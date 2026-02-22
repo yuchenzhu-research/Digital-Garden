@@ -2,7 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Sun, Moon, X } from 'lucide-react';
+import { Settings, Sun, Moon, X, FolderOpen } from 'lucide-react';
+import { isTauri } from '@/utils/env';
+import { getWebFS } from '@/services/entryService';
 
 interface SettingsPanelProps {
     dimmingIntensity: number;
@@ -11,6 +13,22 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsPanelProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [fsStatus, setFsStatus] = useState<string>(
+        !isTauri() && getWebFS().isReady() ? 'Connected' : 'Not Connected'
+    );
+
+    const handleConnectFS = async () => {
+        try {
+            const success = await getWebFS().requestDirectoryAccess();
+            if (success) {
+                setFsStatus('Connected');
+                // Force a page reload so all data fetching immediately switches to the new adapter
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     return (
         <>
@@ -65,6 +83,29 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                                 Adjust the background opacity to reduce visual noise and focus on the collection.
                             </p>
                         </div>
+
+                        {!isTauri() && (
+                            <>
+                                <hr className="my-6 border-foreground/10" />
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
+                                        <span>Local Storage</span>
+                                        <span className={`font-mono ${fsStatus === 'Connected' ? 'text-green-500' : ''}`}>{fsStatus}</span>
+                                    </div>
+                                    <button
+                                        onClick={handleConnectFS}
+                                        disabled={fsStatus === 'Connected'}
+                                        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-foreground/5 hover:bg-foreground/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-sm font-sans"
+                                    >
+                                        <FolderOpen className="w-4 h-4" />
+                                        {fsStatus === 'Connected' ? 'Connected to folder' : 'Connect Folder'}
+                                    </button>
+                                    <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+                                        Connect a local folder to bypass browser limits and write native `.json` files perfectly synced to your disk.
+                                    </p>
+                                </div>
+                            </>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -13,8 +13,8 @@ use tauri::State;
 // ============================================================================
 
 /// In-memory storage for entries (until we implement proper DB)
-struct AppState {
-    entries: Mutex<Vec<EntryPayload>>,
+pub struct AppState {
+    pub entries: Mutex<Vec<EntryPayload>>,
 }
 
 /// Main entry payload matching the frontend Entry interface
@@ -53,7 +53,7 @@ pub struct ImageResult {
 // ============================================================================
 
 /// Initialize the app state with existing entries from disk
-fn initialize_entries(state: &State<AppState>) -> Vec<EntryPayload> {
+fn initialize_entries(_state: &State<AppState>) -> Vec<EntryPayload> {
     let archive_dir = get_archive_dir();
     let mut entries = Vec::new();
 
@@ -76,7 +76,7 @@ fn initialize_entries(state: &State<AppState>) -> Vec<EntryPayload> {
                                 .unwrap_or(&entry_data["created_at"].as_str().unwrap_or(""))
                                 .to_string(),
                             date_modified: None,
-                            image_url: None,
+                            image_url: entry_data["image_url"].as_str().map(|s| s.to_string()),
                         };
                         entries.push(payload);
                     }
@@ -93,9 +93,8 @@ fn initialize_entries(state: &State<AppState>) -> Vec<EntryPayload> {
 // ============================================================================
 
 fn get_archive_dir() -> PathBuf {
-    let documents_dir = dirs::document_dir()
-        .unwrap_or_else(|| PathBuf::from(std::env::var("HOME").unwrap_or_else|_| ".".to_string()));
-    documents_dir.join("DigitalGarden").join("Archive")
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(home).join("Documents").join("DigitalGarden").join("Archive")
 }
 
 fn sanitize_filename(title: &str) -> String {
@@ -157,21 +156,7 @@ pub async fn save_entry(
     saved_payload.id = Some(id.clone());
     saved_payload.date_modified = Some(chrono::Utc::now().to_rfc3339());
 
-    // Serialize (include image reference but not base64 for file size)
-    let json_content = serde_json::to_string_pretty(&saved_payload)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
-
-    // Write to file
-    fs::write(&file_path, json_content)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
-
-    // Update in-memory state
-    {
-        let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
-        entries.push(saved_payload.clone());
-    }
-
-    // Save image if present
+    // Save image from base64 if present (Legacy fallback)
     if let Some(base64) = &payload.image_base64 {
         let image_dir = archive_dir.join("images");
         fs::create_dir_all(&image_dir)
@@ -183,7 +168,25 @@ pub async fn save_entry(
         if let Ok(bytes) = base64_decode(base64) {
             fs::write(&image_path, bytes)
                 .map_err(|e| format!("Failed to save image: {}", e))?;
+            saved_payload.image_url = Some(format!("images/{}", image_filename));
         }
+    }
+
+    // Strip out base64 before serializing so it doesn't bloat the JSON file!
+    saved_payload.image_base64 = None;
+
+    // Serialize
+    let json_content = serde_json::to_string_pretty(&saved_payload)
+        .map_err(|e| format!("Failed to serialize: {}", e))?;
+
+    // Write to file
+    fs::write(&file_path, json_content)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    // Update in-memory state
+    {
+        let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
+        entries.push(saved_payload.clone());
     }
 
     Ok(SaveResult {
@@ -221,6 +224,9 @@ pub async fn update_entry(
             entries[index].keywords = keywords.iter()
                 .filter_map(|v| v.as_str().map(|s| s.to_string()))
                 .collect();
+        }
+        if let Some(image_url) = payload.get("image_url").and_then(|v| v.as_str()) {
+             entries[index].image_url = Some(image_url.to_string());
         }
 
         entries[index].date_modified = Some(chrono::Utc::now().to_rfc3339());
@@ -285,7 +291,7 @@ pub async fn delete_entry(id: String, state: State<'_, AppState>) -> Result<(), 
 pub async fn save_image(
     data: String,
     filename: String,
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<ImageResult, String> {
     let archive_dir = get_archive_dir();
     let image_dir = archive_dir.join("images");
@@ -293,7 +299,12 @@ pub async fn save_image(
     fs::create_dir_all(&image_dir)
         .map_err(|e| format!("Failed to create image directory: {}", e))?;
 
-    let image_path = image_dir.join(&filename);
+    let ext = std::path::Path::new(&filename)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("png");
+    let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
+    let image_path = image_dir.join(&safe_filename);
 
     let bytes = base64_decode(&data)
         .map_err(|e| format!("Failed to decode base64: {}", e))?;
@@ -303,7 +314,37 @@ pub async fn save_image(
 
     Ok(ImageResult {
         success: true,
-        url: Some(image_path.to_string_lossy().to_string()),
+        url: Some(format!("images/{}", safe_filename)),
+        error: None,
+    })
+}
+
+/// Save an image file from raw bytes (More efficient)
+#[tauri::command]
+pub async fn save_image_from_bytes(
+    bytes: Vec<u8>,
+    filename: String,
+    _state: State<'_, AppState>,
+) -> Result<ImageResult, String> {
+    let archive_dir = get_archive_dir();
+    let image_dir = archive_dir.join("images");
+
+    fs::create_dir_all(&image_dir)
+        .map_err(|e| format!("Failed to create image directory: {}", e))?;
+
+    let ext = std::path::Path::new(&filename)
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("png");
+    let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
+    let image_path = image_dir.join(&safe_filename);
+
+    fs::write(&image_path, bytes)
+        .map_err(|e| format!("Failed to write image: {}", e))?;
+
+    Ok(ImageResult {
+        success: true,
+        url: Some(format!("images/{}", safe_filename)),
         error: None,
     })
 }
@@ -382,7 +423,7 @@ pub fn get_backup_path() -> Result<String, String> {
 
 /// Legacy payload type
 #[derive(Serialize, Deserialize)]
-struct LegacyPayload {
+pub struct LegacyPayload {
     pub image: Option<String>,
     pub title: String,
     pub figure: String,

@@ -6,14 +6,37 @@
 import { isTauri } from '@/utils/env';
 import { WebStorageAdapter } from './web-storage';
 import { NativeStorageAdapter } from './native-storage';
-import type { StorageRepository, AdapterMetadata } from './storage-repository';
+import { WebFSStorageAdapter } from './web-fs-storage';
+import type { StorageRepository, AdapterMetadata, DraftEntry } from './storage-repository';
 
 // ============================================================================
 // Singleton Instance
 // ============================================================================
 
 let repositoryInstance: StorageRepository | null = null;
-let currentEnvironment: 'tauri' | 'web' | null = null;
+let currentEnvironment: 'tauri' | 'web-fs' | 'web-local' | null = null;
+
+// Global explicit instances for web to switch dynamically
+const sharedWebFS = new WebFSStorageAdapter();
+let sharedWebLocal: WebStorageAdapter | null = null;
+
+/**
+ * Initialize WebFS automatically in the background
+ */
+if (typeof window !== 'undefined' && !isTauri()) {
+  sharedWebFS.initialize(true).then((ready) => {
+    if (ready) {
+      console.log('WebFSStorage automatically re-connected via IndexedDB.');
+      // Force repository instance refresh
+      repositoryInstance = null;
+    }
+  });
+}
+
+/**
+ * Expose shared WebFS instance for UI to request directory access
+ */
+export const getWebFS = () => sharedWebFS;
 
 /**
  * Get the singleton repository instance
@@ -26,7 +49,7 @@ export const getRepository = (): StorageRepository => {
   }
 
   // Recreate if environment changed
-  const environment = isTauri() ? 'tauri' : 'web';
+  let environment: 'tauri' | 'web-fs' | 'web-local' = isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
 
   if (repositoryInstance && currentEnvironment === environment) {
     return repositoryInstance;
@@ -34,8 +57,11 @@ export const getRepository = (): StorageRepository => {
 
   if (environment === 'tauri') {
     repositoryInstance = new NativeStorageAdapter();
+  } else if (environment === 'web-fs') {
+    repositoryInstance = sharedWebFS;
   } else {
-    repositoryInstance = new WebStorageAdapter();
+    if (!sharedWebLocal) sharedWebLocal = new WebStorageAdapter();
+    repositoryInstance = sharedWebLocal;
   }
 
   currentEnvironment = environment;
@@ -154,6 +180,34 @@ export const getStorageLocation = async (): Promise<string> => {
 };
 
 // ============================================================================
+// Draft Operations
+// ============================================================================
+
+/**
+ * Save a draft entry
+ */
+export const saveDraft = async (draft: DraftEntry): Promise<void> => {
+  const repo = getRepository();
+  return repo.saveDraft(draft);
+};
+
+/**
+ * Get the current draft entry
+ */
+export const getDraft = async (): Promise<DraftEntry | null> => {
+  const repo = getRepository();
+  return repo.getDraft();
+};
+
+/**
+ * Clear the current draft entry
+ */
+export const clearDraft = async (): Promise<void> => {
+  const repo = getRepository();
+  return repo.clearDraft();
+};
+
+// ============================================================================
 // Default Export (Lazy Factory with Proxy)
 // ============================================================================
 
@@ -170,10 +224,15 @@ const createLazyEntryService = (): StorageRepository => {
       throw new Error('Storage service is only available in browser environments');
     }
     if (!repository) {
-      const environment = isTauri() ? 'tauri' : 'web';
-      repository = environment === 'tauri'
-        ? new NativeStorageAdapter()
-        : new WebStorageAdapter();
+      const environment: 'tauri' | 'web-fs' | 'web-local' = isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
+      if (environment === 'tauri') {
+        repository = new NativeStorageAdapter();
+      } else if (environment === 'web-fs') {
+        repository = sharedWebFS;
+      } else {
+        if (!sharedWebLocal) sharedWebLocal = new WebStorageAdapter();
+        repository = sharedWebLocal;
+      }
     }
     return repository;
   };
@@ -204,6 +263,7 @@ export default entryService;
 
 export { WebStorageAdapter } from './web-storage';
 export { NativeStorageAdapter } from './native-storage';
+export { WebFSStorageAdapter } from './web-fs-storage';
 
 // Re-export file-based functions for web
 export { exportToFile, importFromFile, hasUserEntries, getUserEntryCount } from './web-storage';
@@ -216,4 +276,5 @@ export {
   type SaveResult,
   type ImageUploadResult,
   type AdapterMetadata,
+  type DraftEntry,
 } from './storage-repository';

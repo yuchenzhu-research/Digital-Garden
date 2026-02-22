@@ -8,74 +8,80 @@ interface TitleBarProps {
   title?: string;
 }
 
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useDesktopWindow } from '@/hooks/useDesktopWindow';
 
 export function TitleBar({ title = "Bibliotheca Vitae" }: TitleBarProps) {
-  const isMac = typeof window !== 'undefined' &&
-    navigator.platform.toUpperCase().indexOf('MAC') >= 0 &&
-    typeof window !== 'undefined' &&
-    '__TAURI__' in window;
+  const { isDesktop, isMac, minimize, maximize, close } = useDesktopWindow();
 
-  const handleMinimize = () => {
-    getCurrentWindow().minimize();
-  };
-
-  const handleMaximize = () => {
-    getCurrentWindow().toggleMaximize();
-  };
-
-  const handleClose = () => {
-    getCurrentWindow().close();
-  };
+  // If we are not on desktop, we do not need the drag region or controls
+  // But we still want the spacing & nice gradient for consistency
+  if (!isDesktop) {
+    return (
+      <div
+        className="fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-4 z-[9999] select-none"
+        style={{
+          background: 'linear-gradient(180deg, rgba(61, 52, 40, 0.08) 0%, rgba(61, 52, 40, 0.02) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      >
+        <div className="flex-1 text-center">
+          <span className="font-serif text-sm text-foreground/40 tracking-widest uppercase">
+            {title}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       data-tauri-drag-region
-      className="fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-4 z-[9999] select-none"
+      className={`fixed top-0 left-0 right-0 h-10 flex items-center justify-between z-[9999] select-none ${isMac ? 'pl-[80px]' : ''}`}
       style={{
-        // macOS 风格的渐变标题栏背景
         background: 'linear-gradient(180deg, rgba(61, 52, 40, 0.08) 0%, rgba(61, 52, 40, 0.02) 100%)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
     >
-      {/* Window Controls - macOS 风格 */}
-      {isMac && (
-        <div className="flex items-center gap-2 group">
-          <button
-            onClick={handleClose}
-            className="w-3 h-3 rounded-full bg-[#ff5f57] hover:bg-[#ff3b30] border border-[#e0443e] transition-all hover:scale-110 flex items-center justify-center"
-          >
-            <X className="w-2 h-2 text-black/30 opacity-0 group-hover:opacity-100" />
-          </button>
-          <button
-            onClick={handleMinimize}
-            className="w-3 h-3 rounded-full bg-[#febc2e] hover:[#f5a623] border border-[#d4a106] transition-all hover:scale-110 flex items-center justify-center"
-          >
-            <Minus className="w-2 h-2 text-black/30 opacity-0 group-hover:opacity-100" />
-          </button>
-          <button
-            onClick={handleMaximize}
-            className="w-3 h-3 rounded-full bg-[#28c840] hover:[#1db954] border border-[#14ae46] transition-all hover:scale-110 flex items-center justify-center"
-          >
-            <Maximize2 className="w-2 h-2 text-black/30 opacity-0 group-hover:opacity-100" />
-          </button>
-        </div>
-      )}
-
-      {/* Title - 居中显示 */}
+      {/* Title - Centered */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex-1 text-center"
+        className="flex-1 flex justify-center items-center h-full"
+        data-tauri-drag-region
       >
-        <span className="font-serif text-sm text-foreground/40 tracking-widest uppercase">
+        <span className="font-serif text-xs text-foreground/40 tracking-widest uppercase" data-tauri-drag-region>
           {title}
         </span>
       </motion.div>
 
-      {/* Spacer for balance on macOS */}
-      {isMac && <div className="w-14" />}
+      {/* Window Controls - Windows 风格 */}
+      {!isMac && (
+        <div className="flex items-center h-full">
+          <button
+            onClick={minimize}
+            className="w-11 h-full flex items-center justify-center hover:bg-black/10 transition-colors text-foreground/60"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={maximize}
+            className="w-11 h-full flex items-center justify-center hover:bg-black/10 transition-colors text-foreground/60"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={close}
+            className="w-11 h-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors text-foreground/60"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Spacer for balance on macOS (right side to balance the pl-[80px] on left) */}
+      {isMac && <div className="w-[80px] pointer-events-none" />}
     </div>
   );
 }

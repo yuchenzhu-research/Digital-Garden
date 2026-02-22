@@ -11,6 +11,7 @@ import {
   SaveResult,
   ImageUploadResult,
   StorageRepository,
+  DraftEntry,
 } from './storage-repository';
 import { getAdapterMetadata } from './adapter-metadata';
 
@@ -26,6 +27,7 @@ interface RustEntryPayload {
   narrative: string;
   keywords: string[];
   image_base64?: string;
+  image_url?: string;
   date_created: string;
   date_modified?: string;
 }
@@ -54,6 +56,8 @@ interface RustImageResult {
 export class NativeStorageAdapter implements StorageRepository {
   private metadata = getAdapterMetadata('tauri');
   private tauriCore: typeof import('@tauri-apps/api/core') | null = null;
+  private tauriPath: typeof import('@tauri-apps/api/path') | null = null;
+  private tauriFs: typeof import('@tauri-apps/plugin-fs') | null = null;
 
   // ==========================================================================
   // Lazy Tauri Loading
@@ -72,10 +76,29 @@ export class NativeStorageAdapter implements StorageRepository {
       return this.tauriCore;
     } catch (error) {
       throw new Error(
-        `Failed to initialize Tauri Core API: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Failed to initialize Tauri Core API: ${error instanceof Error ? error.message : 'Unknown error'
         }`
       );
+    }
+  }
+
+  private async initPath(): Promise<typeof import('@tauri-apps/api/path')> {
+    if (this.tauriPath) return this.tauriPath;
+    try {
+      this.tauriPath = await import('@tauri-apps/api/path');
+      return this.tauriPath;
+    } catch (e) {
+      throw new Error('Failed to init Tauri Path API');
+    }
+  }
+
+  private async initFs(): Promise<typeof import('@tauri-apps/plugin-fs')> {
+    if (this.tauriFs) return this.tauriFs;
+    try {
+      this.tauriFs = await import('@tauri-apps/plugin-fs');
+      return this.tauriFs;
+    } catch (e) {
+      throw new Error('Failed to init Tauri FS plugin');
     }
   }
 
@@ -94,6 +117,7 @@ export class NativeStorageAdapter implements StorageRepository {
         narrative: entry.narrative,
         keywords: entry.keywords,
         image_base64: entry.imageBase64,
+        image_url: await this.relativizeImageUrl(entry.imageUrl),
         date_created: entry.dateCreated,
         date_modified: new Date().toISOString(),
       };
@@ -137,7 +161,7 @@ export class NativeStorageAdapter implements StorageRepository {
 
       if (!result) return null;
 
-      return this.rustToEntry(result);
+      return await this.rustToEntry(result);
     } catch (error) {
       console.error('Failed to get entry:', error);
       return null;
@@ -150,7 +174,7 @@ export class NativeStorageAdapter implements StorageRepository {
 
       const result = await invoke<RustEntryPayload[]>('get_all_entries');
 
-      return result.map((e) => this.rustToEntry(e));
+      return await Promise.all(result.map((e) => this.rustToEntry(e)));
     } catch (error) {
       console.error('Failed to get entries:', error);
       return [];
@@ -224,11 +248,12 @@ export class NativeStorageAdapter implements StorageRepository {
         return { success: true, url: file };
       }
 
-      // Convert File/Blob to base64
-      const base64 = await this.fileToBase64(file);
+      // Convert File/Blob to byte array to avoid base64 overhead
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
 
-      const result = await invoke<RustImageResult | null>('save_image', {
-        data: base64,
+      const result = await invoke<RustImageResult | null>('save_image_from_bytes', {
+        bytes: Array.from(bytes), // Tauri uses Vec<u8> which accepts arrays of numbers from JS
         filename: file instanceof File ? file.name : 'image.png',
       });
 
@@ -241,7 +266,7 @@ export class NativeStorageAdapter implements StorageRepository {
       }
 
       if (result.success && result.url) {
-        return { success: true, url: result.url };
+        return { success: true, url: await this.resolveImageUrl(result.url) };
       }
 
       return {
@@ -288,8 +313,7 @@ export class NativeStorageAdapter implements StorageRepository {
       await invoke('import_entries', { json });
     } catch (error) {
       throw new Error(
-        `Failed to import data: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'
         }`
       );
     }
@@ -305,13 +329,97 @@ export class NativeStorageAdapter implements StorageRepository {
   }
 
   // ==========================================================================
+  // Draft Operations
+  // ==========================================================================
+
+  async saveDraft(draft: DraftEntry): Promise<void> {
+    try {
+      const fs = await this.initFs();
+      const path = await this.initPath();
+      const appDataDir = await path.appDataDir();
+
+      // Ensure directory exists
+      try {
+        await fs.mkdir(appDataDir, { recursive: true });
+      } catch (e) {
+        // Ignore if exists
+      }
+
+      const draftPath = await path.join(appDataDir, '.draft.json');
+      await fs.writeTextFile(draftPath, JSON.stringify(draft));
+    } catch (error) {
+      console.warn('Native saveDraft error:', error);
+    }
+  }
+
+  async getDraft(): Promise<DraftEntry | null> {
+    try {
+      const fs = await this.initFs();
+      const path = await this.initPath();
+      const appDataDir = await path.appDataDir();
+      const draftPath = await path.join(appDataDir, '.draft.json');
+
+      const exists = await fs.exists(draftPath);
+      if (!exists) return null;
+
+      const content = await fs.readTextFile(draftPath);
+      return JSON.parse(content) as DraftEntry;
+    } catch {
+      return null;
+    }
+  }
+
+  async clearDraft(): Promise<void> {
+    try {
+      const fs = await this.initFs();
+      const path = await this.initPath();
+      const appDataDir = await path.appDataDir();
+      const draftPath = await path.join(appDataDir, '.draft.json');
+
+      const exists = await fs.exists(draftPath);
+      if (exists) {
+        await fs.remove(draftPath);
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  // ==========================================================================
   // Helper Methods
   // ==========================================================================
+
+  private async resolveImageUrl(url: string | undefined): Promise<string | undefined> {
+    if (!url) return undefined;
+    if (url.startsWith('asset://') || url.startsWith('http') || url.startsWith('data:')) {
+      return url;
+    }
+    try {
+      const { convertFileSrc } = await this.initCore();
+      const pathPlugins = await this.initPath();
+      const storagePath = await this.getStorageLocation();
+      const absolutePath = await pathPlugins.join(storagePath, url);
+      return convertFileSrc(absolutePath);
+    } catch {
+      return url;
+    }
+  }
+
+  private async relativizeImageUrl(url: string | undefined): Promise<string | undefined> {
+    if (!url) return undefined;
+    if (url.startsWith('asset://') || url.startsWith('http://localhost') || url.startsWith('https://localhost')) {
+      const match = url.match(/images\/[^/]+$/);
+      if (match) {
+        return match[0];
+      }
+    }
+    return url;
+  }
 
   /**
    * Convert Rust payload to Entry type
    */
-  private rustToEntry(payload: RustEntryPayload): Entry {
+  private async rustToEntry(payload: RustEntryPayload): Promise<Entry> {
     return {
       id: payload.id,
       title: payload.title,
@@ -320,6 +428,7 @@ export class NativeStorageAdapter implements StorageRepository {
       narrative: payload.narrative,
       keywords: payload.keywords,
       imageBase64: payload.image_base64,
+      imageUrl: await this.resolveImageUrl(payload.image_url),
       dateCreated: payload.date_created,
       dateModified: payload.date_modified,
     };

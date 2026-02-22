@@ -8,7 +8,7 @@
     "windows": [
       {
         "center": true,
-        "decorations": false,
+        "decorations": true,
         "fullscreen": false,
         "height": 800,
         "minHeight": 600,
@@ -16,6 +16,7 @@
         "resizable": true,
         "title": "Bibliotheca Vitae",
         "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "transparent": true,
         "width": 1200
       }

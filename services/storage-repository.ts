@@ -63,6 +63,11 @@ export interface ImageUploadResult {
   error?: string;
 }
 
+/**
+ * Draft entry containing partial entry data
+ */
+export type DraftEntry = Partial<Entry>;
+
 // ============================================================================
 // Repository Interface
 // ============================================================================
@@ -138,6 +143,23 @@ export interface StorageRepository {
    * @returns The storage path or identifier
    */
   getStorageLocation(): Promise<string>;
+
+  /**
+   * Save a draft entry
+   * @param draft - Partial entry data to save as draft
+   */
+  saveDraft(draft: DraftEntry): Promise<void>;
+
+  /**
+   * Get the current draft entry
+   * @returns The draft entry or null if none exists
+   */
+  getDraft(): Promise<DraftEntry | null>;
+
+  /**
+   * Clear the current draft entry
+   */
+  clearDraft(): Promise<void>;
 }
 
 // ============================================================================
@@ -198,6 +220,9 @@ export const getAdapterMetadata = (environment: 'tauri' | 'web'): AdapterMetadat
       'uploadImage',
       'exportData',
       'importData',
+      'saveDraft',
+      'getDraft',
+      'clearDraft',
     ],
   };
 };

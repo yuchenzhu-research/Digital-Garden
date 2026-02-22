@@ -11,6 +11,7 @@ import {
   SaveResult,
   ImageUploadResult,
   StorageRepository,
+  DraftEntry,
 } from './storage-repository';
 import { getAdapterMetadata } from './adapter-metadata';
 
@@ -102,7 +103,7 @@ export class WebStorageAdapter implements StorageRepository {
    * Constructor
    * @param prefix - Optional prefix for storage keys (useful for multi-user)
    */
-  constructor(private prefix: string = '') {}
+  constructor(private prefix: string = '') { }
 
   // ==========================================================================
   // Entry Operations
@@ -297,8 +298,7 @@ export class WebStorageAdapter implements StorageRepository {
       saveEntries(merged);
     } catch (error) {
       throw new Error(
-        `Failed to import data: ${
-          error instanceof Error ? error.message : 'Unknown error'
+        `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'
         }`
       );
     }
@@ -306,6 +306,48 @@ export class WebStorageAdapter implements StorageRepository {
 
   async getStorageLocation(): Promise<string> {
     return 'localStorage';
+  }
+
+  // ==========================================================================
+  // Draft Operations
+  // ==========================================================================
+
+  async saveDraft(draft: DraftEntry): Promise<void> {
+    if (!isBrowser()) return;
+    try {
+      const draftKey = this.prefix
+        ? `${this.prefix}_${STORAGE_KEYS.DRAFT}`
+        : STORAGE_KEYS.DRAFT;
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch (error) {
+      console.warn('Failed to save draft:', error);
+    }
+  }
+
+  async getDraft(): Promise<DraftEntry | null> {
+    if (!isBrowser()) return null;
+    try {
+      const draftKey = this.prefix
+        ? `${this.prefix}_${STORAGE_KEYS.DRAFT}`
+        : STORAGE_KEYS.DRAFT;
+      const stored = localStorage.getItem(draftKey);
+      if (!stored) return null;
+      return JSON.parse(stored) as DraftEntry;
+    } catch {
+      return null;
+    }
+  }
+
+  async clearDraft(): Promise<void> {
+    if (!isBrowser()) return;
+    try {
+      const draftKey = this.prefix
+        ? `${this.prefix}_${STORAGE_KEYS.DRAFT}`
+        : STORAGE_KEYS.DRAFT;
+      localStorage.removeItem(draftKey);
+    } catch {
+      // Ignore
+    }
   }
 
   // ==========================================================================
