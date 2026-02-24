@@ -39,7 +39,7 @@
     ],
     "targets": "all"
   },
-  "identifier": "com.bibliotheca-vitae.app",
+  "identifier": "com.bibliotheca-vitae",
   "productName": "Digital-Garden",
   "version": "0.1.0"
 }
