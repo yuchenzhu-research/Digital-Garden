@@ -6,7 +6,7 @@
 
   <p align="center">
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-708090?style=flat-square" alt="Platform" />
-    <img src="https://img.shields.io/badge/framework-Next.js%2015-000000?style=flat-square&logo=next.js" alt="Framework" />
+    <img src="https://img.shields.io/badge/framework-Next.js%2016-000000?style=flat-square&logo=next.js" alt="Framework" />
     <img src="https://img.shields.io/badge/built%20with-Tailwind%20CSS%20v4-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/animation-Framer%20Motion-E10098?style=flat-square&logo=framer" alt="Framer Motion" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
@@ -27,6 +27,8 @@
 <br/>
 
 **Bibliotheca Vitae** は単なるブログの概念を超越しています。それは15世紀の写本美学と21世紀の工学が融合するデジタルガーデンであり、無味乾燥なデータを、キュレートされた人生の物語へと昇華させます。
+
+リポジトリ構成とディレクトリ規約は [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) にまとめています。
 
 ## 🏛️ ビジョン：生ける物語
 
@@ -54,7 +56,7 @@ Appleの美学にインスパイアされたスティッキーな横スクロー
 
 将来的なネイティブアプリ化を見据えた **SPA** アーキテクチャ：
 
--   **Core**: Next.js 15 App Router, React 19, TypeScript
+-   **Core**: Next.js 16 App Router, React 19, TypeScript
 -   **Motion**: Framer Motion, GSAP, React Lenis Smooth Scroll
 -   **Visual**: Tailwind CSS v4 Oklch, Lucide Icons
 -   **グラフィック**: React Three Fiber / Drei WebGL Particle System

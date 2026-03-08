@@ -6,7 +6,7 @@
 
   <p align="center">
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-708090?style=flat-square" alt="Platform" />
-    <img src="https://img.shields.io/badge/framework-Next.js%2015-000000?style=flat-square&logo=next.js" alt="Framework" />
+    <img src="https://img.shields.io/badge/framework-Next.js%2016-000000?style=flat-square&logo=next.js" alt="Framework" />
     <img src="https://img.shields.io/badge/built%20with-Tailwind%20CSS%20v4-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/animation-Framer%20Motion-E10098?style=flat-square&logo=framer" alt="Framer Motion" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
@@ -27,6 +27,8 @@
 <br/>
 
 **Bibliotheca Vitae**는 단순한 블로그를 초월합니다. 이곳은 15세기 필사본의 미학과 21세기 공학이 만나는 디지털 정원이며, 평범한 데이터를 큐레이팅된 삶의 서사로 승화시킵니다.
+
+저장소 구조와 디렉터리 규칙은 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)에서 확인할 수 있습니다.
 
 ## 🏛️ 비전: 살아있는 서사
 
@@ -54,7 +56,7 @@ Apple 스타일의 스티키 가로 스크롤을 통해 사용자는 역사의 �
 
 미래의 네이티브 포팅을 대비한 **SPA** 아키텍처:
 
--   **Core**: Next.js 15 App Router, React 19, TypeScript
+-   **Core**: Next.js 16 App Router, React 19, TypeScript
 -   **Motion**: Framer Motion, GSAP, React Lenis Smooth Scroll
 -   **그래픽**: React Three Fiber / Drei WebGL Particle System
 

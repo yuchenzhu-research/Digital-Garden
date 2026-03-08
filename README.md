@@ -6,7 +6,7 @@
 
   <p align="center">
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-708090?style=flat-square" alt="Platform" />
-    <img src="https://img.shields.io/badge/framework-Next.js%2015-000000?style=flat-square&logo=next.js" alt="Framework" />
+    <img src="https://img.shields.io/badge/framework-Next.js%2016-000000?style=flat-square&logo=next.js" alt="Framework" />
     <img src="https://img.shields.io/badge/built%20with-Tailwind%20CSS%20v4-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/animation-Framer%20Motion-E10098?style=flat-square&logo=framer" alt="Framer Motion" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
@@ -27,6 +27,8 @@
 <br/>
 
 **Bibliotheca Vitae** transcends the concept of a blog. It is a Digital Garden where 15th-century manuscript aesthetics merge with 21st-century engineering, elevating raw data into a curated narrative.
+
+Repository layout and boundary rules live in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md).
 
 ## 🏛️ Vision: Living Narrative
 
@@ -54,7 +56,7 @@ The heart of the project is a Visual-First Editor.
 
 Built as a **Single Page Application** for future native portability:
 
--   **Core**: Next.js 15 App Router, React 19, TypeScript
+-   **Core**: Next.js 16 App Router, React 19, TypeScript
 -   **Motion**: Framer Motion, GSAP, React Lenis
 -   **Visual**: Tailwind CSS v4 Oklch, Lucide Icons
 -   **Graphics**: React Three Fiber / Drei WebGL Particle System

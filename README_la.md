@@ -6,7 +6,7 @@
 
   <p align="center">
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-708090?style=flat-square" alt="Platform" />
-    <img src="https://img.shields.io/badge/framework-Next.js%2015-000000?style=flat-square&logo=next.js" alt="Framework" />
+    <img src="https://img.shields.io/badge/framework-Next.js%2016-000000?style=flat-square&logo=next.js" alt="Framework" />
     <img src="https://img.shields.io/badge/built%20with-Tailwind%20CSS%20v4-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/animation-Framer%20Motion-E10098?style=flat-square&logo=framer" alt="Framer Motion" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
@@ -27,6 +27,8 @@
 <br/>
 
 **Hortus Digitalis** ultra blog personalem transcendit. Est **Tabularium Vitae Immersivum**, ubi aesthetica codicum saeculi XV cum technologia telae saeculi XXI confluit, data vulgaria in artem curationis elegantem transformans.
+
+Structura repositorii et regulae directoriorum in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) servantur.
 
 ## 🏛️ Visio: Narratio Vitae
 

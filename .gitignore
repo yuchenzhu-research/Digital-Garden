@@ -41,6 +41,8 @@ astro_backup.zip
 .vscode/
 .claude/
 .agent/
+.agents/
+.Codex/
 
 # tauri
 src-tauri/target/

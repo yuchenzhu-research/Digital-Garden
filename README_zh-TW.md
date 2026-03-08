@@ -6,7 +6,7 @@
 
   <p align="center">
     <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-708090?style=flat-square" alt="Platform" />
-    <img src="https://img.shields.io/badge/framework-Next.js%2015-000000?style=flat-square&logo=next.js" alt="Framework" />
+    <img src="https://img.shields.io/badge/framework-Next.js%2016-000000?style=flat-square&logo=next.js" alt="Framework" />
     <img src="https://img.shields.io/badge/built%20with-Tailwind%20CSS%20v4-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind CSS" />
     <img src="https://img.shields.io/badge/animation-Framer%20Motion-E10098?style=flat-square&logo=framer" alt="Framer Motion" />
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License" />
@@ -27,6 +27,8 @@
 <br/>
 
 **Bibliotheca Vitae** 超越了部落格的定義。這是一座數位花園，15 世紀手抄本美學與 21 世紀工程技藝在此交匯，將原始數據昇華為被策展的生命敘事。
+
+倉庫分層與目錄約定見 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。
 
 ## 🏛️ 專案願景：生命敘事
 
@@ -54,7 +56,7 @@
 
 基於單頁應用 SPA 架構，為未來的 Electron 原生化做準備：
 
--   **核心**: Next.js 15 App Router, React 19, TypeScript
+-   **核心**: Next.js 16 App Router, React 19, TypeScript
 -   **動效**: Framer Motion, GSAP, React Lenis Smooth Scroll
 -   **視覺**: Tailwind CSS v4 Oklch, Lucide Icons
 -   **圖形**: React Three Fiber / Drei WebGL Particle System
