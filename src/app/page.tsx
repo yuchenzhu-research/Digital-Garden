@@ -4,11 +4,8 @@ import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Hero } from '@/components/features/Hero';
-import { ArchiveGrid } from '@/components/features/ArchiveGrid';
 import { HorizontalScrollSection } from '@/components/ui/HorizontalScrollSection';
 import { ImageCard } from '@/components/ui/ImageCard';
-import { ArchiveDetailView } from '@/components/features/ArchiveDetailView';
-import { EntryEditor } from '@/components/features/EntryEditor';
 import { DataManagement } from '@/components/ui/DataManagement';
 import { FilterBar, type Category } from '@/components/ui/FilterBar';
 import { documents } from '@/lib/data';
@@ -26,6 +23,23 @@ const Canvas3D = dynamic(() => import('@/components/visual/Canvas3D'), {
 const SmoothScrollWrapper = dynamic(
   () => import('@/components/ui/SmoothScrollWrapper').then(mod => mod.SmoothScrollWrapper),
   { ssr: false }
+);
+
+const ArchiveDetailView = dynamic(
+  () => import('@/components/features/ArchiveDetailView').then(mod => mod.ArchiveDetailView),
+  { ssr: false }
+);
+
+const EntryEditor = dynamic(
+  () => import('@/components/features/EntryEditor').then(mod => mod.EntryEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-screen items-center justify-center text-sm uppercase tracking-[0.3em] text-muted-foreground">
+        Loading editor...
+      </div>
+    ),
+  }
 );
 
 // Convert Entry to Document format for display
@@ -46,6 +60,17 @@ const entryToDocument = (entry: Entry, index: number): Document => ({
   type: 'image' as const,
 });
 
+const getInitialDimmingIntensity = (): number => {
+  if (typeof window === 'undefined') {
+    return 0.3;
+  }
+
+  const saved = window.localStorage.getItem('bv_dimming_intensity');
+  const parsed = saved ? Number.parseFloat(saved) : Number.NaN;
+
+  return Number.isFinite(parsed) ? parsed : 0.3;
+};
+
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
@@ -54,19 +79,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState<Category>('all');
   const [isLoading, setIsLoading] = useState(true);
-
-  // Custom Settings
-  const [dimmingIntensity, setDimmingIntensity] = useState(0.3);
-
-  // Load preferences
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('bv_dimming_intensity');
-      if (saved) {
-        setDimmingIntensity(parseFloat(saved));
-      }
-    }
-  }, []);
+  const [dimmingIntensity, setDimmingIntensity] = useState(getInitialDimmingIntensity);
 
   // Save preferences
   const handleIntensityChange = (val: number) => {
@@ -196,6 +209,14 @@ export default function Home() {
 
         {/* Hero Section */}
         <Hero onAppendClick={() => setIsEditing(true)} />
+
+        {isLoading && (
+          <section className="container mx-auto px-4 pt-8">
+            <div className="rounded-lg border border-foreground/10 bg-card/40 px-4 py-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+              Loading your local archive...
+            </div>
+          </section>
+        )}
 
         {/* Horizontal Scroll Section - Featured */}
         <HorizontalScrollSection onScrollProgress={setScrollProgress}>

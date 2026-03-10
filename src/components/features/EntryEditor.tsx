@@ -135,7 +135,7 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
                     showToast('Failed to process image');
                     setImage(null);
                 }
-            } catch (err) {
+            } catch {
                 showToast('Error uploading image');
                 setImage(null);
             }

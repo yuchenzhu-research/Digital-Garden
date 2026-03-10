@@ -67,7 +67,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
         setImportStatus('error');
         setImportMessage(result.error || 'Import failed');
       }
-    } catch (error) {
+    } catch {
       setImportStatus('error');
       setImportMessage('Failed to parse file');
     } finally {

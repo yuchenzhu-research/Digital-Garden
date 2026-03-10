@@ -49,7 +49,7 @@ export const getRepository = (): StorageRepository => {
   }
 
   // Recreate if environment changed
-  let environment: 'tauri' | 'web-fs' | 'web-local' = isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
+  const environment: 'tauri' | 'web-fs' | 'web-local' = isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
 
   if (repositoryInstance && currentEnvironment === environment) {
     return repositoryInstance;
@@ -240,14 +240,22 @@ const createLazyEntryService = (): StorageRepository => {
   return new Proxy({} as StorageRepository, {
     get(_target, prop) {
       const repo = ensureRepository();
-      const value = (repo as any)[prop];
+      const value = Reflect.get(repo as object, prop);
+
       if (typeof value === 'function') {
         // Return a function that first gets the repo, then calls the method
-        return (...args: any[]) => {
+        return (...args: unknown[]) => {
           const targetRepo = ensureRepository();
-          return (targetRepo as any)[prop](...args);
+          const targetValue = Reflect.get(targetRepo as object, prop);
+
+          if (typeof targetValue !== 'function') {
+            return targetValue;
+          }
+
+          return Reflect.apply(targetValue, targetRepo, args);
         };
       }
+
       return value;
     },
   });

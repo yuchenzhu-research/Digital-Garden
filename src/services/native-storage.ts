@@ -87,7 +87,7 @@ export class NativeStorageAdapter implements StorageRepository {
     try {
       this.tauriPath = await import('@tauri-apps/api/path');
       return this.tauriPath;
-    } catch (e) {
+    } catch {
       throw new Error('Failed to init Tauri Path API');
     }
   }
@@ -97,7 +97,7 @@ export class NativeStorageAdapter implements StorageRepository {
     try {
       this.tauriFs = await import('@tauri-apps/plugin-fs');
       return this.tauriFs;
-    } catch (e) {
+    } catch {
       throw new Error('Failed to init Tauri FS plugin');
     }
   }
@@ -341,7 +341,7 @@ export class NativeStorageAdapter implements StorageRepository {
       // Ensure directory exists
       try {
         await fs.mkdir(appDataDir, { recursive: true });
-      } catch (e) {
+      } catch {
         // Ignore if exists
       }
 

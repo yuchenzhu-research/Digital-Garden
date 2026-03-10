@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local tooling and generated artifacts:
+    ".agent/**",
+    ".agents/**",
+    ".claude/**",
+    ".Codex/**",
+    "src-tauri/target/**",
   ]),
 ]);
 

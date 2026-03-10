@@ -18,6 +18,7 @@ import { get, set, del } from 'idb-keyval';
 
 const DIRECTORY_HANDLE_KEY = 'bibliotheca_fs_handle';
 const DRAFT_FILE_NAME = '.draft.json';
+type JsonRecord = Record<string, unknown>;
 
 // Helper to generate UUID-like IDs
 const generateId = (): string => {
@@ -36,6 +37,48 @@ const sanitizeFilename = (title: string): string => {
 async function ensureDirectory(parentHandle: FileSystemDirectoryHandle, name: string): Promise<FileSystemDirectoryHandle> {
     return await parentHandle.getDirectoryHandle(name, { create: true });
 }
+
+const isJsonRecord = (value: unknown): value is JsonRecord => {
+    return typeof value === 'object' && value !== null;
+};
+
+const parseJsonRecord = (text: string): JsonRecord | null => {
+    const parsed: unknown = JSON.parse(text);
+    return isJsonRecord(parsed) ? parsed : null;
+};
+
+const getString = (record: JsonRecord, ...keys: string[]): string | undefined => {
+    for (const key of keys) {
+        const value = record[key];
+        if (typeof value === 'string') {
+            return value;
+        }
+    }
+
+    return undefined;
+};
+
+const getStringArray = (record: JsonRecord, key: string): string[] => {
+    const value = record[key];
+
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value.filter((item): item is string => typeof item === 'string');
+};
+
+const toEntry = (record: JsonRecord): Entry => ({
+    id: getString(record, 'id'),
+    title: getString(record, 'title') ?? '',
+    figure: getString(record, 'figure') ?? '',
+    moment: getString(record, 'moment') ?? '',
+    narrative: getString(record, 'narrative') ?? '',
+    keywords: getStringArray(record, 'keywords'),
+    dateCreated: getString(record, 'date_created', 'dateCreated') ?? '',
+    dateModified: getString(record, 'date_modified', 'dateModified'),
+    imageUrl: getString(record, 'image_url', 'imageUrl'),
+});
 
 export class WebFSStorageAdapter implements StorageRepository {
     private metadata = getAdapterMetadata('web');
@@ -60,8 +103,8 @@ export class WebFSStorageAdapter implements StorageRepository {
             const storedHandle = await get<FileSystemDirectoryHandle>(DIRECTORY_HANDLE_KEY);
             if (storedHandle) {
                 // Verify permission
-                const options = { mode: 'readwrite' };
-                if (await (storedHandle as any).queryPermission(options) === 'granted') {
+                const options = { mode: 'readwrite' as const };
+                if (await storedHandle.queryPermission(options) === 'granted') {
                     this.rootHandle = storedHandle;
                     this.isInitialized = true;
                     return true;
@@ -69,7 +112,7 @@ export class WebFSStorageAdapter implements StorageRepository {
 
                 // Try silently requesting permission if we have the handle
                 if (requestPermissionSilence) {
-                    const state = await (storedHandle as any).requestPermission(options);
+                    const state = await storedHandle.requestPermission(options);
                     if (state === 'granted') {
                         this.rootHandle = storedHandle;
                         this.isInitialized = true;
@@ -88,10 +131,10 @@ export class WebFSStorageAdapter implements StorageRepository {
      */
     async requestDirectoryAccess(): Promise<boolean> {
         try {
-            if (!('showDirectoryPicker' in window)) {
+            if (!window.showDirectoryPicker) {
                 throw new Error('Your browser does not support the File System Access API.');
             }
-            const handle = await (window as any).showDirectoryPicker({
+            const handle = await window.showDirectoryPicker({
                 id: 'bibliotheca_archive',
                 mode: 'readwrite'
             });
@@ -142,7 +185,8 @@ export class WebFSStorageAdapter implements StorageRepository {
             };
 
             // Exclude base64 from being written if we have imageUrl
-            const { imageBase64, ...payloadToSave } = payload as any;
+            const payloadToSave = { ...payload };
+            delete payloadToSave.imageBase64;
 
             const timestamp = new Date().toISOString().replace(/[:\.]/g, '-');
             const filename = `${sanitizeFilename(entry.title)}_${timestamp}.json`;
@@ -178,27 +222,18 @@ export class WebFSStorageAdapter implements StorageRepository {
             const entries: Entry[] = [];
 
             // Iterate async over folder
-            for await (const [name, handle] of (dirHandle as any).entries()) {
+            for await (const [name, handle] of dirHandle.entries()) {
                 if (handle.kind === 'file' && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
                     try {
                         const file = await handle.getFile();
                         const text = await file.text();
-                        const data = JSON.parse(text);
+                        const data = parseJsonRecord(text);
 
-                        // Map JSON back to interface, ensuring backward compat mapping
-                        entries.push({
-                            id: data.id,
-                            title: data.title || '',
-                            figure: data.figure || '',
-                            moment: data.moment || '',
-                            narrative: data.narrative || '',
-                            keywords: data.keywords || [],
-                            dateCreated: data.date_created || data.dateCreated || '',
-                            dateModified: data.date_modified || data.dateModified,
-                            imageUrl: data.image_url || data.imageUrl,
-                        } as Entry);
-                    } catch (e) {
-                        console.warn(`Could not parse JSON file: ${name}`, e);
+                        if (data) {
+                            entries.push(toEntry(data));
+                        }
+                    } catch (error) {
+                        console.warn(`Could not parse JSON file: ${name}`, error);
                     }
                 }
             }
@@ -229,22 +264,22 @@ export class WebFSStorageAdapter implements StorageRepository {
 
             // Need to find which file corresponds to this ID
             let targetFileHandle: FileSystemFileHandle | null = null;
-            let existingData: any = null;
+            let existingData: JsonRecord | null = null;
             let targetName: string = '';
 
-            for await (const [name, handle] of (dirHandle as any).entries()) {
+            for await (const [name, handle] of dirHandle.entries()) {
                 if (handle.kind === 'file' && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
                     const file = await handle.getFile();
                     const text = await file.text();
                     try {
-                        const parsed = JSON.parse(text);
-                        if (parsed.id === id) {
+                        const parsed = parseJsonRecord(text);
+                        if (parsed && getString(parsed, 'id') === id) {
                             targetFileHandle = handle;
                             existingData = parsed;
                             targetName = name;
                             break;
                         }
-                    } catch (e) { /* ignore parse error internally */ }
+                    } catch { /* ignore parse error internally */ }
                 }
             }
 
@@ -284,29 +319,30 @@ export class WebFSStorageAdapter implements StorageRepository {
         try {
             const dirHandle = this.requireHandle();
             // Need to find which file corresponds to this ID, plus possibly image
-            for await (const [name, handle] of (dirHandle as any).entries()) {
+            for await (const [name, handle] of dirHandle.entries()) {
                 if (handle.kind === 'file' && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
                     const file = await handle.getFile();
                     const text = await file.text();
                     try {
-                        const parsed = JSON.parse(text);
-                        if (parsed.id === id) {
+                        const parsed = parseJsonRecord(text);
+                        if (parsed && getString(parsed, 'id') === id) {
                             // Delete JSON file
                             await dirHandle.removeEntry(name);
 
                             // Attempt to delete associated image
-                            if (parsed.imageUrl || parsed.image_url) {
+                            const imageUrl = getString(parsed, 'imageUrl', 'image_url');
+                            if (imageUrl) {
                                 try {
                                     const imgDirHandle = await dirHandle.getDirectoryHandle('images');
-                                    const imgName = (parsed.imageUrl || parsed.image_url).split('/').pop();
+                                    const imgName = imageUrl.split('/').pop();
                                     if (imgName) {
                                         await imgDirHandle.removeEntry(imgName);
                                     }
-                                } catch (e) { /* ignore image delete fail */ }
+                                } catch { /* ignore image delete fail */ }
                             }
                             return;
                         }
-                    } catch (e) { }
+                    } catch { }
                 }
             }
         } catch (error) {
@@ -373,7 +409,7 @@ export class WebFSStorageAdapter implements StorageRepository {
                 return URL.createObjectURL(file);
             }
             return url;
-        } catch (e) {
+        } catch {
             return url;
         }
     }
@@ -388,10 +424,12 @@ export class WebFSStorageAdapter implements StorageRepository {
     }
 
     async importData(json: string): Promise<void> {
-        const entries = JSON.parse(json);
+        const entries: unknown = JSON.parse(json);
         if (Array.isArray(entries)) {
             for (const entry of entries) {
-                await this.saveEntry(entry);
+                if (isJsonRecord(entry)) {
+                    await this.saveEntry(toEntry(entry));
+                }
             }
         }
     }
@@ -447,7 +485,8 @@ export class WebFSStorageAdapter implements StorageRepository {
 
 function uuid_v4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
 }

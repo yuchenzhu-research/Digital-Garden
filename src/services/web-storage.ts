@@ -37,16 +37,6 @@ const generateId = (): string => {
 };
 
 /**
- * Sanitize title for use as filename/key
- */
-const sanitizeKey = (title: string): string => {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .substring(0, 50);
-};
-
-/**
  * Check if running in browser
  */
 const isBrowser = (): boolean => {

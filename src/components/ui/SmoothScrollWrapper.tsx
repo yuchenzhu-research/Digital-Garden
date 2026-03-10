@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import Lenis from 'lenis';
 
 // Global reference for scroll synchronization
@@ -11,14 +11,13 @@ interface SmoothScrollWrapperProps {
 }
 
 export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
-  const [lenis, setLenis] = useState<Lenis | null>(null);
-
   useEffect(() => {
     const lenisInstance = new Lenis({
       lerp: 0.1,
       duration: 1.5,
       smoothWheel: true,
     });
+    let animationFrameId = 0;
 
     // Sync scroll progress
     const updateScroll = () => {
@@ -29,21 +28,20 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
     lenisInstance.on('scroll', updateScroll);
 
     // Store in window for access
-    (window as any).__LENIS__ = lenisInstance;
+    window.__LENIS__ = lenisInstance;
 
     // Animation frame
-    function raf(time: number) {
+    const raf = (time: number) => {
       lenisInstance.raf(time);
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
-
-    setLenis(lenisInstance);
+      animationFrameId = window.requestAnimationFrame(raf);
+    };
+    animationFrameId = window.requestAnimationFrame(raf);
 
     return () => {
+      window.cancelAnimationFrame(animationFrameId);
       lenisInstance.off('scroll', updateScroll);
       lenisInstance.destroy();
-      (window as any).__LENIS__ = null;
+      window.__LENIS__ = null;
     };
   }, []);
 
@@ -52,5 +50,9 @@ export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
 
 // Hook to access lenis instance
 export function useLenis() {
-  return (window as any).__LENIS__ as Lenis | null;
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.__LENIS__ ?? null;
 }

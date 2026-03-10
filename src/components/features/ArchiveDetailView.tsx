@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft, X, Trash2 } from 'lucide-react';
-import { Document } from '@/lib/types';
+import type { Document } from '@/lib/types';
 import { MarkdownView } from '@/components/features/MarkdownView';
 import { ImageView } from '@/components/features/ImageView';
 

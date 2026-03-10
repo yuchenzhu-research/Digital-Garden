@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useMemo, useEffect, forwardRef, RefObject } from 'react';
+import React, { useRef, useMemo, useEffect, forwardRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MotionValue } from 'framer-motion';

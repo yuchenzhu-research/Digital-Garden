@@ -4,8 +4,6 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { ArrowRight } from 'lucide-react';
 
-import Link from 'next/link';
-
 interface ImageCardProps {
     id: string;
     title: string;
@@ -53,6 +51,8 @@ export function ImageCard({
             onClick={onClick}
             role="button"
             tabIndex={0}
+            data-entry-id={id}
+            aria-label={`Open ${title}${author ? ` by ${author}` : ''}${year ? ` (${year})` : ''}`}
             className={cn(
                 'group relative overflow-hidden bg-warm-paper border-elegant flex-none scroll-snap-align-start block cursor-pointer transition-transform duration-300 hover:scale-[1.01]',
                 aspectRatioClasses[aspectRatio],
