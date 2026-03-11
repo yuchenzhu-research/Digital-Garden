@@ -16,7 +16,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Bibliotheca Academica",
+  title: "Bibliotheca Vitae",
   description: "A digital renaissance archive.",
 };
 

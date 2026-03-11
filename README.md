@@ -1,5 +1,8 @@
 <div align="center">
-  <h1 align="center">🌿 Digital Garden | Bibliotheca Vitae</h1>
+  <h1 align="center">🌿 Digital Garden</h1>
+  <p align="center">
+    <strong>Bibliotheca Vitae</strong>
+  </p>
   <p align="center">
     <em>"A digital sanctuary to curate the artifacts of your life."</em>
   </p>
@@ -83,4 +86,4 @@ Built as a **Single Page Application** for future native portability:
 4.  Visit: `https://bibliotheca-vitae.vercel.app` or `http://localhost:4321`.
 
 ---
-*Est. MMXXVI · Digital Garden | Bibliotheca Vitae · Ars Longa, Vita Brevis.*
+*Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

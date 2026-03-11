@@ -1,5 +1,8 @@
 <div align="center">
-  <h1 align="center">🌿 Digital Garden | Bibliotheca Vitae</h1>
+  <h1 align="center">🌿 Digital Garden</h1>
+  <p align="center">
+    <strong>Bibliotheca Vitae</strong>
+  </p>
   <p align="center">
     <em>人生の断片をキュレートするデジタルの聖域</em>
   </p>
@@ -83,4 +86,4 @@ Appleの美学にインスパイアされたスティッキーな横スクロー
 4.  アクセス：`https://bibliotheca-vitae.vercel.app` または `http://localhost:4321`
 
 ---
-*Est. MMXXVI · Digital Garden | Bibliotheca Vitae · Ars Longa, Vita Brevis.*
+*Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

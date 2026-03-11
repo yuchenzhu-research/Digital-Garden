@@ -1,5 +1,8 @@
 <div align="center">
-  <h1 align="center">🌿 Digital Garden | Bibliotheca Vitae</h1>
+  <h1 align="center">🌿 Digital Garden</h1>
+  <p align="center">
+    <strong>Bibliotheca Vitae</strong>
+  </p>
   <p align="center">
     <em>삶의 조각들을 큐레이팅하는 디지털 성소</em>
   </p>
@@ -82,4 +85,4 @@ Apple 스타일의 스티키 가로 스크롤을 통해 사용자는 역사의 �
 4.  방문: `https://bibliotheca-vitae.vercel.app` 또는 `http://localhost:4321`.
 
 ---
-*Est. MMXXVI · Digital Garden | Bibliotheca Vitae · Ars Longa, Vita Brevis.*
+*Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

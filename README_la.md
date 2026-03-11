@@ -1,5 +1,8 @@
 <div align="center">
-  <h1 align="center">🌿 Hortus Digitalis | Bibliotheca Vitae</h1>
+  <h1 align="center">🌿 Digital Garden</h1>
+  <p align="center">
+    <strong>Bibliotheca Vitae</strong>
+  </p>
   <p align="center">
     <em>Sanctuarium digitale ad curanda artificia vitae tuae cum elegantia renascentiae</em>
   </p>
@@ -26,7 +29,7 @@
 </div>
 <br/>
 
-**Hortus Digitalis** ultra blog personalem transcendit. Est **Tabularium Vitae Immersivum**, ubi aesthetica codicum saeculi XV cum technologia telae saeculi XXI confluit, data vulgaria in artem curationis elegantem transformans.
+**Bibliotheca Vitae** ultra blog personalem transcendit. Est tabularium vitae immersivum, ubi aesthetica codicum saeculi XV cum technologia telae saeculi XXI confluit, data vulgaria in artem curationis elegantem transformans.
 
 Structura repositorii et regulae directoriorum in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) servantur.
 
@@ -67,4 +70,4 @@ Cor proiecti est Editor "Imago Primo".
 - Ad creanda et regenda documenta, visita in computatro
 
 ---
-*Est. MMXXVI · Hortus Digitalis | Bibliotheca Vitae · Ars Longa, Vita Brevis.*
+*Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
