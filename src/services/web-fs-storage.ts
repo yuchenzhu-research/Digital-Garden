@@ -88,6 +88,7 @@ export class WebFSStorageAdapter implements StorageRepository {
     private metadata = getAdapterMetadata('web');
     private rootHandle: FileSystemDirectoryHandle | null = null;
     private isInitialized = false;
+    private imageUrlCache = new Map<string, string>();
 
     constructor() { }
 
@@ -143,6 +144,7 @@ export class WebFSStorageAdapter implements StorageRepository {
                 mode: 'readwrite'
             });
             await set(DIRECTORY_HANDLE_KEY, handle);
+            this.clearImageUrlCache();
             this.rootHandle = handle;
             this.isInitialized = true;
 
@@ -158,6 +160,7 @@ export class WebFSStorageAdapter implements StorageRepository {
 
     async disconnect(): Promise<void> {
         await del(DIRECTORY_HANDLE_KEY);
+        this.clearImageUrlCache();
         this.rootHandle = null;
         this.isInitialized = false;
     }
@@ -171,6 +174,63 @@ export class WebFSStorageAdapter implements StorageRepository {
             throw new Error('Storage not connected to local directory. Please authorize access first.');
         }
         return this.rootHandle;
+    }
+
+    private clearImageUrlCache(): void {
+        for (const objectUrl of this.imageUrlCache.values()) {
+            URL.revokeObjectURL(objectUrl);
+        }
+
+        this.imageUrlCache.clear();
+    }
+
+    private releaseCachedImageUrl(relativePath: string | undefined): void {
+        if (!relativePath) {
+            return;
+        }
+
+        const cached = this.imageUrlCache.get(relativePath);
+        if (cached) {
+            URL.revokeObjectURL(cached);
+            this.imageUrlCache.delete(relativePath);
+        }
+    }
+
+    private async hydrateEntry(entry: Entry): Promise<Entry> {
+        if (!entry.imageUrl) {
+            return entry;
+        }
+
+        return {
+            ...entry,
+            imageUrl: await this.resolveImageUrl(entry.imageUrl),
+        };
+    }
+
+    private async readEntries(options: { resolveImages: boolean }): Promise<Entry[]> {
+        if (!this.isReady()) return [];
+
+        const dirHandle = this.requireHandle();
+        const entries: Entry[] = [];
+
+        for await (const [name, handle] of dirHandle.entries()) {
+            if (isFileHandle(handle) && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
+                try {
+                    const file = await handle.getFile();
+                    const text = await file.text();
+                    const data = parseJsonRecord(text);
+
+                    if (data) {
+                        const entry = toEntry(data);
+                        entries.push(options.resolveImages ? await this.hydrateEntry(entry) : entry);
+                    }
+                } catch (error) {
+                    console.warn(`Could not parse JSON file: ${name}`, error);
+                }
+            }
+        }
+
+        return entries.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
     }
 
     // ==========================================================================
@@ -221,29 +281,7 @@ export class WebFSStorageAdapter implements StorageRepository {
 
     async getEntries(): Promise<Entry[]> {
         try {
-            if (!this.isReady()) return [];
-            const dirHandle = this.requireHandle();
-            const entries: Entry[] = [];
-
-            // Iterate async over folder
-            for await (const [name, handle] of dirHandle.entries()) {
-                if (isFileHandle(handle) && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
-                    try {
-                        const file = await handle.getFile();
-                        const text = await file.text();
-                        const data = parseJsonRecord(text);
-
-                        if (data) {
-                            entries.push(toEntry(data));
-                        }
-                    } catch (error) {
-                        console.warn(`Could not parse JSON file: ${name}`, error);
-                    }
-                }
-            }
-
-            // Sort newest created first
-            return entries.sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+            return await this.readEntries({ resolveImages: true });
         } catch (error) {
             console.error('File System Access read entries failed:', error);
             return [];
@@ -291,6 +329,8 @@ export class WebFSStorageAdapter implements StorageRepository {
                 return { success: false, error: 'Entry not found' };
             }
 
+            const previousImageUrl = getString(existingData, 'imageUrl', 'image_url');
+
             // Merge data
             const updatedData = {
                 ...existingData,
@@ -304,6 +344,10 @@ export class WebFSStorageAdapter implements StorageRepository {
             const writable = await targetFileHandle.createWritable();
             await writable.write(JSON.stringify(updatedData, null, 2));
             await writable.close();
+
+            if (data.imageUrl !== undefined && data.imageUrl !== previousImageUrl) {
+                this.releaseCachedImageUrl(previousImageUrl);
+            }
 
             return {
                 success: true,
@@ -336,6 +380,7 @@ export class WebFSStorageAdapter implements StorageRepository {
                             // Attempt to delete associated image
                             const imageUrl = getString(parsed, 'imageUrl', 'image_url');
                             if (imageUrl) {
+                                this.releaseCachedImageUrl(imageUrl);
                                 try {
                                     const imgDirHandle = await dirHandle.getDirectoryHandle('images');
                                     const imgName = imageUrl.split('/').pop();
@@ -404,13 +449,20 @@ export class WebFSStorageAdapter implements StorageRepository {
         try {
             const dirHandle = this.requireHandle();
             if (url.startsWith('images/')) {
+                const cachedUrl = this.imageUrlCache.get(url);
+                if (cachedUrl) {
+                    return cachedUrl;
+                }
+
                 const parts = url.split('/');
                 const imgName = parts[parts.length - 1];
                 const imgDirHandle = await dirHandle.getDirectoryHandle('images');
                 const fileHandle = await imgDirHandle.getFileHandle(imgName);
                 const file = await fileHandle.getFile();
                 // Return an Object URL representation of the secure file access
-                return URL.createObjectURL(file);
+                const objectUrl = URL.createObjectURL(file);
+                this.imageUrlCache.set(url, objectUrl);
+                return objectUrl;
             }
             return url;
         } catch {
@@ -423,7 +475,7 @@ export class WebFSStorageAdapter implements StorageRepository {
     // ==========================================================================
 
     async exportData(): Promise<string> {
-        const entries = await this.getEntries();
+        const entries = await this.readEntries({ resolveImages: false });
         return JSON.stringify(entries, null, 2);
     }
 
