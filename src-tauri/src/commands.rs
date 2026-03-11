@@ -59,7 +59,12 @@ fn initialize_entries(_state: &State<AppState>) -> Vec<EntryPayload> {
 
     if let Ok(read_dir) = fs::read_dir(&archive_dir) {
         for entry in read_dir.flatten() {
-            if entry.path().extension().map(|e| e == "json").unwrap_or(false) {
+            if entry
+                .path()
+                .extension()
+                .map(|e| e == "json")
+                .unwrap_or(false)
+            {
                 if let Ok(content) = fs::read_to_string(entry.path()) {
                     if let Ok(entry_data) = serde_json::from_str::<serde_json::Value>(&content) {
                         let payload = EntryPayload {
@@ -68,11 +73,17 @@ fn initialize_entries(_state: &State<AppState>) -> Vec<EntryPayload> {
                             figure: entry_data["figure"].as_str().unwrap_or("").to_string(),
                             moment: entry_data["moment"].as_str().unwrap_or("").to_string(),
                             narrative: entry_data["narrative"].as_str().unwrap_or("").to_string(),
-                            keywords: entry_data["keywords"].as_array()
-                                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                            keywords: entry_data["keywords"]
+                                .as_array()
+                                .map(|arr| {
+                                    arr.iter()
+                                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                        .collect()
+                                })
                                 .unwrap_or_default(),
                             image_base64: None,
-                            date_created: entry_data["date_created"].as_str()
+                            date_created: entry_data["date_created"]
+                                .as_str()
                                 .unwrap_or(&entry_data["created_at"].as_str().unwrap_or(""))
                                 .to_string(),
                             date_modified: None,
@@ -94,14 +105,54 @@ fn initialize_entries(_state: &State<AppState>) -> Vec<EntryPayload> {
 
 fn get_archive_dir() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join("Documents").join("DigitalGarden").join("Archive")
+    PathBuf::from(home)
+        .join("Documents")
+        .join("DigitalGarden")
+        .join("Archive")
 }
 
 fn sanitize_filename(title: &str) -> String {
-    title.chars()
+    title
+        .chars()
         .take(30)
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect()
+}
+
+fn find_entry_file_by_id(archive_dir: &PathBuf, id: &str) -> Result<Option<PathBuf>, String> {
+    let read_dir = match fs::read_dir(archive_dir) {
+        Ok(read_dir) => read_dir,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(err) => return Err(format!("Failed to read archive directory: {}", err)),
+    };
+
+    for entry in read_dir.flatten() {
+        let path = entry.path();
+
+        if path.extension().map(|ext| ext == "json").unwrap_or(false) {
+            let content = match fs::read_to_string(&path) {
+                Ok(content) => content,
+                Err(_) => continue,
+            };
+
+            let value = match serde_json::from_str::<serde_json::Value>(&content) {
+                Ok(value) => value,
+                Err(_) => continue,
+            };
+
+            if value["id"].as_str() == Some(id) {
+                return Ok(Some(path));
+            }
+        }
+    }
+
+    Ok(None)
 }
 
 // ============================================================================
@@ -143,9 +194,10 @@ pub async fn save_entry(
         .map_err(|e| format!("Failed to create archive directory: {}", e))?;
 
     // Generate ID and path
-    let id = payload.id.clone().unwrap_or_else(|| {
-        uuid::Uuid::new_v4().to_string()
-    });
+    let id = payload
+        .id
+        .clone()
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
     let filename = format!("{}_{}.json", sanitize_filename(&payload.title), timestamp);
@@ -166,8 +218,7 @@ pub async fn save_entry(
         let image_path = image_dir.join(&image_filename);
 
         if let Ok(bytes) = base64_decode(base64) {
-            fs::write(&image_path, bytes)
-                .map_err(|e| format!("Failed to save image: {}", e))?;
+            fs::write(&image_path, bytes).map_err(|e| format!("Failed to save image: {}", e))?;
             saved_payload.image_url = Some(format!("images/{}", image_filename));
         }
     }
@@ -180,8 +231,7 @@ pub async fn save_entry(
         .map_err(|e| format!("Failed to serialize: {}", e))?;
 
     // Write to file
-    fs::write(&file_path, json_content)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+    fs::write(&file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))?;
 
     // Update in-memory state
     {
@@ -204,58 +254,65 @@ pub async fn update_entry(
     payload: serde_json::Value,
     state: State<'_, AppState>,
 ) -> Result<SaveResult, String> {
-    let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
+    let updated_entry = {
+        let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
 
-    if let Some(index) = entries.iter().position(|e| e.id.as_ref() == Some(&id)) {
-        // Update existing entry
-        if let Some(title) = payload.get("title").and_then(|v| v.as_str()) {
-            entries[index].title = title.to_string();
-        }
-        if let Some(figure) = payload.get("figure").and_then(|v| v.as_str()) {
-            entries[index].figure = figure.to_string();
-        }
-        if let Some(moment) = payload.get("moment").and_then(|v| v.as_str()) {
-            entries[index].moment = moment.to_string();
-        }
-        if let Some(narrative) = payload.get("narrative").and_then(|v| v.as_str()) {
-            entries[index].narrative = narrative.to_string();
-        }
-        if let Some(keywords) = payload.get("keywords").and_then(|v| v.as_array()) {
-            entries[index].keywords = keywords.iter()
-                .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                .collect();
-        }
-        if let Some(image_url) = payload.get("image_url").and_then(|v| v.as_str()) {
-             entries[index].image_url = Some(image_url.to_string());
-        }
+        if let Some(index) = entries.iter().position(|e| e.id.as_ref() == Some(&id)) {
+            if let Some(title) = payload.get("title").and_then(|v| v.as_str()) {
+                entries[index].title = title.to_string();
+            }
+            if let Some(figure) = payload.get("figure").and_then(|v| v.as_str()) {
+                entries[index].figure = figure.to_string();
+            }
+            if let Some(moment) = payload.get("moment").and_then(|v| v.as_str()) {
+                entries[index].moment = moment.to_string();
+            }
+            if let Some(narrative) = payload.get("narrative").and_then(|v| v.as_str()) {
+                entries[index].narrative = narrative.to_string();
+            }
+            if let Some(keywords) = payload.get("keywords").and_then(|v| v.as_array()) {
+                entries[index].keywords = keywords
+                    .iter()
+                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                    .collect();
+            }
+            if let Some(image_url) = payload.get("imageUrl").or_else(|| payload.get("image_url")) {
+                entries[index].image_url = image_url.as_str().map(|value| value.to_string());
+            }
 
-        entries[index].date_modified = Some(chrono::Utc::now().to_rfc3339());
+            entries[index].date_modified = Some(chrono::Utc::now().to_rfc3339());
+            entries[index].clone()
+        } else {
+            return Ok(SaveResult {
+                success: false,
+                entry_id: None,
+                file_path: None,
+                error: Some("Entry not found".to_string()),
+            });
+        }
+    };
 
-        // Save to disk
-        let archive_dir = get_archive_dir();
-        let filename = format!("{}.json", id);
-        let file_path = archive_dir.join(&filename);
-
-        let json_content = serde_json::to_string_pretty(&entries[index])
-            .map_err(|e| format!("Failed to serialize: {}", e))?;
-
-        fs::write(&file_path, json_content)
-            .map_err(|e| format!("Failed to write file: {}", e))?;
-
-        Ok(SaveResult {
-            success: true,
-            entry_id: Some(id.clone()),
-            file_path: Some(file_path.to_string_lossy().to_string()),
-            error: None,
-        })
-    } else {
-        Ok(SaveResult {
+    let archive_dir = get_archive_dir();
+    let Some(file_path) = find_entry_file_by_id(&archive_dir, &id)? else {
+        return Ok(SaveResult {
             success: false,
             entry_id: None,
             file_path: None,
-            error: Some("Entry not found".to_string()),
-        })
-    }
+            error: Some("Entry file not found".to_string()),
+        });
+    };
+
+    let json_content = serde_json::to_string_pretty(&updated_entry)
+        .map_err(|e| format!("Failed to serialize: {}", e))?;
+
+    fs::write(&file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))?;
+
+    Ok(SaveResult {
+        success: true,
+        entry_id: Some(id.clone()),
+        file_path: Some(file_path.to_string_lossy().to_string()),
+        error: None,
+    })
 }
 
 /// Delete an entry
@@ -264,22 +321,25 @@ pub async fn delete_entry(id: String, state: State<'_, AppState>) -> Result<(), 
     let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
 
     if let Some(index) = entries.iter().position(|e| e.id.as_ref() == Some(&id)) {
-        // Remove from state
-        entries.remove(index);
+        let removed_entry = entries.remove(index);
 
-        // Delete file
         let archive_dir = get_archive_dir();
-        let file_path = archive_dir.join(format!("{}.json", id));
-
-        if file_path.exists() {
-            fs::remove_file(&file_path)
-                .map_err(|e| format!("Failed to delete file: {}", e))?;
+        if let Some(file_path) = find_entry_file_by_id(&archive_dir, &id)? {
+            fs::remove_file(&file_path).map_err(|e| format!("Failed to delete file: {}", e))?;
         }
 
-        // Delete associated image
-        let image_path = archive_dir.join("images").join(format!("{}.png", id));
-        if image_path.exists() {
-            let _ = fs::remove_file(&image_path);
+        if let Some(image_url) = removed_entry.image_url.as_ref() {
+            if let Some(image_name) = std::path::Path::new(image_url).file_name() {
+                let image_path = archive_dir.join("images").join(image_name);
+                if image_path.exists() {
+                    let _ = fs::remove_file(&image_path);
+                }
+            }
+        } else {
+            let image_path = archive_dir.join("images").join(format!("{}.png", id));
+            if image_path.exists() {
+                let _ = fs::remove_file(&image_path);
+            }
         }
     }
 
@@ -306,11 +366,9 @@ pub async fn save_image(
     let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let image_path = image_dir.join(&safe_filename);
 
-    let bytes = base64_decode(&data)
-        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+    let bytes = base64_decode(&data).map_err(|e| format!("Failed to decode base64: {}", e))?;
 
-    fs::write(&image_path, bytes)
-        .map_err(|e| format!("Failed to write image: {}", e))?;
+    fs::write(&image_path, bytes).map_err(|e| format!("Failed to write image: {}", e))?;
 
     Ok(ImageResult {
         success: true,
@@ -339,8 +397,7 @@ pub async fn save_image_from_bytes(
     let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let image_path = image_dir.join(&safe_filename);
 
-    fs::write(&image_path, bytes)
-        .map_err(|e| format!("Failed to write image: {}", e))?;
+    fs::write(&image_path, bytes).map_err(|e| format!("Failed to write image: {}", e))?;
 
     Ok(ImageResult {
         success: true,
@@ -357,12 +414,9 @@ pub fn get_storage_path() -> Result<String, String> {
 
 /// Import entries from JSON
 #[tauri::command]
-pub async fn import_entries(
-    json: String,
-    state: State<'_, AppState>,
-) -> Result<(), String> {
-    let entries: Vec<EntryPayload> = serde_json::from_str(&json)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+pub async fn import_entries(json: String, state: State<'_, AppState>) -> Result<(), String> {
+    let entries: Vec<EntryPayload> =
+        serde_json::from_str(&json).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
     let mut state_entries = state.entries.lock().map_err(|e| e.to_string())?;
 
@@ -387,10 +441,17 @@ pub async fn backup_to_documents(payload: LegacyPayload) -> Result<String, Strin
     fs::create_dir_all(&archive_dir)
         .map_err(|e| format!("Failed to create archive directory: {}", e))?;
 
-    let sanitized_title: String = payload.title
+    let sanitized_title: String = payload
+        .title
         .chars()
         .take(30)
-        .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '-' || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect();
 
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
@@ -409,8 +470,7 @@ pub async fn backup_to_documents(payload: LegacyPayload) -> Result<String, Strin
     let json_content = serde_json::to_string_pretty(&payload_for_save)
         .map_err(|e| format!("Failed to serialize: {}", e))?;
 
-    fs::write(&file_path, json_content)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+    fs::write(&file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))?;
 
     Ok(file_path.to_string_lossy().to_string())
 }
@@ -443,6 +503,5 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, String> {
     let s = s.trim_start_matches("data:image/gif;base64,");
     let s = s.trim_start_matches("data:image/webp;base64,");
 
-    base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s)
-        .map_err(|e| e.to_string())
+    base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s).map_err(|e| e.to_string())
 }

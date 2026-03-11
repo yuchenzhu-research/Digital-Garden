@@ -51,7 +51,15 @@ const AutoResizeTextarea = ({
 
 // Use the unified Entry type from storage-repository
 
-export function EntryEditor({ onClose }: { onClose?: () => void }) {
+interface EntryEditorProps {
+    mode?: 'create' | 'edit';
+    initialEntry?: Entry;
+    onClose?: () => void;
+}
+
+export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEditorProps) {
+    const isEditMode = mode === 'edit';
+
     // --- State ---
     const [image, setImage] = useState<string | null>(null);
     const [title, setTitle] = useState('');
@@ -69,6 +77,10 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
 
     // Full Entry Autosave Effect
     useEffect(() => {
+        if (isEditMode) {
+            return;
+        }
+
         const currentEntry = {
             image, // We map image UI state to draft's imageUrl
             title,
@@ -91,10 +103,21 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
             }
         }, 1500);
         return () => clearTimeout(timer);
-    }, [image, title, figure, moment, narrative, keywords]);
+    }, [image, title, figure, moment, narrative, keywords, isEditMode]);
 
     useEffect(() => {
-        // Load draft on mount
+        if (isEditMode && initialEntry) {
+            setTitle(initialEntry.title);
+            setFigure(initialEntry.figure);
+            setMoment(initialEntry.moment);
+            setNarrative(initialEntry.narrative);
+            setKeywords(initialEntry.keywords);
+            setImage(initialEntry.imageUrl ?? null);
+            setLastSaved(null);
+            return;
+        }
+
+        // Load draft on mount for new entries only
         entryService.getDraft().then(savedEntry => {
             if (savedEntry) {
                 if (savedEntry.title) setTitle(savedEntry.title);
@@ -105,7 +128,7 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
                 if (savedEntry.imageUrl) setImage(savedEntry.imageUrl);
             }
         });
-    }, []);
+    }, [initialEntry, isEditMode]);
 
     // --- Toast Helper ---
     const showToast = useCallback((message: string) => {
@@ -173,12 +196,14 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
             narrative,
             keywords,
             imageUrl: image || undefined, // Adapter handles base64 fallback if needed
-            dateCreated: new Date().toISOString(),
+            dateCreated: initialEntry?.dateCreated || new Date().toISOString(),
         };
 
         try {
-            console.log('Saving entry with service...');
-            const result = await entryService.saveEntry(entryData);
+            console.log(`${isEditMode ? 'Updating' : 'Saving'} entry with service...`);
+            const result = isEditMode && initialEntry?.id
+                ? await entryService.updateEntry(initialEntry.id, entryData)
+                : await entryService.saveEntry(entryData);
 
             if (!result) {
                 console.error('Save returned undefined result');
@@ -189,9 +214,12 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
             console.log('Save result:', result);
 
             if (result.success) {
-                console.log('Entry saved successfully:', result.savedPath);
-                showToast('Moment Preserved in Archive');
-                await entryService.clearDraft();
+                console.log(`Entry ${isEditMode ? 'updated' : 'saved'} successfully:`, result.savedPath);
+                showToast(isEditMode ? 'Moment Updated in Archive' : 'Moment Preserved in Archive');
+
+                if (!isEditMode) {
+                    await entryService.clearDraft();
+                }
             } else {
                 console.error('Failed to save:', result.error);
                 showToast(result.error ? `Failed: ${result.error}` : 'Failed to save. Please try again.');
@@ -238,7 +266,9 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
                             <Upload className="w-6 h-6 text-primary" />
                         </div>
                         <div className="text-center">
-                            <h2 className="font-epic-serif text-2xl text-foreground mb-2">Upload Artifact Image</h2>
+                            <h2 className="font-epic-serif text-2xl text-foreground mb-2">
+                                {isEditMode ? 'Update Artifact Image' : 'Upload Artifact Image'}
+                            </h2>
                             <p className="font-sans text-sm text-muted-foreground tracking-widest uppercase">
                                 Drag & drop or click to browse
                             </p>
@@ -334,7 +364,7 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
 
                         {/* Short Description placeholder / Subtitle */}
                         <p className="font-elegant-sans text-lg md:text-xl text-white/60 italic font-light max-w-2xl">
-                            — Visual Anchor Established. Scroll to edit details.
+                            — {isEditMode ? 'Editing an archived moment. Scroll to revise the narrative.' : 'Visual Anchor Established. Scroll to edit details.'}
                         </p>
                     </motion.div>
                 </div>
@@ -394,7 +424,7 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
                     </div>
 
                     {/* Autosave Status */}
-                    {lastSaved && (
+                    {!isEditMode && lastSaved && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -452,7 +482,7 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
                     className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-full shadow-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 group font-sans tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Save className="w-4 h-4" />
-                    {isPublishing ? 'Preserving...' : 'Publish to Archive'}
+                    {isPublishing ? (isEditMode ? 'Updating...' : 'Preserving...') : (isEditMode ? 'Update Archive Entry' : 'Publish to Archive')}
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
 

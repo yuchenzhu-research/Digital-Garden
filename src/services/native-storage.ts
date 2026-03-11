@@ -196,10 +196,15 @@ export class NativeStorageAdapter implements StorageRepository {
   async updateEntry(id: string, data: Partial<Entry>): Promise<SaveResult> {
     try {
       const { invoke } = await this.initCore();
+      const payload: Record<string, unknown> = { ...data };
+
+      if (Object.prototype.hasOwnProperty.call(data, 'imageUrl')) {
+        payload.imageUrl = data.imageUrl ?? null;
+      }
 
       const result = await invoke<RustSaveResult | null>('update_entry', {
         id,
-        payload: data,
+        payload,
       });
 
       // Handle undefined result from invoke

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowLeft, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Pencil, X, Trash2 } from 'lucide-react';
 import type { Document } from '@/lib/types';
 import { MarkdownView } from '@/components/features/MarkdownView';
 import { ImageView } from '@/components/features/ImageView';
@@ -11,10 +11,11 @@ import { ImageView } from '@/components/features/ImageView';
 interface ArchiveDetailViewProps {
     document: Document; // Keep interface as is for now or rename it too
     onClose: () => void;
+    onEdit?: (id: string) => void;
     onDelete?: (id: string) => void;
 }
 
-export function ArchiveDetailView({ document: data, onClose, onDelete }: ArchiveDetailViewProps) {
+export function ArchiveDetailView({ document: data, onClose, onEdit, onDelete }: ArchiveDetailViewProps) {
     // Body scroll locking when overlay is active
     useEffect(() => {
         const originalStyle = window.getComputedStyle(window.document.body).overflow;
@@ -47,6 +48,16 @@ export function ArchiveDetailView({ document: data, onClose, onDelete }: Archive
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
+                    {onEdit && data.id.startsWith('user-') && (
+                        <button
+                            onClick={() => onEdit(data.id)}
+                            className="p-2 text-foreground/70 hover:text-foreground hover:bg-foreground/10 rounded-full transition-colors"
+                            title="Edit Entry"
+                        >
+                            <Pencil className="w-5 h-5" />
+                        </button>
+                    )}
+
                     {/* Delete Button - Only for user entries (detected via onDelete presence or ID pattern) */}
                     {onDelete && data.id.startsWith('user-') && (
                         <button

@@ -10,7 +10,7 @@ import { DataManagement } from '@/components/ui/DataManagement';
 import { FilterBar, type Category } from '@/components/ui/FilterBar';
 import { documents } from '@/lib/data';
 import type { Document } from '@/lib/types';
-import { getEntries, deleteEntry, isRunningInWeb } from '@/services/entryService';
+import { getEntries, deleteEntry } from '@/services/entryService';
 import { SettingsPanel } from '@/components/features/SettingsPanel';
 import type { Entry } from '@/services/storage-repository';
 
@@ -74,12 +74,14 @@ const getInitialDimmingIntensity = (): number => {
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [editorEntry, setEditorEntry] = useState<Entry | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [userEntries, setUserEntries] = useState<Entry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState<Category>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [dimmingIntensity, setDimmingIntensity] = useState(getInitialDimmingIntensity);
+  const isEditMode = editorEntry !== null;
 
   // Save preferences
   const handleIntensityChange = (val: number) => {
@@ -101,13 +103,11 @@ export default function Home() {
   // Load user entries on mount
   useEffect(() => {
     const loadUserEntries = async () => {
-      if (isRunningInWeb()) {
-        try {
-          const entries = await getEntries();
-          setUserEntries(entries);
-        } catch (error) {
-          console.warn('Failed to load user entries:', error);
-        }
+      try {
+        const entries = await getEntries();
+        setUserEntries(entries);
+      } catch (error) {
+        console.warn('Failed to load user entries:', error);
       }
       setIsLoading(false);
     };
@@ -170,18 +170,37 @@ export default function Home() {
   // Reload entries when editing is closed
   const handleEditorClose = async () => {
     setIsEditing(false);
-    if (isRunningInWeb()) {
-      const entries = await getEntries();
-      setUserEntries(entries);
-    }
+    setEditorEntry(null);
+    await refreshUserEntries();
   };
 
   // Refresh user entries
   const refreshUserEntries = async () => {
-    if (isRunningInWeb()) {
+    try {
       const entries = await getEntries();
       setUserEntries(entries);
+    } catch (error) {
+      console.warn('Failed to refresh user entries:', error);
     }
+  };
+
+  const handleCreateEntry = () => {
+    setEditorEntry(null);
+    setIsEditing(true);
+  };
+
+  const handleEditEntry = (id: string) => {
+    const realId = id.replace(/^user-/, '');
+    const entry = userEntries.find((candidate) => candidate.id === realId);
+
+    if (!entry) {
+      console.warn(`Could not find user entry for editing: ${realId}`);
+      return;
+    }
+
+    setSelectedDocId(null);
+    setEditorEntry(entry);
+    setIsEditing(true);
   };
 
   // Show featured docs (first 3) regardless of filter
@@ -208,7 +227,7 @@ export default function Home() {
         />
 
         {/* Hero Section */}
-        <Hero onAppendClick={() => setIsEditing(true)} />
+        <Hero onAppendClick={handleCreateEntry} />
 
         {isLoading && (
           <section className="container mx-auto px-4 pt-8">
@@ -422,6 +441,7 @@ export default function Home() {
           <ArchiveDetailView
             document={selectedDoc}
             onClose={() => setSelectedDocId(null)}
+            onEdit={handleEditEntry}
             onDelete={handleDeleteEntry}
           />
         )}
@@ -437,7 +457,11 @@ export default function Home() {
             className="fixed inset-0 z-[100] bg-background overflow-y-auto"
             data-lenis-prevent
           >
-            <EntryEditor onClose={handleEditorClose} />
+            <EntryEditor
+              mode={isEditMode ? 'edit' : 'create'}
+              initialEntry={editorEntry ?? undefined}
+              onClose={handleEditorClose}
+            />
           </motion.div>
         )}
       </AnimatePresence>
