@@ -35,3 +35,4 @@ I have installed specific agent skills in the `.claude/skills` directory. Please
 - **Local-First**: Prioritize saving data to local storage/fs.
 - **System Integration**: Use Tauri APIs to access the file system.
 - **Docs Placement**: Keep multilingual `README*.md` at the repo root; place longer internal documentation in `docs/`.
+- **Docs Assets**: Store documentation-only images and screenshots in `docs/assets/`; keep `public/` for runtime assets only.

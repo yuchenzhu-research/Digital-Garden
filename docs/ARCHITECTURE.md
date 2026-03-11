@@ -98,7 +98,7 @@ Only these directories should be treated as product architecture:
 
 - `src/`
 - `src-tauri/`
-- `public/`
+- `public/` for runtime static assets only
 - `docs/`
 - root `README*.md`
 
@@ -114,3 +114,5 @@ These directories are local tooling or generated artifacts, not architecture:
 - `src-tauri/target/`
 
 If you see `AGENTS.md`, `README`, or other familiar files inside `node_modules/` or `src-tauri/target/`, they are vendor or build-output files and should be ignored when reasoning about the project.
+
+Documentation-only screenshots and diagrams should live under `docs/assets/`, not inside `public/`.

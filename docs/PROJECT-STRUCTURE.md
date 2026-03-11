@@ -34,12 +34,13 @@
 - `src/services/`：Web / Tauri 存储适配与仓储抽象
 - `src/lib/`：静态数据、几何与通用类型
 - `src-tauri/`：桌面端原生壳、命令、窗口配置
-- `public/`：运行时静态资源，例如图片、PDF、图标
+- `public/`：运行时静态资源，例如图片、PDF、图标；不放仅供 README 使用的文档素材
 
 ### 2. 文档层
 
 - 根目录 `README*.md`：项目首页与多语言说明
 - `docs/`：放结构说明、架构说明、发布说明等长文档
+- `docs/assets/`：仅供 README 或内部文档使用的截图、示意图等素材
 - `docs/ARCHITECTURE.md`：说明运行时分层、存储适配器、Web/Tauri 边界
 
 建议后续逐步补充：
