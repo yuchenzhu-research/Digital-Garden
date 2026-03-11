@@ -7,7 +7,7 @@ import { isTauri } from '@/utils/env';
 import { WebStorageAdapter } from './web-storage';
 import { NativeStorageAdapter } from './native-storage';
 import { WebFSStorageAdapter } from './web-fs-storage';
-import type { StorageRepository, AdapterMetadata, DraftEntry } from './storage-repository';
+import type { StorageRepository, AdapterMetadata, DraftEntry, Entry } from './storage-repository';
 
 // ============================================================================
 // Singleton Instance
@@ -38,6 +38,76 @@ if (typeof window !== 'undefined' && !isTauri()) {
  */
 export const getWebFS = () => sharedWebFS;
 
+export type StorageMode = 'tauri' | 'web-fs' | 'web-local';
+
+export interface StorageModeInfo {
+  kind: StorageMode;
+  badge: string;
+  exportLabel: string;
+  importLabel: string;
+  description: string;
+  emptyState: string;
+}
+
+export interface FileExportResult {
+  success: boolean;
+  filename?: string;
+  error?: string;
+}
+
+export interface FileImportOptions {
+  merge?: boolean;
+  onProgress?: (count: number) => void;
+}
+
+export interface FileImportResult {
+  success: boolean;
+  importedCount?: number;
+  error?: string;
+}
+
+const getEnvironment = (): StorageMode => {
+  if (typeof window === 'undefined') {
+    return 'web-local';
+  }
+
+  return isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
+};
+
+const parseImportedEntries = (value: unknown): Entry[] => {
+  if (Array.isArray(value)) {
+    return value as Entry[];
+  }
+
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'entries' in value &&
+    Array.isArray((value as { entries?: unknown }).entries)
+  ) {
+    return (value as { entries: Entry[] }).entries;
+  }
+
+  throw new Error('Invalid backup format: expected an entries array.');
+};
+
+const downloadJsonFile = (filename: string, json: string) => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    throw new Error('File download is only available in browser environments');
+  }
+
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 /**
  * Get the singleton repository instance
  * Creates it if it doesn't exist
@@ -49,7 +119,7 @@ export const getRepository = (): StorageRepository => {
   }
 
   // Recreate if environment changed
-  const environment: 'tauri' | 'web-fs' | 'web-local' = isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
+  const environment = getEnvironment();
 
   if (repositoryInstance && currentEnvironment === environment) {
     return repositoryInstance;
@@ -82,6 +152,41 @@ export const getAdapterInfo = (): AdapterMetadata => {
     environment: isTauri() ? 'tauri' : 'web',
     capabilities: [],
   };
+};
+
+export const getStorageModeInfo = (): StorageModeInfo => {
+  const mode = getEnvironment();
+
+  switch (mode) {
+    case 'tauri':
+      return {
+        kind: mode,
+        badge: 'Desktop App',
+        exportLabel: 'Export Archive Backup',
+        importLabel: 'Import Archive Backup',
+        description: 'Desktop archives are stored in your Bibliotheca Vitae folder on disk.',
+        emptyState: 'No archived entries yet. Create one or import a backup into the desktop archive.',
+      };
+    case 'web-fs':
+      return {
+        kind: mode,
+        badge: 'Folder Mode',
+        exportLabel: 'Export Archive Backup',
+        importLabel: 'Import Archive Backup',
+        description: 'Folder Mode reads and writes native `.json` files in your connected directory.',
+        emptyState: 'No folder-connected entries yet. Create one or import a backup into this directory.',
+      };
+    case 'web-local':
+    default:
+      return {
+        kind: 'web-local',
+        badge: 'Browser Local',
+        exportLabel: 'Export Browser Backup',
+        importLabel: 'Import Browser Backup',
+        description: 'Browser Local is a compatibility fallback stored inside this browser only.',
+        emptyState: 'No browser-local entries yet. Create one or import a backup into this browser.',
+      };
+  }
 };
 
 /**
@@ -179,6 +284,78 @@ export const getStorageLocation = async (): Promise<string> => {
   return repo.getStorageLocation();
 };
 
+export const exportToFile = async (): Promise<FileExportResult> => {
+  try {
+    const mode = getStorageModeInfo();
+    const exported = await exportData();
+    const entries = parseImportedEntries(JSON.parse(exported));
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `bibliotheca_vitae_backup_${timestamp}.json`;
+
+    const payload = {
+      version: '1.1',
+      exportedAt: new Date().toISOString(),
+      storageMode: mode.kind,
+      entryCount: entries.length,
+      entries,
+    };
+
+    downloadJsonFile(filename, JSON.stringify(payload, null, 2));
+
+    return { success: true, filename };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to export backup',
+    };
+  }
+};
+
+export const importFromFile = async (
+  file: File,
+  options: FileImportOptions = {}
+): Promise<FileImportResult> => {
+  if (options.merge === false) {
+    return {
+      success: false,
+      error: 'Replacing the active archive is not supported yet.',
+    };
+  }
+
+  try {
+    const previousCount = await getUserEntryCount();
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const entries = parseImportedEntries(parsed);
+
+    await importData(JSON.stringify(entries));
+
+    const nextCount = await getUserEntryCount();
+    const importedCount = Math.max(0, nextCount - previousCount);
+    options.onProgress?.(importedCount);
+
+    return {
+      success: true,
+      importedCount,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to import backup',
+    };
+  }
+};
+
+export const hasUserEntries = async (): Promise<boolean> => {
+  const count = await getUserEntryCount();
+  return count > 0;
+};
+
+export const getUserEntryCount = async (): Promise<number> => {
+  const entries = await getEntries();
+  return entries.length;
+};
+
 // ============================================================================
 // Draft Operations
 // ============================================================================
@@ -224,7 +401,7 @@ const createLazyEntryService = (): StorageRepository => {
       throw new Error('Storage service is only available in browser environments');
     }
     if (!repository) {
-      const environment: 'tauri' | 'web-fs' | 'web-local' = isTauri() ? 'tauri' : (sharedWebFS.isReady() ? 'web-fs' : 'web-local');
+      const environment = getEnvironment();
       if (environment === 'tauri') {
         repository = new NativeStorageAdapter();
       } else if (environment === 'web-fs') {
@@ -272,9 +449,6 @@ export default entryService;
 export { WebStorageAdapter } from './web-storage';
 export { NativeStorageAdapter } from './native-storage';
 export { WebFSStorageAdapter } from './web-fs-storage';
-
-// Re-export file-based functions for web
-export { exportToFile, importFromFile, hasUserEntries, getUserEntryCount } from './web-storage';
 
 export {
   type StorageRepository,

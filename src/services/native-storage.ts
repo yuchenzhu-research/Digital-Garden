@@ -45,6 +45,25 @@ interface RustImageResult {
   error?: string;
 }
 
+const parseImportPayload = (json: string): Entry[] => {
+  const parsed: unknown = JSON.parse(json);
+
+  if (Array.isArray(parsed)) {
+    return parsed as Entry[];
+  }
+
+  if (
+    typeof parsed === 'object' &&
+    parsed !== null &&
+    'entries' in parsed &&
+    Array.isArray((parsed as { entries?: unknown }).entries)
+  ) {
+    return (parsed as { entries: Entry[] }).entries;
+  }
+
+  throw new Error('Invalid import format: expected an entries array');
+};
+
 // ============================================================================
 // Native Storage Adapter Class
 // ============================================================================
@@ -308,14 +327,45 @@ export class NativeStorageAdapter implements StorageRepository {
   // ==========================================================================
 
   async exportData(): Promise<string> {
-    const entries = await this.getEntries();
+    const { invoke } = await this.initCore();
+    const result = await invoke<RustEntryPayload[]>('get_all_entries');
+
+    const entries: Entry[] = result.map((payload) => ({
+      id: payload.id,
+      title: payload.title,
+      figure: payload.figure,
+      moment: payload.moment,
+      narrative: payload.narrative,
+      keywords: payload.keywords,
+      imageBase64: payload.image_base64,
+      imageUrl: payload.image_url,
+      dateCreated: payload.date_created,
+      dateModified: payload.date_modified,
+    }));
+
     return JSON.stringify(entries, null, 2);
   }
 
   async importData(json: string): Promise<void> {
     try {
       const { invoke } = await this.initCore();
-      await invoke('import_entries', { json });
+      const entries = parseImportPayload(json);
+      const payload: RustEntryPayload[] = entries.map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        figure: entry.figure,
+        moment: entry.moment,
+        narrative: entry.narrative,
+        keywords: entry.keywords,
+        image_base64: entry.imageBase64,
+        image_url: entry.imageUrl,
+        date_created: entry.dateCreated,
+        date_modified: entry.dateModified,
+      }));
+
+      await invoke('import_entries', {
+        json: JSON.stringify(payload),
+      });
     } catch (error) {
       throw new Error(
         `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'

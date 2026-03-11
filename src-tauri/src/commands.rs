@@ -125,6 +125,18 @@ fn sanitize_filename(title: &str) -> String {
         .collect()
 }
 
+fn build_entry_file_path(archive_dir: &PathBuf, title: &str, id: &str) -> PathBuf {
+    let short_id: String = id.chars().take(8).collect();
+    archive_dir.join(format!("{}_{}.json", sanitize_filename(title), short_id))
+}
+
+fn write_entry_to_disk(file_path: &PathBuf, payload: &EntryPayload) -> Result<(), String> {
+    let json_content = serde_json::to_string_pretty(payload)
+        .map_err(|e| format!("Failed to serialize: {}", e))?;
+
+    fs::write(file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
 fn find_entry_file_by_id(archive_dir: &PathBuf, id: &str) -> Result<Option<PathBuf>, String> {
     let read_dir = match fs::read_dir(archive_dir) {
         Ok(read_dir) => read_dir,
@@ -199,9 +211,7 @@ pub async fn save_entry(
         .clone()
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let filename = format!("{}_{}.json", sanitize_filename(&payload.title), timestamp);
-    let file_path = archive_dir.join(&filename);
+    let file_path = build_entry_file_path(&archive_dir, &payload.title, &id);
 
     // Create saved entry with ID
     let mut saved_payload = payload.clone();
@@ -227,11 +237,8 @@ pub async fn save_entry(
     saved_payload.image_base64 = None;
 
     // Serialize
-    let json_content = serde_json::to_string_pretty(&saved_payload)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
-
     // Write to file
-    fs::write(&file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))?;
+    write_entry_to_disk(&file_path, &saved_payload)?;
 
     // Update in-memory state
     {
@@ -418,13 +425,30 @@ pub async fn import_entries(json: String, state: State<'_, AppState>) -> Result<
     let entries: Vec<EntryPayload> =
         serde_json::from_str(&json).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
+    let archive_dir = get_archive_dir();
+    fs::create_dir_all(&archive_dir)
+        .map_err(|e| format!("Failed to create archive directory: {}", e))?;
+
     let mut state_entries = state.entries.lock().map_err(|e| e.to_string())?;
 
-    for entry in entries {
+    for mut entry in entries {
+        let entry_id = entry
+            .id
+            .clone()
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
         // Skip if ID already exists
-        if !state_entries.iter().any(|e| e.id == entry.id) {
-            state_entries.push(entry);
+        if state_entries
+            .iter()
+            .any(|existing| existing.id.as_deref() == Some(entry_id.as_str()))
+        {
+            continue;
         }
+
+        entry.id = Some(entry_id.clone());
+        let file_path = build_entry_file_path(&archive_dir, &entry.title, &entry_id);
+        write_entry_to_disk(&file_path, &entry)?;
+        state_entries.push(entry);
     }
 
     Ok(())

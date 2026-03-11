@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Upload, RefreshCw, Check, AlertCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { exportToFile, importFromFile, getUserEntryCount } from '@/services/entryService';
+import {
+  exportToFile,
+  importFromFile,
+  getStorageLocation,
+  getStorageModeInfo,
+  getUserEntryCount,
+} from '@/services/entryService';
 
 interface DataManagementProps {
   onDataChanged?: () => void;
@@ -12,19 +18,38 @@ interface DataManagementProps {
 }
 
 export function DataManagement({ onDataChanged, className }: DataManagementProps) {
+  const [storageMode] = useState(() => getStorageModeInfo());
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [importMessage, setImportMessage] = useState('');
-  const [entryCount, setEntryCount] = useState(getUserEntryCount());
+  const [entryCount, setEntryCount] = useState(0);
+  const [storageLocation, setStorageLocation] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Update entry count when data changes
-  const refreshCount = useCallback(() => {
-    setEntryCount(getUserEntryCount());
+  const refreshState = useCallback(async () => {
+    try {
+      const [count, location] = await Promise.all([
+        getUserEntryCount(),
+        getStorageLocation(),
+      ]);
+
+      setEntryCount(count);
+      setStorageLocation(location);
+    } catch (error) {
+      console.warn('Failed to refresh storage state:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshState();
+  }, [refreshState]);
+
+  const refreshAfterMutation = useCallback(async () => {
+    await refreshState();
     onDataChanged?.();
-  }, [onDataChanged]);
+  }, [onDataChanged, refreshState]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -34,9 +59,14 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
         setImportStatus('success');
         setImportMessage(`Downloaded ${result.filename}`);
         setTimeout(() => setImportStatus('idle'), 3000);
+      } else {
+        setImportStatus('error');
+        setImportMessage(result.error || 'Export failed');
       }
     } catch (error) {
       console.error('Export failed:', error);
+      setImportStatus('error');
+      setImportMessage('Export failed');
     } finally {
       setIsExporting(false);
     }
@@ -61,8 +91,12 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
 
       if (result.success) {
         setImportStatus('success');
-        setImportMessage(`Imported ${result.importedCount} new entries`);
-        refreshCount();
+        setImportMessage(
+          result.importedCount && result.importedCount > 0
+            ? `Imported ${result.importedCount} new entries`
+            : 'Backup loaded. No new entries were added.'
+        );
+        await refreshAfterMutation();
       } else {
         setImportStatus('error');
         setImportMessage(result.error || 'Import failed');
@@ -124,7 +158,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
               <div className="flex items-center gap-2">
                 <span className="font-sans text-sm font-medium">Data Management</span>
                 <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60">
-                  Browser Local
+                  {storageMode.badge}
                 </span>
               </div>
               <button
@@ -162,8 +196,8 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
             <div className="p-4 space-y-3">
               <p className="text-xs text-muted-foreground mb-2">
                 {entryCount > 0
-                  ? `You have ${entryCount} browser-local entries available for backup.`
-                  : 'No browser-local entries yet. Folder-connected archives stay in your chosen directory.'}
+                  ? `You have ${entryCount} entries available from ${storageLocation || storageMode.badge}.`
+                  : storageMode.emptyState}
               </p>
 
               {/* Export Button */}
@@ -178,9 +212,9 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                   <Download className="w-4 h-4" />
                 )}
                 <div className="text-left">
-                  <div className="font-sans text-sm font-medium">Export Browser Backup</div>
+                  <div className="font-sans text-sm font-medium">{storageMode.exportLabel}</div>
                   <div className="font-sans text-xs text-muted-foreground">
-                    Download browser-local entries as `.json`
+                    Download the current archive as a portable `.json` backup
                   </div>
                 </div>
               </button>
@@ -197,9 +231,9 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                   <Upload className="w-4 h-4" />
                 )}
                 <div className="text-left">
-                  <div className="font-sans text-sm font-medium">Import Browser Backup</div>
+                  <div className="font-sans text-sm font-medium">{storageMode.importLabel}</div>
                   <div className="font-sans text-xs text-muted-foreground">
-                    Restore browser-local entries from `.json`
+                    Merge a backup into the current storage mode
                   </div>
                 </div>
               </button>
@@ -214,7 +248,10 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
               {/* Info */}
               <div className="pt-2 border-t border-foreground/10">
                 <p className="font-sans text-[10px] text-muted-foreground/60 leading-relaxed">
-                  This panel currently manages browser-local fallback data. Folder-connected archives remain in the local directory you selected.
+                  {storageMode.description}
+                </p>
+                <p className="mt-2 font-sans text-[10px] text-muted-foreground/50 leading-relaxed break-all">
+                  Current source: {storageLocation || 'Loading storage location...'}
                 </p>
               </div>
             </div>

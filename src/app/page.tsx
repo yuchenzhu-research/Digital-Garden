@@ -262,23 +262,23 @@ export default function Home() {
           ))}
         </HorizontalScrollSection>
 
-        {/* My Moments Section - User Entries (show if any) */}
-        {userEntries.length > 0 && (
-          <section className="container mx-auto px-4 py-20">
-            <div className="mb-12">
-              <div className="flex items-end justify-between">
-                <div>
-                  <span className="text-decorative text-muted-foreground/60 block mb-3">
-                    Your Personal Collection
-                  </span>
-                  <h2 className="font-epic-serif text-4xl md:text-5xl text-foreground font-light">
-                    My Moments
-                  </h2>
-                </div>
-                <DataManagement onDataChanged={refreshUserEntries} />
+        {/* My Moments Section - User Entries */}
+        <section className="container mx-auto px-4 py-20">
+          <div className="mb-12">
+            <div className="flex items-end justify-between gap-6">
+              <div>
+                <span className="text-decorative text-muted-foreground/60 block mb-3">
+                  Your Personal Collection
+                </span>
+                <h2 className="font-epic-serif text-4xl md:text-5xl text-foreground font-light">
+                  My Moments
+                </h2>
               </div>
+              <DataManagement onDataChanged={refreshUserEntries} />
             </div>
+          </div>
 
+          {userEntries.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {userEntries.map((entry, index) => (
                 <motion.div
@@ -319,8 +319,17 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <div className="rounded-2xl border border-foreground/10 bg-card/40 px-6 py-10 text-center">
+              <p className="font-sans text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                No personal entries yet
+              </p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Create a new moment or import an archive backup to begin building your collection.
+              </p>
+            </div>
+          )}
+        </section>
 
         {/* Browsable Archive Section - With Search & Filter */}
         <section className="container mx-auto px-4 py-20">

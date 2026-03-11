@@ -7,6 +7,7 @@
 export {
   getRepository,
   getAdapterInfo,
+  getStorageModeInfo,
   isRunningInTauri,
   isRunningInWeb,
   saveEntry,
@@ -17,6 +18,10 @@ export {
   uploadImage,
   exportData,
   importData,
+  exportToFile,
+  importFromFile,
+  hasUserEntries,
+  getUserEntryCount,
   getStorageLocation,
   default as entryService,
 } from './entryService';
@@ -24,9 +29,6 @@ export {
 // Adapters
 export { WebStorageAdapter } from './web-storage';
 export { NativeStorageAdapter } from './native-storage';
-
-// File-based import/export functions (web only)
-export { exportToFile, importFromFile, hasUserEntries, getUserEntryCount } from './web-storage';
 
 // Repository interface
 export type {
@@ -37,3 +39,11 @@ export type {
   SaveResult,
   ImageUploadResult,
 } from './storage-repository';
+
+export type {
+  StorageMode,
+  StorageModeInfo,
+  FileExportResult,
+  FileImportOptions,
+  FileImportResult,
+} from './entryService';
