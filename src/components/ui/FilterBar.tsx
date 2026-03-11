@@ -2,8 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ARCHIVE_CATEGORIES, type ArchiveCategory } from '@/lib/types';
 
 interface SearchBarProps {
     value: string;
@@ -72,15 +73,16 @@ export function SearchBar({
 // Category Filter Component
 // ============================================================================
 
-const CATEGORIES = [
-    { key: 'all', label: 'All', icon: Filter },
-    { key: 'Art', label: 'Art', icon: Filter },
-    { key: 'Philosophy', label: 'Philosophy', icon: Filter },
-    { key: 'Technology', label: 'Technology', icon: Filter },
-    { key: 'History', label: 'History', icon: Filter },
-] as const;
+type Category = 'all' | ArchiveCategory;
 
-type Category = typeof CATEGORIES[number]['key'];
+const CATEGORIES: Array<{ key: Category; label: string; icon: LucideIcon }> = [
+    { key: 'all', label: 'All', icon: Filter },
+    ...ARCHIVE_CATEGORIES.map((category) => ({
+        key: category,
+        label: category,
+        icon: Filter,
+    })),
+];
 
 interface CategoryFilterProps {
     value: Category;

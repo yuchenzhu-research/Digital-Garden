@@ -9,7 +9,8 @@ import { ImageCard } from '@/components/ui/ImageCard';
 import { DataManagement } from '@/components/ui/DataManagement';
 import { FilterBar, type Category } from '@/components/ui/FilterBar';
 import { documents } from '@/lib/data';
-import type { Document } from '@/lib/types';
+import { isUserDocument, type Document } from '@/lib/types';
+import { entryToDocument } from '@/lib/document-mappers';
 import { getEntries, deleteEntry } from '@/services/entryService';
 import { hasMobileDraft } from '@/services/mobile-draft';
 import { SettingsPanel } from '@/components/features/SettingsPanel';
@@ -43,24 +44,6 @@ const EntryEditor = dynamic(
     ),
   }
 );
-
-// Convert Entry to Document format for display
-const entryToDocument = (entry: Entry, index: number): Document => ({
-  id: entry.id || `user-${index}`,
-  title: entry.title,
-  category: 'Art' as const,
-  description: entry.narrative?.substring(0, 100) + '...' || 'Your personal moment',
-  imageUrl: entry.imageUrl || '/placeholder.jpg',
-  year: new Date(entry.dateCreated).getFullYear().toString(),
-  author: entry.figure || 'You',
-  focalPoint: '50% 50%',
-  academicContext: '',
-  tags: entry.keywords,
-  longDescription: entry.narrative || '',
-  concepts: [],
-  resources: [],
-  type: 'image' as const,
-});
 
 const getInitialDimmingIntensity = (): number => {
   if (typeof window === 'undefined') {
@@ -103,15 +86,13 @@ export default function Home() {
   };
 
   // Handle entry deletion
-  const handleDeleteEntry = async (id: string) => {
-    if (isMobileMode) {
+  const handleDeleteEntry = async (document: Document) => {
+    if (isMobileMode || !isUserDocument(document) || !document.storageId) {
       return;
     }
 
-    // Strip 'user-' prefix to get real storage ID
-    const realId = id.replace(/^user-/, '');
     if (confirm('Are you sure you want to delete this moment? This cannot be undone.')) {
-      await deleteEntry(realId);
+      await deleteEntry(document.storageId);
       await refreshUserEntries();
       setSelectedDocId(null);
     }
@@ -156,11 +137,7 @@ export default function Home() {
 
   // Combine static and user entries
   const allDocuments = useMemo(() => {
-    const userDocs = userEntries.map((entry, i) => ({
-      ...entryToDocument(entry, i),
-      id: `user-${entry.id || i}`,
-      isUserEntry: true,
-    }));
+    const userDocs = userEntries.map((entry, i) => entryToDocument(entry, i));
     return [...documents, ...userDocs];
   }, [userEntries]);
 
@@ -180,11 +157,7 @@ export default function Home() {
         const matchesDescription = doc.description.toLowerCase().includes(query);
         const matchesTags = doc.tags?.some(tag => tag.toLowerCase().includes(query));
 
-        // For user entries, also check keywords ((doc as any).keywords)
-        const docKeywords = (doc as unknown as { keywords?: string[] }).keywords;
-        const matchesKeywords = docKeywords?.some(kw => kw.toLowerCase().includes(query));
-
-        if (!matchesTitle && !matchesAuthor && !matchesDescription && !matchesTags && !matchesKeywords) {
+        if (!matchesTitle && !matchesAuthor && !matchesDescription && !matchesTags) {
           return false;
         }
       }
@@ -230,16 +203,15 @@ export default function Home() {
     setIsEditing(true);
   };
 
-  const handleEditEntry = (id: string) => {
-    if (isMobileMode) {
+  const handleEditEntry = (document: Document) => {
+    if (isMobileMode || !isUserDocument(document) || !document.storageId) {
       return;
     }
 
-    const realId = id.replace(/^user-/, '');
-    const entry = userEntries.find((candidate) => candidate.id === realId);
+    const entry = userEntries.find((candidate) => candidate.id === document.storageId);
 
     if (!entry) {
-      console.warn(`Could not find user entry for editing: ${realId}`);
+      console.warn(`Could not find user entry for editing: ${document.storageId}`);
       return;
     }
 
@@ -450,7 +422,7 @@ export default function Home() {
                     focalPoint={doc.focalPoint}
                     onClick={() => { }}
                   />
-                  {doc.id.startsWith('user-') && (
+                  {isUserDocument(doc) && (
                     <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/80 backdrop-blur-sm rounded text-[10px] uppercase tracking-wider text-foreground z-10">
                       Personal
                     </span>

@@ -4,18 +4,20 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Pencil, X, Trash2 } from 'lucide-react';
-import type { Document } from '@/lib/types';
+import { isUserDocument, type Document } from '@/lib/types';
 import { MarkdownView } from '@/components/features/MarkdownView';
 import { ImageView } from '@/components/features/ImageView';
 
 interface ArchiveDetailViewProps {
-    document: Document; // Keep interface as is for now or rename it too
+    document: Document;
     onClose: () => void;
-    onEdit?: (id: string) => void;
-    onDelete?: (id: string) => void;
+    onEdit?: (document: Document) => void;
+    onDelete?: (document: Document) => void;
 }
 
 export function ArchiveDetailView({ document: data, onClose, onEdit, onDelete }: ArchiveDetailViewProps) {
+    const itemLabel = isUserDocument(data) ? 'Personal Entry' : `Item ${data.id.padStart(3, '0')}`;
+
     // Body scroll locking when overlay is active
     useEffect(() => {
         const originalStyle = window.getComputedStyle(window.document.body).overflow;
@@ -44,13 +46,13 @@ export function ArchiveDetailView({ document: data, onClose, onEdit, onDelete }:
                     <span className="font-sans text-xs tracking-widest uppercase">Back to Archive</span>
                 </button>
                 <div className="hidden md:block font-sans text-xs tracking-[0.2em] text-muted-foreground/30 uppercase">
-                    Bibliotheca Vitae / Item {data.id.padStart(3, '0')}
+                    Bibliotheca Vitae / {itemLabel}
                 </div>
 
                 <div className="flex items-center gap-2 pointer-events-auto">
-                    {onEdit && data.id.startsWith('user-') && (
+                    {onEdit && isUserDocument(data) && (
                         <button
-                            onClick={() => onEdit(data.id)}
+                            onClick={() => onEdit(data)}
                             className="p-2 text-foreground/70 hover:text-foreground hover:bg-foreground/10 rounded-full transition-colors"
                             title="Edit Entry"
                         >
@@ -59,9 +61,9 @@ export function ArchiveDetailView({ document: data, onClose, onEdit, onDelete }:
                     )}
 
                     {/* Delete Button - Only for user entries (detected via onDelete presence or ID pattern) */}
-                    {onDelete && data.id.startsWith('user-') && (
+                    {onDelete && isUserDocument(data) && (
                         <button
-                            onClick={() => onDelete(data.id)}
+                            onClick={() => onDelete(data)}
                             className="p-2 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors mr-2"
                             title="Delete Entry"
                         >

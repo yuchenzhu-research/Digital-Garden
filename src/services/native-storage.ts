@@ -12,8 +12,8 @@ import {
   ImageUploadResult,
   StorageRepository,
   DraftEntry,
+  getAdapterMetadata,
 } from './storage-repository';
-import { getAdapterMetadata } from './adapter-metadata';
 import {
   bytesToDataUrl,
   getMimeTypeFromPath,

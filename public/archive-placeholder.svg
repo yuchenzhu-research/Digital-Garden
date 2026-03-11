@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Archive Placeholder</title>
+  <desc id="desc">Neutral placeholder illustration for archive entries without an image.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f6f0e4" />
+      <stop offset="100%" stop-color="#e6dac2" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)" />
+  <rect x="110" y="110" width="980" height="580" rx="24" fill="none" stroke="#5a4c3a" stroke-opacity="0.18" stroke-width="8" />
+  <path d="M240 560l150-160 130 110 160-190 220 240" fill="none" stroke="#5a4c3a" stroke-opacity="0.35" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="405" cy="295" r="46" fill="#5a4c3a" fill-opacity="0.18" />
+  <text x="600" y="645" text-anchor="middle" fill="#5a4c3a" fill-opacity="0.7" font-family="Georgia, serif" font-size="42" letter-spacing="10">
+    BIBLIOTHECA VITAE
+  </text>
+</svg>
