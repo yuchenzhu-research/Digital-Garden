@@ -398,9 +398,10 @@ export function EntryEditor({ onClose }: { onClose?: () => void }) {
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="text-xs text-muted-foreground/50"
+                            className="space-y-1 text-xs text-muted-foreground/50"
                         >
-                            Draft autosaved {lastSaved.toLocaleTimeString()}
+                            <p>Draft autosaved locally {lastSaved.toLocaleTimeString()}</p>
+                            <p>Unpublished changes stay on this device until you publish them to the archive.</p>
                         </motion.div>
                     )}
                 </aside>

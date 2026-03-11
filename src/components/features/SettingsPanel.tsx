@@ -13,15 +13,15 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsPanelProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [fsStatus, setFsStatus] = useState<string>(
-        !isTauri() && getWebFS().isReady() ? 'Connected' : 'Not Connected'
+    const [fsConnected, setFsConnected] = useState<boolean>(
+        !isTauri() && getWebFS().isReady()
     );
 
     const handleConnectFS = async () => {
         try {
             const success = await getWebFS().requestDirectoryAccess();
             if (success) {
-                setFsStatus('Connected');
+                setFsConnected(true);
                 // Force a page reload so all data fetching immediately switches to the new adapter
                 window.location.reload();
             }
@@ -89,19 +89,24 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                                 <hr className="my-6 border-foreground/10" />
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
-                                        <span>Local Storage</span>
-                                        <span className={`font-mono ${fsStatus === 'Connected' ? 'text-green-500' : ''}`}>{fsStatus}</span>
+                                        <span>Storage Mode</span>
+                                        <span className={`font-mono ${fsConnected ? 'text-green-500' : ''}`}>
+                                            {fsConnected ? 'Folder Mode' : 'Browser Local'}
+                                        </span>
                                     </div>
                                     <button
                                         onClick={handleConnectFS}
-                                        disabled={fsStatus === 'Connected'}
+                                        disabled={fsConnected}
                                         className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-foreground/5 hover:bg-foreground/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-sm font-sans"
                                     >
                                         <FolderOpen className="w-4 h-4" />
-                                        {fsStatus === 'Connected' ? 'Connected to folder' : 'Connect Folder'}
+                                        {fsConnected ? 'Folder Connected' : 'Connect Folder Mode'}
                                     </button>
                                     <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
-                                        Connect a local folder to bypass browser limits and write native `.json` files perfectly synced to your disk.
+                                        Folder Mode is recommended. It writes your archive as native `.json` files in a local directory you control.
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+                                        If folder access is unavailable, Bibliotheca Vitae falls back to browser-local storage as a compatibility mode.
                                     </p>
                                 </div>
                             </>

@@ -121,7 +121,12 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-foreground/10 flex items-center justify-between">
-              <span className="font-sans text-sm font-medium">Data Management</span>
+              <div className="flex items-center gap-2">
+                <span className="font-sans text-sm font-medium">Data Management</span>
+                <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60">
+                  Browser Local
+                </span>
+              </div>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1 hover:bg-foreground/10 rounded transition-colors"
@@ -157,8 +162,8 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
             <div className="p-4 space-y-3">
               <p className="text-xs text-muted-foreground mb-2">
                 {entryCount > 0
-                  ? `You have ${entryCount} custom entries saved locally.`
-                  : 'No custom entries yet. Create your first moment!'}
+                  ? `You have ${entryCount} browser-local entries available for backup.`
+                  : 'No browser-local entries yet. Folder-connected archives stay in your chosen directory.'}
               </p>
 
               {/* Export Button */}
@@ -173,9 +178,9 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                   <Download className="w-4 h-4" />
                 )}
                 <div className="text-left">
-                  <div className="font-sans text-sm font-medium">Export Data</div>
+                  <div className="font-sans text-sm font-medium">Export Browser Backup</div>
                   <div className="font-sans text-xs text-muted-foreground">
-                    Download backup as .json
+                    Download browser-local entries as `.json`
                   </div>
                 </div>
               </button>
@@ -192,9 +197,9 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                   <Upload className="w-4 h-4" />
                 )}
                 <div className="text-left">
-                  <div className="font-sans text-sm font-medium">Import Data</div>
+                  <div className="font-sans text-sm font-medium">Import Browser Backup</div>
                   <div className="font-sans text-xs text-muted-foreground">
-                    Restore from backup file
+                    Restore browser-local entries from `.json`
                   </div>
                 </div>
               </button>
@@ -209,7 +214,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
               {/* Info */}
               <div className="pt-2 border-t border-foreground/10">
                 <p className="font-sans text-[10px] text-muted-foreground/60 leading-relaxed">
-                  Data is stored locally in your browser. Export regularly to prevent data loss.
+                  This panel currently manages browser-local fallback data. Folder-connected archives remain in the local directory you selected.
                 </p>
               </div>
             </div>
