@@ -15,6 +15,12 @@ import {
 } from './storage-repository';
 import { getAdapterMetadata } from './adapter-metadata';
 import { get, set, del } from 'idb-keyval';
+import {
+    blobToDataUrl,
+    dataUrlToBlob,
+    isDataUrl,
+    isManagedImagePath,
+} from './portable-images';
 
 const DIRECTORY_HANDLE_KEY = 'bibliotheca_fs_handle';
 const DRAFT_FILE_NAME = '.draft.json';
@@ -81,6 +87,7 @@ const toEntry = (record: JsonRecord): Entry => ({
     keywords: getStringArray(record, 'keywords'),
     dateCreated: getString(record, 'date_created', 'dateCreated') ?? '',
     dateModified: getString(record, 'date_modified', 'dateModified'),
+    imageBase64: getString(record, 'image_base64', 'imageBase64'),
     imageUrl: getString(record, 'image_url', 'imageUrl'),
 });
 
@@ -204,6 +211,72 @@ export class WebFSStorageAdapter implements StorageRepository {
         return {
             ...entry,
             imageUrl: await this.resolveImageUrl(entry.imageUrl),
+        };
+    }
+
+    private async readManagedImageAsDataUrl(relativePath: string): Promise<string | undefined> {
+        if (!isManagedImagePath(relativePath)) {
+            return undefined;
+        }
+
+        try {
+            const dirHandle = this.requireHandle();
+            const parts = relativePath.split('/');
+            const imgName = parts[parts.length - 1];
+            const imgDirHandle = await dirHandle.getDirectoryHandle('images');
+            const fileHandle = await imgDirHandle.getFileHandle(imgName);
+            const file = await fileHandle.getFile();
+            return await blobToDataUrl(file);
+        } catch {
+            return undefined;
+        }
+    }
+
+    private async createPortableEntry(entry: Entry): Promise<Entry> {
+        if (!isManagedImagePath(entry.imageUrl)) {
+            return entry;
+        }
+
+        const imageBase64 = await this.readManagedImageAsDataUrl(entry.imageUrl);
+        if (!imageBase64) {
+            return entry;
+        }
+
+        return {
+            ...entry,
+            imageBase64,
+        };
+    }
+
+    private async prepareImportedEntry(entry: Entry): Promise<Entry> {
+        const embeddedImage = entry.imageBase64 || (isDataUrl(entry.imageUrl) ? entry.imageUrl : undefined);
+
+        if (!embeddedImage) {
+            return {
+                ...entry,
+                imageBase64: undefined,
+            };
+        }
+
+        try {
+            const blob = await dataUrlToBlob(embeddedImage);
+            const uploadResult = await this.uploadImage(blob);
+
+            if (uploadResult.success && uploadResult.url) {
+                return {
+                    ...entry,
+                    imageUrl: uploadResult.url,
+                    imageBase64: undefined,
+                };
+            }
+        } catch (error) {
+            console.warn('Failed to materialize imported image into Folder Mode:', error);
+        }
+
+        return {
+            ...entry,
+            imageUrl: embeddedImage,
+            imageBase64: undefined,
         };
     }
 
@@ -476,7 +549,8 @@ export class WebFSStorageAdapter implements StorageRepository {
 
     async exportData(): Promise<string> {
         const entries = await this.readEntries({ resolveImages: false });
-        return JSON.stringify(entries, null, 2);
+        const portableEntries = await Promise.all(entries.map((entry) => this.createPortableEntry(entry)));
+        return JSON.stringify(portableEntries, null, 2);
     }
 
     async importData(json: string): Promise<void> {
@@ -484,7 +558,8 @@ export class WebFSStorageAdapter implements StorageRepository {
         if (Array.isArray(entries)) {
             for (const entry of entries) {
                 if (isJsonRecord(entry)) {
-                    await this.saveEntry(toEntry(entry));
+                    const preparedEntry = await this.prepareImportedEntry(toEntry(entry));
+                    await this.saveEntry(preparedEntry);
                 }
             }
         }

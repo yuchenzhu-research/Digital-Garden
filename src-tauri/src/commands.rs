@@ -131,10 +131,43 @@ fn build_entry_file_path(archive_dir: &PathBuf, title: &str, id: &str) -> PathBu
 }
 
 fn write_entry_to_disk(file_path: &PathBuf, payload: &EntryPayload) -> Result<(), String> {
-    let json_content = serde_json::to_string_pretty(payload)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
+    let json_content =
+        serde_json::to_string_pretty(payload).map_err(|e| format!("Failed to serialize: {}", e))?;
 
     fs::write(file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+fn image_extension_from_data(data: &str) -> &'static str {
+    if data.starts_with("data:image/jpeg;base64,") {
+        "jpg"
+    } else if data.starts_with("data:image/gif;base64,") {
+        "gif"
+    } else if data.starts_with("data:image/webp;base64,") {
+        "webp"
+    } else if data.starts_with("data:image/svg+xml;base64,") {
+        "svg"
+    } else {
+        "png"
+    }
+}
+
+fn write_embedded_image(
+    archive_dir: &PathBuf,
+    entry_id: &str,
+    image_data: &str,
+) -> Result<String, String> {
+    let image_dir = archive_dir.join("images");
+    fs::create_dir_all(&image_dir)
+        .map_err(|e| format!("Failed to create image directory: {}", e))?;
+
+    let ext = image_extension_from_data(image_data);
+    let image_filename = format!("{}.{}", entry_id, ext);
+    let image_path = image_dir.join(&image_filename);
+    let bytes = base64_decode(image_data)?;
+
+    fs::write(&image_path, bytes).map_err(|e| format!("Failed to save image: {}", e))?;
+
+    Ok(format!("images/{}", image_filename))
 }
 
 fn find_entry_file_by_id(archive_dir: &PathBuf, id: &str) -> Result<Option<PathBuf>, String> {
@@ -220,17 +253,7 @@ pub async fn save_entry(
 
     // Save image from base64 if present (Legacy fallback)
     if let Some(base64) = &payload.image_base64 {
-        let image_dir = archive_dir.join("images");
-        fs::create_dir_all(&image_dir)
-            .map_err(|e| format!("Failed to create image directory: {}", e))?;
-
-        let image_filename = format!("{}.png", id);
-        let image_path = image_dir.join(&image_filename);
-
-        if let Ok(bytes) = base64_decode(base64) {
-            fs::write(&image_path, bytes).map_err(|e| format!("Failed to save image: {}", e))?;
-            saved_payload.image_url = Some(format!("images/{}", image_filename));
-        }
+        saved_payload.image_url = Some(write_embedded_image(&archive_dir, &id, base64)?);
     }
 
     // Strip out base64 before serializing so it doesn't bloat the JSON file!
@@ -446,6 +469,10 @@ pub async fn import_entries(json: String, state: State<'_, AppState>) -> Result<
         }
 
         entry.id = Some(entry_id.clone());
+        if let Some(base64) = entry.image_base64.as_ref() {
+            entry.image_url = Some(write_embedded_image(&archive_dir, &entry_id, base64)?);
+            entry.image_base64 = None;
+        }
         let file_path = build_entry_file_path(&archive_dir, &entry.title, &entry_id);
         write_entry_to_disk(&file_path, &entry)?;
         state_entries.push(entry);
@@ -526,6 +553,7 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, String> {
     let s = s.trim_start_matches("data:image/jpeg;base64,");
     let s = s.trim_start_matches("data:image/gif;base64,");
     let s = s.trim_start_matches("data:image/webp;base64,");
+    let s = s.trim_start_matches("data:image/svg+xml;base64,");
 
     base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s).map_err(|e| e.to_string())
 }

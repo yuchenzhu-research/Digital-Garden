@@ -14,6 +14,12 @@ import {
   DraftEntry,
 } from './storage-repository';
 import { getAdapterMetadata } from './adapter-metadata';
+import {
+  bytesToDataUrl,
+  getMimeTypeFromPath,
+  isDataUrl,
+  isManagedImagePath,
+} from './portable-images';
 
 // ============================================================================
 // Tauri Types (duplicated from Rust for TypeScript)
@@ -326,22 +332,39 @@ export class NativeStorageAdapter implements StorageRepository {
   // Import/Export Operations
   // ==========================================================================
 
+  private async readManagedImageAsDataUrl(relativePath: string): Promise<string | undefined> {
+    if (!isManagedImagePath(relativePath)) {
+      return undefined;
+    }
+
+    try {
+      const fs = await this.initFs();
+      const path = await this.initPath();
+      const storagePath = await this.getStorageLocation();
+      const absolutePath = await path.join(storagePath, relativePath);
+      const bytes = await fs.readFile(absolutePath);
+      return bytesToDataUrl(bytes, getMimeTypeFromPath(relativePath));
+    } catch {
+      return undefined;
+    }
+  }
+
   async exportData(): Promise<string> {
     const { invoke } = await this.initCore();
     const result = await invoke<RustEntryPayload[]>('get_all_entries');
 
-    const entries: Entry[] = result.map((payload) => ({
+    const entries: Entry[] = await Promise.all(result.map(async (payload) => ({
       id: payload.id,
       title: payload.title,
       figure: payload.figure,
       moment: payload.moment,
       narrative: payload.narrative,
       keywords: payload.keywords,
-      imageBase64: payload.image_base64,
+      imageBase64: payload.image_base64 ?? await this.readManagedImageAsDataUrl(payload.image_url ?? ''),
       imageUrl: payload.image_url,
       dateCreated: payload.date_created,
       dateModified: payload.date_modified,
-    }));
+    })));
 
     return JSON.stringify(entries, null, 2);
   }
@@ -357,8 +380,8 @@ export class NativeStorageAdapter implements StorageRepository {
         moment: entry.moment,
         narrative: entry.narrative,
         keywords: entry.keywords,
-        image_base64: entry.imageBase64,
-        image_url: entry.imageUrl,
+        image_base64: entry.imageBase64 || (isDataUrl(entry.imageUrl) ? entry.imageUrl : undefined),
+        image_url: entry.imageBase64 || isDataUrl(entry.imageUrl) ? undefined : entry.imageUrl,
         date_created: entry.dateCreated,
         date_modified: entry.dateModified,
       }));

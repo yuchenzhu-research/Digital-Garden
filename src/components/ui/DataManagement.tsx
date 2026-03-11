@@ -214,7 +214,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                 <div className="text-left">
                   <div className="font-sans text-sm font-medium">{storageMode.exportLabel}</div>
                   <div className="font-sans text-xs text-muted-foreground">
-                    Download the current archive as a portable `.json` backup
+                    Download a portable `.json` backup with embedded local images
                   </div>
                 </div>
               </button>
@@ -233,7 +233,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                 <div className="text-left">
                   <div className="font-sans text-sm font-medium">{storageMode.importLabel}</div>
                   <div className="font-sans text-xs text-muted-foreground">
-                    Merge a backup into the current storage mode
+                    Merge a backup and restore embedded images into the current storage mode
                   </div>
                 </div>
               </button>

@@ -14,6 +14,7 @@ import {
   DraftEntry,
 } from './storage-repository';
 import { getAdapterMetadata } from './adapter-metadata';
+import { isManagedImagePath } from './portable-images';
 
 // ============================================================================
 // Storage Keys
@@ -76,6 +77,17 @@ const saveEntries = (entries: Entry[]): boolean => {
     console.error('Failed to save entries to localStorage:', error);
     return false;
   }
+};
+
+const normalizeImportedEntry = (entry: Entry): Entry => {
+  if (entry.imageBase64 && (!entry.imageUrl || isManagedImagePath(entry.imageUrl))) {
+    return {
+      ...entry,
+      imageUrl: entry.imageBase64,
+    };
+  }
+
+  return entry;
 };
 
 // ============================================================================
@@ -276,12 +288,13 @@ export class WebStorageAdapter implements StorageRepository {
       const merged = [...existingEntries];
 
       for (const entry of entries) {
+        const normalizedEntry = normalizeImportedEntry(entry as Entry);
         // Skip if ID already exists
         const exists = merged.some(
-          (e) => (e as SavedEntry).id === (entry as SavedEntry).id
+          (e) => (e as SavedEntry).id === (normalizedEntry as SavedEntry).id
         );
         if (!exists) {
-          merged.push(entry);
+          merged.push(normalizedEntry);
         }
       }
 

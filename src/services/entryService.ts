@@ -293,7 +293,7 @@ export const exportToFile = async (): Promise<FileExportResult> => {
     const filename = `bibliotheca_vitae_backup_${timestamp}.json`;
 
     const payload = {
-      version: '1.1',
+      version: '1.2',
       exportedAt: new Date().toISOString(),
       storageMode: mode.kind,
       entryCount: entries.length,
