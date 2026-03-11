@@ -38,7 +38,7 @@ Repository layout and boundary rules live in [docs/PROJECT-STRUCTURE.md](docs/PR
 In an age of fragmented information, Context is the Soul. Traditional databases treat history as rows in a table, whereas Bibliotheca Vitae views every record as a **Moment in Time**, a visual and textual vessel worthy of deep perception.
 
 * **Immersion**: Physics-based interactive motion gives digital objects a true sense of weight and presence.
-* **Aesthetics**: Classical typography like Cinzel and EB Garamond meets modern minimalism to create a museum-grade reading experience.
+* **Aesthetics**: Expressive typography with Inter and Playfair Display meets warm, museum-style minimalism.
 * **Curator Experience**: We replace forms with a canvas.
 
 ## ✨ Core Features
@@ -51,40 +51,48 @@ Clicking any entry opens a seamless overlay. Users can explore the **Moment in T
 
 ### 🖋️ Append Moment Editor
 The heart of the project is a Visual-First Editor.
-1.  **Visual Anchor**: Drag photos directly onto the canvas as a background.
-2.  **In-place Editing**: Type directly on the page—edit titles, figures, and narratives exactly where they will appear.
-3.  **Dual-Mode Particles**: Integrated Alet-style particle deconstruction with **Linear** and **Random** visual modes.
+1.  **Visual Anchor**: Upload an artifact image to establish the visual background.
+2.  **In-place Editing**: Revise titles, figures, keywords, moments, and narratives in a single flowing view.
+3.  **Drafts and Archive Updates**: New moments autosave locally before publication, and personal archive entries can be reopened and edited on desktop.
 
 ## 🛠️ Tech Stack
 
-Built as a **Single Page Application** for future native portability:
+Built as a shared **Web + Tauri desktop application**:
 
 -   **Core**: Next.js 16 App Router, React 19, TypeScript
--   **Motion**: Framer Motion, GSAP, React Lenis
--   **Visual**: Tailwind CSS v4 Oklch, Lucide Icons
+-   **Motion**: Framer Motion, GSAP, Lenis
+-   **Visual**: Tailwind CSS v4, Lucide Icons
 -   **Graphics**: React Three Fiber / Drei WebGL Particle System
+-   **Desktop**: Tauri 2
 
 ## 💾 Data Storage & Cross-Platform Support
 
 ### 🖥️ Desktop Web (Windows / macOS / Linux)
 - Recommended mode: connect a local folder and write each entry directly as a `.json` file on your disk
-- Full features: **Browse, Create, Edit, Export & Import**
+- Desktop web features: **Browse, Create, Edit, Export & Import**
 - Folder Mode keeps your archive in files you can inspect, back up, and sync yourself
 - If folder access is unavailable, the app falls back to browser-local storage as a compatibility mode
 - Works completely offline - no server storage required
 
+### 🪟 Desktop App (Tauri)
+- Uses the same archive model through native file-system access
+- Stores entries locally inside your Bibliotheca Vitae archive folder on disk
+- Best for a full offline desktop workflow with direct archive management
+
 ### 📱 Mobile (iOS / Android)
-- **Browse + Local Drafts**: review archives and capture drafts in the current device/browser
-- Mobile drafts stay in local browser storage on that device, making them suitable for quick capture rather than final archiving
+- **Browse + Local Drafts**: review archives and capture draft text, metadata, and images in the current device/browser
+- Mobile drafts stay in on-device browser storage, making them suitable for quick capture rather than final archiving
 - Publishing to a connected folder, importing/exporting, and full archive management remain desktop workflows
-- For the complete archival workflow, use a desktop browser or the desktop app
+- Use a desktop browser or the desktop app for final archive management
 
 ## 🚀 Quick Start
 
 1.  Clone the repository.
 2.  Install dependencies: `npm install`
-3.  Start development server: `npm run dev`
-4.  Visit: `https://bibliotheca-vitae.vercel.app` or `http://localhost:4321`.
+3.  Start the web development server: `npm run dev`
+4.  Open `http://localhost:4321`
+5.  Optional desktop shell: `npm run app:dev`
+6.  Optional production web build: `npm run build`
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

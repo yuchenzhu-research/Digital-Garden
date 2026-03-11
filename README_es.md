@@ -38,7 +38,7 @@ La estructura del repositorio y las reglas de directorios están en [docs/PROJEC
 En una era de información fragmentada, el Contexto es el Alma. Las bases de datos tradicionales tratan la historia como filas en una tabla, mientras que Bibliotheca Vitae percibe cada registro como un **Moment in Time**, un receptáculo visual y textual digno de profunda percepción.
 
 *   **Inmersión**: El movimiento interactivo basado en física otorga a los objetos digitales peso y presencia real.
-*   **Estética**: La tipografía clásica como Cinzel y EB Garamond se encuentra con el minimalismo moderno para crear una experiencia de lectura museística.
+*   **Estética**: La combinación de Inter y Playfair Display se une a un minimalismo cálido, de tono museístico.
 *   **Experiencia del Curador**: Reemplazamos los formularios con un lienzo.
 
 ## ✨ Características Principales
@@ -51,30 +51,36 @@ Al hacer clic en cualquier entrada se abre una superposición fluida. Los usuari
 
 ### 🖋️ Editor Append Moment
 El corazón del proyecto es un Editor Visual-First.
-1.  **Ancla Visual**: Arrastra fotos directamente al lienzo como fondo.
-2.  **Edición In-situ**: Escribe directamente en la página, edita títulos, figuras y narrativas exactamente donde aparecerán.
-3.  **Partículas de Modo Dual**: Deconstrucción de partículas estilo Alet integrada con modos visuales **Linear** y **Random**.
+1.  **Ancla Visual**: Sube una imagen para establecer el fondo visual de la entrada.
+2.  **Edición In-situ**: Ajusta títulos, figuras, palabras clave, momentos y narrativas dentro de un mismo flujo.
+3.  **Borradores y Actualización del Archivo**: Las nuevas entradas se guardan localmente antes de publicarse y, en escritorio, las entradas personales pueden reabrirse y editarse.
 
 ## 🛠️ Stack Tecnológico
 
-Construido como una **Single Page Application** para futura portabilidad nativa:
+Construido como una aplicación compartida **Web + Tauri de escritorio**:
 
 -   **Núcleo**: Next.js 16 App Router, React 19, TypeScript
--   **Movimiento**: Framer Motion, GSAP, React Lenis
--   **Visual**: Tailwind CSS v4 Oklch, Lucide Icons
+-   **Movimiento**: Framer Motion, GSAP, Lenis
+-   **Visual**: Tailwind CSS v4, Lucide Icons
 -   **Gráficos**: React Three Fiber / Drei WebGL Particle System
+-   **Escritorio**: Tauri 2
 
 ## 💾 Almacenamiento de Datos y Compatibilidad Multiplataforma
 
 ### 🖥️ Web Escritorio (Windows / macOS / Linux)
 - Modo recomendado: conecta una carpeta local y escribe cada entrada directamente como archivo `.json` en tu disco
-- Funciones completas: **Navegar, Crear, Editar, Exportar e Importar**
+- Funciones en web de escritorio: **Navegar, Crear, Editar, Exportar e Importar**
 - En el modo carpeta, tu archivo queda en ficheros que puedes inspeccionar, respaldar y sincronizar por tu cuenta
 - Si el acceso a carpetas no está disponible, la aplicación vuelve al almacenamiento local del navegador como modo de compatibilidad
 - Funciona completamente sin conexión - no requiere almacenamiento en servidor
 
+### 🪟 Aplicación de Escritorio (Tauri)
+- Usa el mismo modelo de archivo mediante acceso nativo al sistema de archivos
+- Guarda las entradas localmente en tu carpeta de archivo Bibliotheca Vitae en disco
+- Es la mejor opción para un flujo de archivo completamente offline en escritorio
+
 ### 📱 Móvil (iOS / Android)
-- **Exploración + borradores locales**: revisa archivos y guarda borradores en el dispositivo/navegador actual
+- **Exploración + borradores locales**: revisa archivos y guarda borradores de texto, metadatos e imágenes en el dispositivo/navegador actual
 - Los borradores móviles permanecen en el almacenamiento local del navegador de ese dispositivo, por lo que sirven mejor para captura rápida que para archivado final
 - Publicar en una carpeta conectada, importar/exportar y la gestión completa del archivo siguen siendo flujos de escritorio
 - Para el flujo archivístico completo, usa un navegador de escritorio o la aplicación de escritorio
@@ -83,8 +89,10 @@ Construido como una **Single Page Application** para futura portabilidad nativa:
 
 1.  Clona el repositorio.
 2.  Instala dependencias: `npm install`
-3.  Inicia el servidor de desarrollo: `npm run dev`
-4.  Visita: `https://bibliotheca-vitae.vercel.app` o `http://localhost:4321`.
+3.  Inicia el servidor web de desarrollo: `npm run dev`
+4.  Abre `http://localhost:4321`
+5.  Shell de escritorio opcional: `npm run app:dev`
+6.  Build web opcional de producción: `npm run build`
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

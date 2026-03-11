@@ -38,7 +38,7 @@ Structura repositorii et regulae directoriorum in [docs/PROJECT-STRUCTURE.md](do
 In aevo fragmentorum, Contextus est Anima. Bases datorum traditionales historiam ut lineas in tabula tractant, sed Bibliotheca Vitae quodque documentum ut **Momentum in Tempore** tractat — artificium visuale et textuale quod non solum indicandum, sed penitus sentiendum est.
 
 *   **Immersio**: Interactiones fluidae secundum leges physicas, quae obiectis digitalibus pondus et praesentiam veram tribuunt.
-*   **Aesthetica**: Typographia classica ut Cinzel et EB Garamond cum minimalismo moderno coit, experientiam legendi musealem creans.
+*   **Aesthetica**: Typographia Inter et Playfair Display cum minimalismo calido et museali coniungitur.
 *   **Experientia Curatoris**: Formulas cum linteo (canvas) substituimus.
 
 ## ✨ Proprietates
@@ -51,24 +51,48 @@ Cliccando in quolibet item, velamen continuum aperitur. Usor **Momentum in Tempo
 
 ### 🖋️ Addere Momentum Append Moment Editor
 Cor proiecti est Editor "Imago Primo".
-1.  **Anchora Visualis**: Trahe imaginem in linteum ut fundamentum.
-2.  **Editio in Loco**: Scribe directe in pagina — titulum, figuram et narrationem illic ubi apparebunt.
-3.  **Particulae**: Effectus deconstructionis particularum more Alet integratus cum modis visualibus **Linearis** et **Aleatorius**.
+1.  **Anchora Visualis**: Imaginem impone ut fundamentum visuale constituas.
+2.  **Editio in Loco**: Titulum, figuram, verba clavium, momentum et narrationem in uno fluxu emenda.
+3.  **Rudimenta et Renovatio Archivi**: Nova momenta localiter servantur ante publicationem, et documenta personalia in desktop iterum aperiri atque emendari possunt.
+
+## 🛠️ Instrumenta Technica
+
+Structura communis inter telam et applicationem desktopianam Tauri:
+
+-   **Nucleus**: Next.js 16 App Router, React 19, TypeScript
+-   **Motus**: Framer Motion, GSAP, Lenis
+-   **Visus**: Tailwind CSS v4, Lucide Icons
+-   **Graphica**: React Three Fiber / Drei WebGL Particle System
+-   **Desktop**: Tauri 2
 
 ## 💾 Servatio Data et Compatibilitas Multipla
 
 ### 🖥️ Usus Interretialis Desktop (Windows / macOS / Linux)
 - Modus commendatus: directorium locale coniunge et singula documenta ut fasciculos `.json` directe in disco scribe
-- Facultates completae: **Videre, Creare, Editare, Exportare et Importare**
+- Facultates desktopianae in tela: **Videre, Creare, Editare, Exportare et Importare**
 - In modo directorii, archivum tuum ipse inspicere, reservare et synchronizare potes
 - Si accessus ad directorium deest, applicatio ad servationem localem navigatoris recidit ut modus compatibilitatis
 - Totum operatio sine conexione interretiali - servatio serveri non necessaria
 
+### 🪟 Applicatio Desktopiana (Tauri)
+- Eodem exemplo archivi per accessum nativum ad systema fasciculorum utitur
+- Documenta localiter in directorio archivi Bibliothecae Vitae servantur
+- Optima est ad plenam rationem desktopianam sine rete
+
 ### 📱 Usus Mobilis (iOS / Android)
-- **Lectio + Rudimenta Localia**: archiva inspicere et rudimenta in hoc apparatu/navigatro servare potes
+- **Lectio + Rudimenta Localia**: archiva inspicere et rudimenta textus, metadatae atque imaginum in hoc apparatu/navigatro servare potes
 - Rudimenta mobilia tantum in servatione locali navigatoris huius apparatus manent, ideo ad celerem notationem magis quam ad archivum finale apta sunt
 - Publicatio in directorium connexum, importatio/exportatio, et plena administratio archivi ad usum desktop reservantur
 - Ad plenam rationem archivi, navigatorem desktopum vel applicationem desktopam utere
+
+## 🚀 Initium Celeriter
+
+1.  Repositorium describe.
+2.  Dependentias instala: `npm install`
+3.  Ambitum evolutionis telaris incipe: `npm run dev`
+4.  Aperi `http://localhost:4321`
+5.  Si vis crustam desktopianam, utere `npm run app:dev`
+6.  Si vis constructionem telarem finalem, utere `npm run build`
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
