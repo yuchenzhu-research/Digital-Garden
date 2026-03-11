@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, ArrowRight, Save, X, Plus, Trash2, RotateCcw } from 'lucide-react';
@@ -9,6 +9,11 @@ import { Toast } from '@/components/ui/Toast';
 import { useSaveShortcut } from '@/hooks/useKeyboardShortcut';
 import entryService from '@/services/entryService';
 import type { Entry } from '@/services/storage-repository';
+import {
+    clearMobileDraft,
+    getMobileDraft,
+    saveMobileDraft,
+} from '@/services/mobile-draft';
 
 // Simple Auto-Resizing Textarea Component
 const AutoResizeTextarea = ({
@@ -55,9 +60,28 @@ interface EntryEditorProps {
     mode?: 'create' | 'edit';
     initialEntry?: Entry;
     onClose?: () => void;
+    mobileDraftMode?: boolean;
+    onDraftStateChange?: () => void;
 }
 
-export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEditorProps) {
+const hasDraftContent = (draft: Partial<Entry>): boolean => {
+    return Boolean(
+        draft.title ||
+        draft.figure ||
+        draft.moment ||
+        draft.narrative ||
+        draft.imageUrl ||
+        draft.keywords?.length
+    );
+};
+
+export function EntryEditor({
+    mode = 'create',
+    initialEntry,
+    onClose,
+    mobileDraftMode = false,
+    onDraftStateChange,
+}: EntryEditorProps) {
     const isEditMode = mode === 'edit';
 
     // --- State ---
@@ -74,6 +98,37 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const draftStorage = useMemo(() => (mobileDraftMode
+        ? {
+            save: saveMobileDraft,
+            get: getMobileDraft,
+            clear: clearMobileDraft,
+        }
+        : {
+            save: entryService.saveDraft,
+            get: entryService.getDraft,
+            clear: entryService.clearDraft,
+        }), [mobileDraftMode]);
+
+    const persistDraft = useCallback(async (draft: Partial<Entry>) => {
+        if (isEditMode) {
+            return;
+        }
+
+        if (!hasDraftContent(draft)) {
+            await draftStorage.clear();
+            setLastSaved(null);
+            onDraftStateChange?.();
+            return;
+        }
+
+        await draftStorage.save({
+            ...draft,
+            dateModified: new Date().toISOString(),
+        });
+        setLastSaved(new Date());
+        onDraftStateChange?.();
+    }, [draftStorage, isEditMode, onDraftStateChange]);
 
     // Full Entry Autosave Effect
     useEffect(() => {
@@ -81,29 +136,20 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
             return;
         }
 
-        const currentEntry = {
-            image, // We map image UI state to draft's imageUrl
+        const currentEntry: Partial<Entry> = {
             title,
             figure,
             moment,
             narrative,
             keywords,
+            imageUrl: image || undefined,
         };
 
         const timer = setTimeout(() => {
-            if (title || narrative || image) {
-                entryService.saveDraft({
-                    ...currentEntry,
-                    imageUrl: image || undefined,
-                    dateModified: new Date().toISOString()
-                }).then(() => {
-                    setLastSaved(new Date());
-                    console.log('Draft autosaved at', new Date().toISOString());
-                });
-            }
+            void persistDraft(currentEntry);
         }, 1500);
         return () => clearTimeout(timer);
-    }, [image, title, figure, moment, narrative, keywords, isEditMode]);
+    }, [image, title, figure, moment, narrative, keywords, isEditMode, persistDraft]);
 
     useEffect(() => {
         if (isEditMode && initialEntry) {
@@ -118,7 +164,7 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
         }
 
         // Load draft on mount for new entries only
-        entryService.getDraft().then(savedEntry => {
+        draftStorage.get().then(savedEntry => {
             if (savedEntry) {
                 if (savedEntry.title) setTitle(savedEntry.title);
                 if (savedEntry.figure) setFigure(savedEntry.figure);
@@ -128,7 +174,7 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
                 if (savedEntry.imageUrl) setImage(savedEntry.imageUrl);
             }
         });
-    }, [initialEntry, isEditMode]);
+    }, [draftStorage, initialEntry, isEditMode]);
 
     // --- Toast Helper ---
     const showToast = useCallback((message: string) => {
@@ -139,7 +185,7 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
     // --- Save Shortcut ---
     useSaveShortcut(() => {
         handlePublish();
-    }, true);
+    }, !mobileDraftMode);
 
     // --- File Handlers ---
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,6 +214,40 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
     // --- Remove Image ---
     const handleRemoveImage = () => {
         setImage(null);
+    };
+
+    const handleDiscardDraft = async () => {
+        if (isEditMode) {
+            return;
+        }
+
+        setTitle('');
+        setFigure('');
+        setMoment('');
+        setNarrative('');
+        setKeywords([]);
+        setCurrentKeyword('');
+        setImage(null);
+        setLastSaved(null);
+        await draftStorage.clear();
+        onDraftStateChange?.();
+        showToast('Local draft discarded');
+        onClose?.();
+    };
+
+    const handleCloseEditor = async () => {
+        if (!isEditMode) {
+            await persistDraft({
+                title,
+                figure,
+                moment,
+                narrative,
+                keywords,
+                imageUrl: image || undefined,
+            });
+        }
+
+        onClose?.();
     };
 
     const handleKeywordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -218,7 +298,8 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
                 showToast(isEditMode ? 'Moment Updated in Archive' : 'Moment Preserved in Archive');
 
                 if (!isEditMode) {
-                    await entryService.clearDraft();
+                    await draftStorage.clear();
+                    onDraftStateChange?.();
                 }
             } else {
                 console.error('Failed to save:', result.error);
@@ -239,7 +320,7 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
                 {/* Close Button */}
                 {onClose && (
                     <button
-                        onClick={onClose}
+                        onClick={() => void handleCloseEditor()}
                         className="absolute top-8 left-8 p-3 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors z-50 group"
                         title="Close Editor"
                     >
@@ -272,6 +353,11 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
                             <p className="font-sans text-sm text-muted-foreground tracking-widest uppercase">
                                 Drag & drop or click to browse
                             </p>
+                            {mobileDraftMode && (
+                                <p className="mt-3 text-[11px] tracking-[0.24em] text-muted-foreground/50 uppercase">
+                                    Local Draft Mode on this device
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -298,7 +384,7 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
             {/* Global Close Button for Overlay */}
             {onClose && (
                 <button
-                    onClick={onClose}
+                    onClick={() => void handleCloseEditor()}
                     className="fixed top-8 left-8 p-3 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md z-[60] transition-all hover:scale-110"
                     title="Close Editor"
                 >
@@ -431,8 +517,23 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
                             className="space-y-1 text-xs text-muted-foreground/50"
                         >
                             <p>Draft autosaved locally {lastSaved.toLocaleTimeString()}</p>
-                            <p>Unpublished changes stay on this device until you publish them to the archive.</p>
+                            <p>
+                                {mobileDraftMode
+                                    ? 'This draft stays in this browser. Open desktop mode when you are ready to archive it.'
+                                    : 'Unpublished changes stay on this device until you publish them to the archive.'}
+                            </p>
                         </motion.div>
+                    )}
+
+                    {mobileDraftMode && !isEditMode && (
+                        <div className="space-y-3 rounded-2xl border border-foreground/10 bg-card/40 p-4">
+                            <p className="font-sans text-[10px] uppercase tracking-[0.24em] text-muted-foreground/60">
+                                Local Draft Mode
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Mobile keeps drafts on this device only. Formal archive publishing remains a desktop action.
+                            </p>
+                        </div>
                     )}
                 </aside>
 
@@ -476,25 +577,47 @@ export function EntryEditor({ mode = 'create', initialEntry, onClose }: EntryEdi
                 animate={{ y: 0 }}
                 className="fixed bottom-8 right-8 z-50"
             >
-                <button
-                    onClick={handlePublish}
-                    disabled={isPublishing}
-                    className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-full shadow-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 group font-sans tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <Save className="w-4 h-4" />
-                    {isPublishing ? (isEditMode ? 'Updating...' : 'Preserving...') : (isEditMode ? 'Update Archive Entry' : 'Publish to Archive')}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                {mobileDraftMode && !isEditMode ? (
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => void handleDiscardDraft()}
+                            className="flex items-center gap-2 px-5 py-4 bg-background/90 text-foreground rounded-full shadow-2xl border border-foreground/10 hover:bg-background transition-all hover:scale-105 active:scale-95 font-sans tracking-widest uppercase text-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Discard Draft
+                        </button>
+                        <button
+                            onClick={() => void handleCloseEditor()}
+                            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-full shadow-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 group font-sans tracking-widest uppercase text-sm"
+                        >
+                            <Save className="w-4 h-4" />
+                            Keep Local Draft
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        <button
+                            onClick={handlePublish}
+                            disabled={isPublishing}
+                            className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-full shadow-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 group font-sans tracking-widest uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <Save className="w-4 h-4" />
+                            {isPublishing ? (isEditMode ? 'Updating...' : 'Preserving...') : (isEditMode ? 'Update Archive Entry' : 'Publish to Archive')}
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
 
-                {/* Keyboard shortcut hint */}
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="absolute -bottom-8 right-0 text-[10px] text-muted-foreground/40 font-sans tracking-widest"
-                >
-                    Cmd+S or Ctrl+S to save
-                </motion.div>
+                        {/* Keyboard shortcut hint */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="absolute -bottom-8 right-0 text-[10px] text-muted-foreground/40 font-sans tracking-widest"
+                        >
+                            Cmd+S or Ctrl+S to save
+                        </motion.div>
+                    </>
+                )}
             </motion.div>
 
             {/* Toast */}

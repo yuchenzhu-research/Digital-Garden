@@ -83,6 +83,23 @@ export const getEnvironment = (): Environment => {
 };
 
 /**
+ * Check if the current device should be treated as mobile/tablet for capability gating.
+ */
+export const isMobileDevice = (): boolean => {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileUserAgent =
+    /android|iphone|ipod|ipad|mobile|blackberry|iemobile|opera mini/.test(userAgent);
+  const ipadOsDesktopClass =
+    navigator.platform === 'MacIntel' && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1;
+
+  return mobileUserAgent || ipadOsDesktopClass;
+};
+
+/**
  * Check if SSR (Server-Side Rendering)
  */
 export const isSSR = (): boolean => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Hero } from '@/components/features/Hero';
@@ -11,8 +11,10 @@ import { FilterBar, type Category } from '@/components/ui/FilterBar';
 import { documents } from '@/lib/data';
 import type { Document } from '@/lib/types';
 import { getEntries, deleteEntry } from '@/services/entryService';
+import { hasMobileDraft } from '@/services/mobile-draft';
 import { SettingsPanel } from '@/components/features/SettingsPanel';
 import type { Entry } from '@/services/storage-repository';
+import { useMobileDevice } from '@/hooks/useMobileDevice';
 
 // Dynamically import Canvas3D with loading state
 const Canvas3D = dynamic(() => import('@/components/visual/Canvas3D'), {
@@ -81,7 +83,18 @@ export default function Home() {
   const [category, setCategory] = useState<Category>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [dimmingIntensity, setDimmingIntensity] = useState(getInitialDimmingIntensity);
+  const [hasLocalMobileDraft, setHasLocalMobileDraft] = useState(false);
+  const isMobileMode = useMobileDevice();
   const isEditMode = editorEntry !== null;
+
+  const refreshMobileDraftState = useCallback(async () => {
+    if (!isMobileMode) {
+      setHasLocalMobileDraft(false);
+      return;
+    }
+
+    setHasLocalMobileDraft(await hasMobileDraft());
+  }, [isMobileMode]);
 
   // Save preferences
   const handleIntensityChange = (val: number) => {
@@ -91,6 +104,10 @@ export default function Home() {
 
   // Handle entry deletion
   const handleDeleteEntry = async (id: string) => {
+    if (isMobileMode) {
+      return;
+    }
+
     // Strip 'user-' prefix to get real storage ID
     const realId = id.replace(/^user-/, '');
     if (confirm('Are you sure you want to delete this moment? This cannot be undone.')) {
@@ -100,7 +117,6 @@ export default function Home() {
     }
   };
 
-  // Load user entries on mount
   useEffect(() => {
     const loadUserEntries = async () => {
       try {
@@ -113,6 +129,30 @@ export default function Home() {
     };
     loadUserEntries();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadMobileDraftState = async () => {
+      if (!isMobileMode) {
+        if (!cancelled) {
+          setHasLocalMobileDraft(false);
+        }
+        return;
+      }
+
+      const hasDraft = await hasMobileDraft();
+      if (!cancelled) {
+        setHasLocalMobileDraft(hasDraft);
+      }
+    };
+
+    void loadMobileDraftState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isMobileMode]);
 
   // Combine static and user entries
   const allDocuments = useMemo(() => {
@@ -172,6 +212,7 @@ export default function Home() {
     setIsEditing(false);
     setEditorEntry(null);
     await refreshUserEntries();
+    await refreshMobileDraftState();
   };
 
   // Refresh user entries
@@ -190,6 +231,10 @@ export default function Home() {
   };
 
   const handleEditEntry = (id: string) => {
+    if (isMobileMode) {
+      return;
+    }
+
     const realId = id.replace(/^user-/, '');
     const entry = userEntries.find((candidate) => candidate.id === realId);
 
@@ -227,7 +272,11 @@ export default function Home() {
         />
 
         {/* Hero Section */}
-        <Hero onAppendClick={handleCreateEntry} />
+        <Hero
+          onAppendClick={handleCreateEntry}
+          appendLabel={isMobileMode ? (hasLocalMobileDraft ? 'Continue Local Draft' : 'Open Local Draft') : 'Append Moment'}
+          mobileNote={isMobileMode ? 'Mobile keeps drafts in this browser only. Use desktop to publish into the archive.' : undefined}
+        />
 
         {isLoading && (
           <section className="container mx-auto px-4 pt-8">
@@ -274,7 +323,7 @@ export default function Home() {
                   My Moments
                 </h2>
               </div>
-              <DataManagement onDataChanged={refreshUserEntries} />
+              {!isMobileMode && <DataManagement onDataChanged={refreshUserEntries} />}
             </div>
           </div>
 
@@ -322,10 +371,14 @@ export default function Home() {
           ) : (
             <div className="rounded-2xl border border-foreground/10 bg-card/40 px-6 py-10 text-center">
               <p className="font-sans text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                No personal entries yet
+                {isMobileMode && hasLocalMobileDraft ? 'Local draft ready' : 'No personal entries yet'}
               </p>
               <p className="mt-3 text-sm text-muted-foreground">
-                Create a new moment or import an archive backup to begin building your collection.
+                {isMobileMode
+                  ? (hasLocalMobileDraft
+                    ? 'Use the hero button to reopen the local draft stored on this device. Publish to the archive from desktop when it is ready.'
+                    : 'Open a local draft to start writing on this device. Formal archive publishing is available on desktop.')
+                  : 'Create a new moment or import an archive backup to begin building your collection.'}
               </p>
             </div>
           )}
@@ -450,8 +503,8 @@ export default function Home() {
           <ArchiveDetailView
             document={selectedDoc}
             onClose={() => setSelectedDocId(null)}
-            onEdit={handleEditEntry}
-            onDelete={handleDeleteEntry}
+            onEdit={isMobileMode ? undefined : handleEditEntry}
+            onDelete={isMobileMode ? undefined : handleDeleteEntry}
           />
         )}
       </AnimatePresence>
@@ -470,6 +523,8 @@ export default function Home() {
               mode={isEditMode ? 'edit' : 'create'}
               initialEntry={editorEntry ?? undefined}
               onClose={handleEditorClose}
+              mobileDraftMode={isMobileMode && !isEditMode}
+              onDraftStateChange={refreshMobileDraftState}
             />
           </motion.div>
         )}

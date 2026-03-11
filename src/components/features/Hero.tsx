@@ -3,7 +3,17 @@
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
-export function Hero({ onAppendClick }: { onAppendClick?: () => void }) {
+interface HeroProps {
+    onAppendClick?: () => void;
+    appendLabel?: string;
+    mobileNote?: string;
+}
+
+export function Hero({
+    onAppendClick,
+    appendLabel = 'Append Moment',
+    mobileNote,
+}: HeroProps) {
     return (
         <section className="relative min-h-screen flex items-center">
             <div className="container mx-auto px-4 pt-20">
@@ -46,7 +56,7 @@ export function Hero({ onAppendClick }: { onAppendClick?: () => void }) {
                                     className="btn-minimal h-12 px-8"
                                     onClick={onAppendClick}
                                 >
-                                    Append Moment
+                                    {appendLabel}
                                 </motion.button>
                                 <motion.button
                                     whileHover={{ scale: 1.02 }}
@@ -63,6 +73,12 @@ export function Hero({ onAppendClick }: { onAppendClick?: () => void }) {
                                     <ArrowRight className="ml-2 h-4 w-4 opacity-50 group-hover:translate-x-1 transition-all" />
                                 </motion.button>
                             </div>
+
+                            {mobileNote && (
+                                <p className="mt-4 max-w-md font-sans text-xs uppercase tracking-[0.24em] text-muted-foreground/50">
+                                    {mobileNote}
+                                </p>
+                            )}
                         </motion.div>
 
                         <div className="hidden lg:block absolute -left-8 top-1/2 -translate-y-1/2 -translate-x-full">

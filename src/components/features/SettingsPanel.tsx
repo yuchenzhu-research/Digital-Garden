@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Sun, Moon, X, FolderOpen } from 'lucide-react';
 import { isTauri } from '@/utils/env';
 import { getWebFS } from '@/services/entryService';
+import { useMobileDevice } from '@/hooks/useMobileDevice';
 
 interface SettingsPanelProps {
     dimmingIntensity: number;
@@ -13,6 +14,7 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsPanelProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const mobileDevice = useMobileDevice();
     const [fsConnected, setFsConnected] = useState<boolean>(
         !isTauri() && getWebFS().isReady()
     );
@@ -84,7 +86,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                             </p>
                         </div>
 
-                        {!isTauri() && (
+                        {!isTauri() && !mobileDevice && (
                             <>
                                 <hr className="my-6 border-foreground/10" />
                                 <div className="space-y-4">
@@ -107,6 +109,23 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                                     </p>
                                     <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
                                         If folder access is unavailable, Bibliotheca Vitae falls back to browser-local storage as a compatibility mode.
+                                    </p>
+                                </div>
+                            </>
+                        )}
+
+                        {!isTauri() && mobileDevice && (
+                            <>
+                                <hr className="my-6 border-foreground/10" />
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
+                                        <span>Capture Mode</span>
+                                        <span className="font-mono text-primary/80">
+                                            Local Drafts
+                                        </span>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+                                        Mobile browsers stay in Local Draft Mode. You can browse the archive and keep drafts on this device, but formal archive publishing is reserved for desktop.
                                     </p>
                                 </div>
                             </>
