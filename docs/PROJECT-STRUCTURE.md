@@ -40,10 +40,10 @@
 
 - 根目录 `README*.md`：项目首页与多语言说明
 - `docs/`：放结构说明、架构说明、发布说明等长文档
+- `docs/ARCHITECTURE.md`：说明运行时分层、存储适配器、Web/Tauri 边界
 
 建议后续逐步补充：
 
-- `docs/ARCHITECTURE.md`
 - `docs/RELEASE.md`
 
 ### 3. 本地产物层
@@ -55,6 +55,11 @@
 - `node_modules/`
 - `src-tauri/target/`
 
+补充说明：
+
+- 如果你在 Finder、IDE 或全局搜索里看到 `AGENTS.md`、`README.md` 出现在 `node_modules/` 或 `src-tauri/target/` 下，这些都不是项目源码，而是依赖或构建产物里的文件
+- 判断“项目架构”时，应只看 `src/`、`src-tauri/`、`public/`、`docs/` 和根目录入口文件
+
 ### 4. Agent 配置层
 
 - `AGENTS.md`、`CLAUDE.md` 是可跟踪的入口说明
@@ -65,6 +70,7 @@
 
 - 保留多语言 `README*.md` 在根目录
 - 新增 `docs/PROJECT-STRUCTURE.md` 作为结构说明入口
+- 新增 `docs/ARCHITECTURE.md` 作为运行时架构说明
 - 将 `.agents/` 与 `.Codex/` 视为本地 Agent 目录并忽略提交
 - 将版本说明与当前依赖对齐：README 统一为 Next.js 16
 
