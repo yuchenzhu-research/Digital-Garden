@@ -67,16 +67,17 @@ Built as a **Single Page Application** for future native portability:
 ## 💾 Data Storage & Cross-Platform Support
 
 ### 🖥️ Desktop Web (Windows / macOS / Linux)
+- Recommended mode: connect a local folder and write each entry directly as a `.json` file on your disk
 - Full features: **Browse, Create, Edit, Export & Import**
-- Your created entries are stored locally in your browser
-- **Export**: Download your data as a `.json` file for backup
-- **Import**: Restore your data from a previously exported file
+- Folder Mode keeps your archive in files you can inspect, back up, and sync yourself
+- If folder access is unavailable, the app falls back to browser-local storage as a compatibility mode
 - Works completely offline - no server storage required
 
 ### 📱 Mobile (iOS / Android)
-- **Read-only mode**: Browse existing archives and moments
-- File upload/export features require a desktop browser
-- Simply visit on a computer to create and manage your entries
+- **Browse + Local Drafts**: review archives and capture drafts in the current device/browser
+- Mobile drafts stay in local browser storage on that device, making them suitable for quick capture rather than final archiving
+- Publishing to a connected folder, importing/exporting, and full archive management remain desktop workflows
+- For the complete archival workflow, use a desktop browser or the desktop app
 
 ## 🚀 Quick Start
 

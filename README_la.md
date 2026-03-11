@@ -58,16 +58,17 @@ Cor proiecti est Editor "Imago Primo".
 ## 💾 Servatio Data et Compatibilitas Multipla
 
 ### 🖥️ Usus Interretialis Desktop (Windows / macOS / Linux)
+- Modus commendatus: directorium locale coniunge et singula documenta ut fasciculos `.json` directe in disco scribe
 - Facultates completae: **Videre, Creare, Editare, Exportare et Importare**
-- Documenta creata in navegadori locali servantur
-- **Exportare**: Descende data ut fasciculum `.json` pro subsilio
-- **Importare**: Refice data ex fasciculo exportsato prius
+- In modo directorii, archivum tuum ipse inspicere, reservare et synchronizare potes
+- Si accessus ad directorium deest, applicatio ad servationem localem navigatoris recidit ut modus compatibilitatis
 - Totum operatio sine conexione interretiali - servatio serveri non necessaria
 
 ### 📱 Usus Mobilis (iOS / Android)
-- **Modus legendi tantum**: Vide archiva et momenta exstantia
-- Facultates fasciculi carricandi/exportandi navegadorem desktopum requirunt
-- Ad creanda et regenda documenta, visita in computatro
+- **Lectio + Rudimenta Localia**: archiva inspicere et rudimenta in hoc apparatu/navigatro servare potes
+- Rudimenta mobilia tantum in servatione locali navigatoris huius apparatus manent, ideo ad celerem notationem magis quam ad archivum finale apta sunt
+- Publicatio in directorium connexum, importatio/exportatio, et plena administratio archivi ad usum desktop reservantur
+- Ad plenam rationem archivi, navigatorem desktopum vel applicationem desktopam utere
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

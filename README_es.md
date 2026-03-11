@@ -67,16 +67,17 @@ Construido como una **Single Page Application** para futura portabilidad nativa:
 ## 💾 Almacenamiento de Datos y Compatibilidad Multiplataforma
 
 ### 🖥️ Web Escritorio (Windows / macOS / Linux)
+- Modo recomendado: conecta una carpeta local y escribe cada entrada directamente como archivo `.json` en tu disco
 - Funciones completas: **Navegar, Crear, Editar, Exportar e Importar**
-- Tus entradas creadas se almacenan localmente en tu navegador
-- **Exportar**: Descarga tus datos como archivo `.json` para respaldo
-- **Importar**: Restaura tus datos desde un archivo exportado previamente
+- En el modo carpeta, tu archivo queda en ficheros que puedes inspeccionar, respaldar y sincronizar por tu cuenta
+- Si el acceso a carpetas no está disponible, la aplicación vuelve al almacenamiento local del navegador como modo de compatibilidad
 - Funciona completamente sin conexión - no requiere almacenamiento en servidor
 
 ### 📱 Móvil (iOS / Android)
-- **Modo solo lectura**: Explora archivos y momentos existentes
-- Las funciones de carga/exportación de archivos requieren un navegador de escritorio
-- Simplemente visita la web en una computadora para crear y gestionar tus entradas
+- **Exploración + borradores locales**: revisa archivos y guarda borradores en el dispositivo/navegador actual
+- Los borradores móviles permanecen en el almacenamiento local del navegador de ese dispositivo, por lo que sirven mejor para captura rápida que para archivado final
+- Publicar en una carpeta conectada, importar/exportar y la gestión completa del archivo siguen siendo flujos de escritorio
+- Para el flujo archivístico completo, usa un navegador de escritorio o la aplicación de escritorio
 
 ## 🚀 Inicio Rápido
 
