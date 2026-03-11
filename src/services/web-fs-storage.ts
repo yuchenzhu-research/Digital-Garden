@@ -42,6 +42,10 @@ const isJsonRecord = (value: unknown): value is JsonRecord => {
     return typeof value === 'object' && value !== null;
 };
 
+const isFileHandle = (handle: FileSystemHandle): handle is FileSystemFileHandle => {
+    return handle.kind === 'file';
+};
+
 const parseJsonRecord = (text: string): JsonRecord | null => {
     const parsed: unknown = JSON.parse(text);
     return isJsonRecord(parsed) ? parsed : null;
@@ -223,7 +227,7 @@ export class WebFSStorageAdapter implements StorageRepository {
 
             // Iterate async over folder
             for await (const [name, handle] of dirHandle.entries()) {
-                if (handle.kind === 'file' && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
+                if (isFileHandle(handle) && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
                     try {
                         const file = await handle.getFile();
                         const text = await file.text();
@@ -268,7 +272,7 @@ export class WebFSStorageAdapter implements StorageRepository {
             let targetName: string = '';
 
             for await (const [name, handle] of dirHandle.entries()) {
-                if (handle.kind === 'file' && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
+                if (isFileHandle(handle) && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
                     const file = await handle.getFile();
                     const text = await file.text();
                     try {
@@ -320,7 +324,7 @@ export class WebFSStorageAdapter implements StorageRepository {
             const dirHandle = this.requireHandle();
             // Need to find which file corresponds to this ID, plus possibly image
             for await (const [name, handle] of dirHandle.entries()) {
-                if (handle.kind === 'file' && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
+                if (isFileHandle(handle) && name.endsWith('.json') && name !== DRAFT_FILE_NAME) {
                     const file = await handle.getFile();
                     const text = await file.text();
                     try {
