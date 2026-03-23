@@ -10,6 +10,10 @@
     "log:default",
     "fs:default",
     "core:path:default",
-    "os:default"
+    "os:default",
+    {
+      "identifier": "fs:scope",
+      "allow": [{ "path": "$APPDATA/**" }, { "path": "$DOCUMENT/**" }]
+    }
   ]
 }
