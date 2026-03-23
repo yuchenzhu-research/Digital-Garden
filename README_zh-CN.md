@@ -85,6 +85,23 @@
 - 发布到已连接文件夹、导入/导出以及完整档案管理，仍建议在桌面端完成
 - 如需完整归档流程，请使用桌面浏览器或桌面应用
 
+## 📥 下载与安装
+
+你可以前往 [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) 页面下载为你平台预编译的桌面端客户端（`.dmg` 或 `.exe`）。
+
+### 🍎 macOS 用户请注意
+由于目前的 MVP 版本是直接通过 GitHub Actions 构建的，未配置 Apple 开发者证书签名，苹果系统的安全隔离机制会拦截它，并在首次打开时提示 **“文件已损坏，你应该将它移到废纸篓”**。
+**这并非文件真的损坏，请按以下步骤解除隔离即可正常使用：**
+1. 将下载的 `.dmg` 挂载后，将 App 拖入你的 `/Applications` (应用程序) 文件夹。
+2. 打开「终端 (Terminal)」，运行以下命令移除隔离属性：
+```bash
+xattr -cr "/Applications/Bibliotheca Vitae.app"
+```
+3. 随后即可正常双击打开应用。
+
+### 🪟 Windows 用户请注意
+安装 `.exe` 时如果被 Windows Defender (安全中心/SmartScreen) 提示“Windows 已保护你的电脑”，请点击 **“更多信息”** -> **“仍要运行”** 即可。
+
 ## 🚀 快速开始
 
 1.  克隆仓库。

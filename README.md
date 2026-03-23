@@ -85,6 +85,23 @@ Built as a shared **Web + Tauri desktop application**:
 - Publishing to a connected folder, importing/exporting, and full archive management remain desktop workflows
 - Use a desktop browser or the desktop app for final archive management
 
+## 📥 Download & Install
+
+You can download the pre-compiled desktop application for your platform from the [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) page.
+
+### 🍎 macOS Users
+Because the current MVP release is built via GitHub Actions without an Apple Developer certificate, macOS will trigger its quarantine mechanism and prompt that the app is "damaged". 
+**To fix this and run the app:**
+1. Drag the `.dmg` application into your `/Applications` folder.
+2. Open your Terminal and run the following command to remove the quarantine flag:
+```bash
+xattr -cr "/Applications/Bibliotheca Vitae.app"
+```
+3. You can now open the app normally.
+
+### 🪟 Windows Users
+Windows SmartScreen might flag the `.exe` as an unrecognized app. Click **"More info"** and then **"Run anyway"** to proceed.
+
 ## 🚀 Quick Start
 
 1.  Clone the repository.
