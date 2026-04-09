@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -p 4321",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test",
     "check": "npm run lint && npm run test && npm run build",
     "app:dev": "tauri dev",
     "app:build": "tauri build"
