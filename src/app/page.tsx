@@ -1,21 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Hero } from '@/components/features/Hero';
 import { HorizontalScrollSection } from '@/components/ui/HorizontalScrollSection';
 import { ImageCard } from '@/components/ui/ImageCard';
 import { DataManagement } from '@/components/ui/DataManagement';
-import { FilterBar, type Category } from '@/components/ui/FilterBar';
-import { documents } from '@/lib/data';
-import { isUserDocument, type Document } from '@/lib/types';
-import { entryToDocument } from '@/lib/document-mappers';
-import { getEntries, deleteEntry } from '@/services/entryService';
-import { hasMobileDraft } from '@/services/mobile-draft';
+import { isUserDocument } from '@/lib/types';
+import { FilterBar } from '@/components/ui/FilterBar';
 import { SettingsPanel } from '@/components/features/SettingsPanel';
-import type { Entry } from '@/services/storage-repository';
-import { useMobileDevice } from '@/hooks/useMobileDevice';
+import { useHomePageController } from '@/hooks/useHomePageController';
 
 // Dynamically import Canvas3D with loading state
 const Canvas3D = dynamic(() => import('@/components/visual/Canvas3D'), {
@@ -45,183 +39,38 @@ const EntryEditor = dynamic(
   }
 );
 
-const getInitialDimmingIntensity = (): number => {
-  if (typeof window === 'undefined') {
-    return 0.3;
-  }
-
-  const saved = window.localStorage.getItem('bv_dimming_intensity');
-  const parsed = saved ? Number.parseFloat(saved) : Number.NaN;
-
-  return Number.isFinite(parsed) ? parsed : 0.3;
-};
-
 export default function Home() {
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
-  const [editorEntry, setEditorEntry] = useState<Entry | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [userEntries, setUserEntries] = useState<Entry[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [category, setCategory] = useState<Category>('all');
-  const [isLoading, setIsLoading] = useState(true);
-  const [dimmingIntensity, setDimmingIntensity] = useState(getInitialDimmingIntensity);
-  const [hasLocalMobileDraft, setHasLocalMobileDraft] = useState(false);
-  const isMobileMode = useMobileDevice();
-  const isEditMode = editorEntry !== null;
-
-  const refreshMobileDraftState = useCallback(async () => {
-    if (!isMobileMode) {
-      setHasLocalMobileDraft(false);
-      return;
-    }
-
-    setHasLocalMobileDraft(await hasMobileDraft());
-  }, [isMobileMode]);
-
-  // Save preferences
-  const handleIntensityChange = (val: number) => {
-    setDimmingIntensity(val);
-    localStorage.setItem('bv_dimming_intensity', val.toString());
-  };
-
-  // Handle entry deletion
-  const handleDeleteEntry = async (document: Document) => {
-    if (isMobileMode || !isUserDocument(document) || !document.storageId) {
-      return;
-    }
-
-    if (confirm('Are you sure you want to delete this moment? This cannot be undone.')) {
-      await deleteEntry(document.storageId);
-      await refreshUserEntries();
-      setSelectedDocId(null);
-    }
-  };
-
-  useEffect(() => {
-    const loadUserEntries = async () => {
-      try {
-        const entries = await getEntries();
-        setUserEntries(entries);
-      } catch (error) {
-        console.warn('Failed to load user entries:', error);
-      }
-      setIsLoading(false);
-    };
-    loadUserEntries();
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadMobileDraftState = async () => {
-      if (!isMobileMode) {
-        if (!cancelled) {
-          setHasLocalMobileDraft(false);
-        }
-        return;
-      }
-
-      const hasDraft = await hasMobileDraft();
-      if (!cancelled) {
-        setHasLocalMobileDraft(hasDraft);
-      }
-    };
-
-    void loadMobileDraftState();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isMobileMode]);
-
-  // Combine static and user entries
-  const allDocuments = useMemo(() => {
-    const userDocs = userEntries.map((entry, i) => entryToDocument(entry, i));
-    return [...documents, ...userDocs];
-  }, [userEntries]);
-
-  // Filter documents based on search and category
-  const filteredDocuments = useMemo(() => {
-    return allDocuments.filter((doc) => {
-      // Category filter
-      if (category !== 'all' && doc.category !== category) {
-        return false;
-      }
-
-      // Search filter
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = doc.title.toLowerCase().includes(query);
-        const matchesAuthor = doc.author.toLowerCase().includes(query);
-        const matchesDescription = doc.description.toLowerCase().includes(query);
-        const matchesTags = doc.tags?.some(tag => tag.toLowerCase().includes(query));
-
-        if (!matchesTitle && !matchesAuthor && !matchesDescription && !matchesTags) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [allDocuments, category, searchQuery]);
-
-  const selectedDoc = allDocuments.find(doc => doc.id === selectedDocId);
-
-  // Sync scroll lock with edit mode as well
-  useEffect(() => {
-    if (selectedDocId || isEditing) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [selectedDocId, isEditing]);
-
-  // Reload entries when editing is closed
-  const handleEditorClose = async () => {
-    setIsEditing(false);
-    setEditorEntry(null);
-    await refreshUserEntries();
-    await refreshMobileDraftState();
-  };
-
-  // Refresh user entries
-  const refreshUserEntries = async () => {
-    try {
-      const entries = await getEntries();
-      setUserEntries(entries);
-    } catch (error) {
-      console.warn('Failed to refresh user entries:', error);
-    }
-  };
-
-  const handleCreateEntry = () => {
-    setEditorEntry(null);
-    setIsEditing(true);
-  };
-
-  const handleEditEntry = (document: Document) => {
-    if (isMobileMode || !isUserDocument(document) || !document.storageId) {
-      return;
-    }
-
-    const entry = userEntries.find((candidate) => candidate.id === document.storageId);
-
-    if (!entry) {
-      console.warn(`Could not find user entry for editing: ${document.storageId}`);
-      return;
-    }
-
-    setSelectedDocId(null);
-    setEditorEntry(entry);
-    setIsEditing(true);
-  };
-
-  // Show featured docs (first 3) regardless of filter
-  const featuredDocs = documents.slice(0, 3);
+  const {
+    allDocuments,
+    category,
+    clearFilters,
+    dimmingIntensity,
+    editorEntry,
+    featuredDocs,
+    filteredDocuments,
+    handleCreateEntry,
+    handleDeleteEntry,
+    handleEditEntry,
+    handleEditorClose,
+    handleIntensityChange,
+    hasLocalMobileDraft,
+    heroAppendLabel,
+    heroMobileNote,
+    isEditing,
+    isEditMode,
+    isLoading,
+    isMobileMode,
+    refreshMobileDraftState,
+    refreshUserEntries,
+    scrollProgress,
+    searchQuery,
+    selectedDoc,
+    setCategory,
+    setScrollProgress,
+    setSearchQuery,
+    setSelectedDocId,
+    userEntries,
+  } = useHomePageController();
 
   return (
     <main className="relative min-h-screen">
@@ -246,8 +95,8 @@ export default function Home() {
         {/* Hero Section */}
         <Hero
           onAppendClick={handleCreateEntry}
-          appendLabel={isMobileMode ? (hasLocalMobileDraft ? 'Continue Local Draft' : 'Open Local Draft') : 'Append Moment'}
-          mobileNote={isMobileMode ? 'Mobile keeps drafts in this browser only. Use desktop to publish into the archive.' : undefined}
+          appendLabel={heroAppendLabel}
+          mobileNote={heroMobileNote}
         />
 
         {isLoading && (
@@ -386,10 +235,7 @@ export default function Home() {
                 Showing {filteredDocuments.length} of {allDocuments.length} entries
               </span>
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setCategory('all');
-                }}
+                onClick={clearFilters}
                 className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
                 Clear filters
@@ -434,10 +280,7 @@ export default function Home() {
             <div className="text-center py-20">
               <p className="text-muted-foreground mb-4">No entries match your search.</p>
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setCategory('all');
-                }}
+                onClick={clearFilters}
                 className="text-primary hover:text-primary/80 transition-colors"
               >
                 Clear filters
