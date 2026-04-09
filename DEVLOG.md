@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-04-09 / Phase 5 Preparation: Project Structure Cleanup and Visual Foundation Setup
+
+### What changed
+- Added `docs/LOCAL-AGENT-ASSETS.md` to describe the local-only agent directory model:
+  - `.agent/` is reserved for Antigravity-specific rules
+  - `.agents/skills/` is the canonical shared repo-local skill library
+  - `.claude/` is a compatibility layer and should not drift into its own forked skill tree
+  - `.Codex/` remains optional local tool state
+- Updated `AGENTS.md`, `CLAUDE.md`, `docs/PROJECT-STRUCTURE.md`, and `docs/ENGINEERING-GUARDRAILS.md` so project structure and agent pipeline docs all describe the same local-tooling split.
+- Added `docs/DESIGN-FOUNDATION.md` as a pre-style visual-system brief. This document intentionally does not lock the project into a final UI direction yet.
+- Updated `src/app/globals.css` with semantic visual groundwork:
+  - canvas / surface / ink / accent / line / scrim token families
+  - motion duration and easing tokens
+  - shared utility classes such as `surface-panel`, `surface-card`, `frame-hairline`, and semantic text/overlay helpers
+- Updated `tests/guardrails.test.mjs` so repo-level tests now also guard:
+  - the local agent asset split
+  - the existence of the visual foundation doc
+  - the presence of semantic visual tokens in `globals.css`
+
+### Problems addressed
+- Fixed the ambiguity around `.agent/`, `.agents/`, `.claude/`, and `.Codex/`, which previously looked like overlapping project structure instead of local-only collaboration assets.
+- Fixed the lack of a documented canonical source for shared repo-local skills.
+- Fixed the design-system starting point so future UI work does not need to begin from scattered hardcoded color and timing values.
+- Kept visual preparation general on purpose, so a future direction can be chosen without first undoing premature component redesigns.
+
+### Impacted areas
+- `AGENTS.md`
+- `CLAUDE.md`
+- `docs/PROJECT-STRUCTURE.md`
+- `docs/ENGINEERING-GUARDRAILS.md`
+- `docs/LOCAL-AGENT-ASSETS.md`
+- `docs/DESIGN-FOUNDATION.md`
+- `src/app/globals.css`
+- `tests/guardrails.test.mjs`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### Risks / unfinished work
+- This preparation round does not decide the final UI style. Hero, cards, overlays, and editor surfaces still keep the current baseline until a stronger art direction is chosen.
+- Local filesystem cleanup inside ignored directories such as `.claude/` and `.agents/` still needs to be checked machine-locally after the tracked docs are in place.
+- The new semantic utilities are largely preparatory; most feature components do not consume them yet.
+
+### Next step
+- Consolidate local ignored agent folders so `.claude/skills/` points back to shared skill sources instead of carrying duplicate copies.
+- Then continue Phase 5 with non-destructive visual-system groundwork in shared components before choosing a full aesthetic direction.
+
 ## 2026-04-09 / Phase 4 Complete: Test Guardrail Expansion
 
 ### Related commits

@@ -8,6 +8,12 @@
 ## [Unreleased]
 
 ### Added
+- Added `docs/LOCAL-AGENT-ASSETS.md` to define the local-only agent directory split:
+  - `.agent/` for Antigravity rules
+  - `.agents/skills/` as the canonical shared repo-local skill library
+  - `.claude/` as a compatibility layer instead of a second source of truth
+- Added `docs/DESIGN-FOUNDATION.md` to prepare visual-system work before committing to a final UI style direction.
+- Added semantic visual and motion foundation tokens to `src/app/globals.css`, including canvas, surface, ink, accent, line, scrim, and timing roles.
 - Added the first-stage homepage orchestration consolidation:
   - Added `src/hooks/useHomePageController.ts`
   - Added homepage section components under `src/components/features/home/`
@@ -25,6 +31,8 @@
 - Starting from 2026-04-09, all new release notes and work logs should continue accumulating in this section.
 
 ### Changed
+- `AGENTS.md`, `CLAUDE.md`, `docs/PROJECT-STRUCTURE.md`, and `docs/ENGINEERING-GUARDRAILS.md` now treat `.agent/` as the Antigravity-specific local config, `.agents/skills/` as the canonical shared skill source, and `.claude/` as a compatibility layer.
+- `src/app/globals.css` now starts from semantic design-system primitives instead of only hardcoded “Alet-style” naming, while keeping the current warm editorial baseline visually intact.
 - `src/app/page.tsx` was further thinned down from a large page that mixed state and long JSX blocks into a shell that mostly composes a controller and sections.
 - `src/components/features/EntryEditor.tsx` no longer keeps draft loading, autosave, close-time persistence, and field coordination inline in the main component body. It now trends back toward a render shell plus publish actions.
 - `src/components/features/EntryEditor.tsx` was further reduced from a giant JSX file into an editor shell that mainly handles wiring and publish behavior.
@@ -36,6 +44,8 @@
 - `.github/workflows/ci.yml` and `docs/TESTING-CI.md` now reflect the expanded controller/service/backup guardrail suite instead of describing the tests as docs-only checks.
 
 ### Fixed
+- Fixed the local tooling ambiguity where `.agents/` and `.claude/` looked like parallel repo structures instead of local-only agent assets with different responsibilities.
+- Fixed the lack of a neutral UI-preparation layer, where future visual exploration would otherwise have started directly from component-level hardcoded colors and motion timings.
 - Fixed the continued growth of the homepage shell file, where page-level orchestration and concrete section rendering were still mixed together.
 - Fixed the continued single-file buildup in the editor, where form state, draft bridging, and render structure all lived in one component.
 - Fixed the way settings/data UI components were directly coupled to storage strategy and mutation lifecycle.
@@ -55,6 +65,8 @@
 - None.
 
 ### Migration Notes
+- If local agent tooling changes further, keep `.agent/` for Antigravity-only rules and keep shared skills converged under `.agents/skills/`.
+- If the visual direction changes later, start by extending the semantic foundation in `docs/DESIGN-FOUNDATION.md` and `src/app/globals.css` before rewriting feature components.
 - If homepage work continues, do not move section details and page control logic back into `page.tsx`.
 - If the editor keeps evolving, do not move autosave / discard / close / hydrate logic back into the `EntryEditor.tsx` body.
 - If settings or data tooling grows further, prefer the corresponding controller hook instead of pushing storage branches back into UI components.
