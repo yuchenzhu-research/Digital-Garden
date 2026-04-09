@@ -17,6 +17,8 @@ test('core engineering docs exist', () => {
     'docs/ARCHITECTURE.md',
     'docs/PROJECT-STRUCTURE.md',
     'docs/ENGINEERING-GUARDRAILS.md',
+    'docs/LOCAL-AGENT-ASSETS.md',
+    'docs/DESIGN-FOUNDATION.md',
     'docs/TESTING-CI.md',
     'docs/RELEASE.md',
     '.github/workflows/release.yml',
@@ -50,6 +52,23 @@ test('project structure includes changelog and devlog as root docs', () => {
   assert.match(structure, /DEVLOG\.md/);
 });
 
+test('agent asset docs define a canonical local tooling split', () => {
+  const agents = read('AGENTS.md');
+  const claude = read('CLAUDE.md');
+  const structure = read('docs', 'PROJECT-STRUCTURE.md');
+  const localAssets = read('docs', 'LOCAL-AGENT-ASSETS.md');
+
+  assert.match(agents, /\.agent\//);
+  assert.match(agents, /\.agents\/skills\//);
+  assert.match(claude, /\.agent\//);
+  assert.match(claude, /\.agents\/skills\//);
+  assert.match(structure, /\.agent\//);
+  assert.match(structure, /\.claude\//);
+  assert.match(localAssets, /Antigravity/i);
+  assert.match(localAssets, /canonical shared repo-local skill library/i);
+  assert.match(localAssets, /compatibility layer/i);
+});
+
 test('engineering guardrails document the architecture boundaries', () => {
   const content = read('docs', 'ENGINEERING-GUARDRAILS.md');
   assert.match(content, /src\/app\/page\.tsx/);
@@ -61,6 +80,21 @@ test('engineering guardrails document the architecture boundaries', () => {
   assert.match(content, /Desktop web/i);
   assert.match(content, /Mobile web/i);
   assert.match(content, /Tauri desktop app/i);
+});
+
+test('design foundation documents semantic visual groundwork', () => {
+  const doc = read('docs', 'DESIGN-FOUNDATION.md');
+  const globals = read('src', 'app', 'globals.css');
+
+  assert.match(doc, /semantic tokens/i);
+  assert.match(doc, /Variant/i);
+  assert.match(doc, /MotionSites/i);
+  assert.match(doc, /React Bits/i);
+  assert.match(doc, /Design Prompts/i);
+  assert.match(globals, /--canvas-base/);
+  assert.match(globals, /--surface-1/);
+  assert.match(globals, /--motion-duration-base/);
+  assert.match(globals, /\.surface-panel/);
 });
 
 test('release docs do not overclaim Linux desktop app automation', () => {
