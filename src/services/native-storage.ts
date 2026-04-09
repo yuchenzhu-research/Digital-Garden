@@ -20,6 +20,7 @@ import {
   isDataUrl,
   isManagedImagePath,
 } from './portable-images';
+import { parseBackupJson } from './storage-backups';
 
 // ============================================================================
 // Tauri Types (duplicated from Rust for TypeScript)
@@ -50,25 +51,6 @@ interface RustImageResult {
   url?: string;
   error?: string;
 }
-
-const parseImportPayload = (json: string): Entry[] => {
-  const parsed: unknown = JSON.parse(json);
-
-  if (Array.isArray(parsed)) {
-    return parsed as Entry[];
-  }
-
-  if (
-    typeof parsed === 'object' &&
-    parsed !== null &&
-    'entries' in parsed &&
-    Array.isArray((parsed as { entries?: unknown }).entries)
-  ) {
-    return (parsed as { entries: Entry[] }).entries;
-  }
-
-  throw new Error('Invalid import format: expected an entries array');
-};
 
 // ============================================================================
 // Native Storage Adapter Class
@@ -372,7 +354,7 @@ export class NativeStorageAdapter implements StorageRepository {
   async importData(json: string): Promise<void> {
     try {
       const { invoke } = await this.initCore();
-      const entries = parseImportPayload(json);
+      const entries = parseBackupJson(json);
       const payload: RustEntryPayload[] = entries.map((entry) => ({
         id: entry.id,
         title: entry.title,

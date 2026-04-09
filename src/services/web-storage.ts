@@ -14,6 +14,7 @@ import {
   DraftEntry,
   getAdapterMetadata,
 } from './storage-repository';
+import { parseBackupJson } from './storage-backups';
 import { isManagedImagePath } from './portable-images';
 
 // ============================================================================
@@ -279,10 +280,7 @@ export class WebStorageAdapter implements StorageRepository {
 
   async importData(json: string): Promise<void> {
     try {
-      const entries = JSON.parse(json);
-      if (!Array.isArray(entries)) {
-        throw new Error('Invalid data format');
-      }
+      const entries = parseBackupJson(json);
 
       const existingEntries = loadEntries();
       const merged = [...existingEntries];

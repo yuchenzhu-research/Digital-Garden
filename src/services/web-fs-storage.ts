@@ -21,6 +21,7 @@ import {
     isDataUrl,
     isManagedImagePath,
 } from './portable-images';
+import { parseBackupJson } from './storage-backups';
 
 const DIRECTORY_HANDLE_KEY = 'bibliotheca_fs_handle';
 const DRAFT_FILE_NAME = '.draft.json';
@@ -554,14 +555,10 @@ export class WebFSStorageAdapter implements StorageRepository {
     }
 
     async importData(json: string): Promise<void> {
-        const entries: unknown = JSON.parse(json);
-        if (Array.isArray(entries)) {
-            for (const entry of entries) {
-                if (isJsonRecord(entry)) {
-                    const preparedEntry = await this.prepareImportedEntry(toEntry(entry));
-                    await this.saveEntry(preparedEntry);
-                }
-            }
+        const entries = parseBackupJson(json);
+        for (const entry of entries) {
+            const preparedEntry = await this.prepareImportedEntry(entry);
+            await this.saveEntry(preparedEntry);
         }
     }
 

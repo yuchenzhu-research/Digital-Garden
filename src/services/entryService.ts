@@ -3,7 +3,12 @@
  * Creates and exports a singleton repository instance based on the environment
  */
 
-import type { DraftEntry, Entry, StorageRepository } from './storage-repository';
+import type { DraftEntry, StorageRepository } from './storage-repository';
+import {
+  createArchiveBackupFilename,
+  createArchiveBackupPayload,
+  parseBackupEntries,
+} from './storage-backups';
 import {
   createLazyRepositoryProxy,
   getRepository,
@@ -26,23 +31,6 @@ export interface FileImportResult {
   importedCount?: number;
   error?: string;
 }
-
-const parseImportedEntries = (value: unknown): Entry[] => {
-  if (Array.isArray(value)) {
-    return value as Entry[];
-  }
-
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'entries' in value &&
-    Array.isArray((value as { entries?: unknown }).entries)
-  ) {
-    return (value as { entries: Entry[] }).entries;
-  }
-
-  throw new Error('Invalid backup format: expected an entries array.');
-};
 
 const downloadJsonFile = (filename: string, json: string) => {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
@@ -146,17 +134,12 @@ export const exportToFile = async (): Promise<FileExportResult> => {
   try {
     const mode = getStorageModeInfo();
     const exported = await exportData();
-    const entries = parseImportedEntries(JSON.parse(exported));
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `bibliotheca_vitae_backup_${timestamp}.json`;
-
-    const payload = {
-      version: '1.2',
-      exportedAt: new Date().toISOString(),
-      storageMode: mode.kind,
-      entryCount: entries.length,
+    const entries = parseBackupEntries(JSON.parse(exported));
+    const filename = createArchiveBackupFilename();
+    const payload = createArchiveBackupPayload({
       entries,
-    };
+      storageMode: mode.kind,
+    });
 
     downloadJsonFile(filename, JSON.stringify(payload, null, 2));
 
@@ -184,7 +167,7 @@ export const importFromFile = async (
     const previousCount = await getUserEntryCount();
     const text = await file.text();
     const parsed = JSON.parse(text);
-    const entries = parseImportedEntries(parsed);
+    const entries = parseBackupEntries(parsed);
 
     await importData(JSON.stringify(entries));
 
