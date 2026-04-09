@@ -9,6 +9,13 @@ Type: Next.js + Tauri (Desktop App)
 - **Local-only agent assets**: `.agents/`, `.claude/`, `.Codex/`, `.agent/` (tooling only; not product source)
 - **Build outputs**: `.next/`, `out/`, `node_modules/`, `src-tauri/target/` (generated artifacts; not project structure)
 
+## 🤖 Local Agent Asset Roles
+- `.agent/` is reserved for the Antigravity agent system and its local rules. Keep it.
+- `.agents/skills/` is the canonical shared repo-local skill library for Codex, Claude, and similar coding agents.
+- `.claude/` should stay a compatibility layer over shared skills, not a second independent source of truth.
+- `.Codex/` is optional local tool state. Do not create or document product logic there.
+- See `docs/LOCAL-AGENT-ASSETS.md` for the current consolidation rule.
+
 ## 🧭 Runtime Surfaces
 - **Desktop Web**: full archive browsing plus local folder/browser-local persistence
 - **Mobile Web**: browse plus browser-local drafts only, not a full archive-management surface
@@ -64,4 +71,4 @@ These rules apply to OpenAI Codex, Claude Code, Google Antigravity/Gemini-style 
 - **Docs Placement**: Keep multilingual `README*.md` at the repo root; place longer internal documentation in `docs/`.
 - **Docs Assets**: Store documentation-only images and screenshots in `docs/assets/`; keep `public/` for runtime assets only.
 - **Testing Baseline**: `npm run lint`, `npm run test`, and `npm run build` are the minimum checks for frontend/documentation changes. Rust or workflow changes may require extra validation.
-- **Source of Truth**: Use `docs/ARCHITECTURE.md`, `docs/ENGINEERING-GUARDRAILS.md`, `docs/TESTING-CI.md`, and `docs/RELEASE.md` as the living engineering references for this repo.
+- **Source of Truth**: Use `docs/ARCHITECTURE.md`, `docs/ENGINEERING-GUARDRAILS.md`, `docs/TESTING-CI.md`, `docs/RELEASE.md`, `docs/PROJECT-STRUCTURE.md`, `docs/LOCAL-AGENT-ASSETS.md`, and `docs/DESIGN-FOUNDATION.md` as the living engineering references for this repo.

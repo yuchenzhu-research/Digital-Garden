@@ -84,6 +84,17 @@ Every coding task should move through this pipeline:
 5. Update docs when code behavior, architecture assumptions, or release expectations changed.
 6. Report concrete outcomes and unresolved risks.
 
+## Local Agent Asset Discipline
+
+Local tool folders such as `.agent/`, `.agents/`, `.claude/`, and `.Codex/` are collaboration tooling only.
+
+- `.agent/` is reserved for Antigravity-specific local rules.
+- `.agents/skills/` is the shared repo-local skill source.
+- `.claude/` should behave as a compatibility layer over shared skills instead of drifting into a second skill library.
+- These folders are not product architecture and should not be described as runtime application structure.
+
+See `docs/LOCAL-AGENT-ASSETS.md` for the canonical split.
+
 ## Required Validation Baseline
 
 For most frontend, docs, and workflow changes, the minimum validation set is:

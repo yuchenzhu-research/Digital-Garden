@@ -47,6 +47,8 @@
 - `docs/ENGINEERING-GUARDRAILS.md`：说明项目架构守卫、Agent 协作 pipeline 与工程边界
 - `docs/TESTING-CI.md`：说明默认验证命令、CI 职责与测试扩展方向
 - `docs/RELEASE.md`：说明当前发布矩阵与桌面 Web / 桌面 App 的支持差异
+- `docs/LOCAL-AGENT-ASSETS.md`：说明 `.agent` / `.agents` / `.claude` / `.Codex` 的职责边界
+- `docs/DESIGN-FOUNDATION.md`：说明 UI 风格未定前的视觉基础层、语义 token 与后续升级方式
 
 建议后续逐步补充：
 
@@ -72,6 +74,11 @@
 - `AGENTS.md`、`CLAUDE.md` 是可跟踪的入口说明
 - `.agents/`、`.claude/`、`.Codex/`、`.agent/` 属于本地工具目录
 - 这些目录用于技能、缓存、规则或工具配置，不应视为业务源码或产品文档
+- 当前推荐职责：
+  - `.agent/`：Antigravity 系统配置与规则，保留
+  - `.agents/skills/`：共享 repo-local 技能源，作为 canonical source
+  - `.claude/`：Claude 兼容层，尽量通过别名或链接复用 `.agents/skills/`
+  - `.Codex/`：可选的本地工具状态目录，不作为项目结构的一部分
 
 ## 当前整理决定
 
@@ -86,3 +93,4 @@
 - 确认 `public/docs/` 是否为运行时资源；如果只是仓库文档素材，再考虑迁移到 `docs/assets/`
 - 把架构说明、数据流、发布流程分别拆到 `docs/ARCHITECTURE.md` 和 `docs/RELEASE.md`
 - 继续清理根目录，只保留入口文件和工程配置
+- 把视觉系统准备工作持续收敛到 `docs/DESIGN-FOUNDATION.md` 与 `src/app/globals.css` 的语义 token 层

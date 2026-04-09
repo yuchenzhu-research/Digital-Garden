@@ -9,6 +9,13 @@ Type: Next.js + Tauri (Desktop App)
 - **Local-only agent assets**: `.claude/`, `.agents/`, `.Codex/`, `.agent/` (tooling only; not product source)
 - **Build outputs**: `.next/`, `out/`, `node_modules/`, `src-tauri/target/` (generated artifacts; not project structure)
 
+## 🤖 Local Agent Asset Roles
+- `.agent/` is reserved for the Antigravity agent system and its local rules. Keep it.
+- `.agents/skills/` is the canonical shared repo-local skill library for Codex, Claude, and similar coding agents.
+- `.claude/` should stay a compatibility layer over shared skills, not a second independent source of truth.
+- `.Codex/` is optional local tool state. Do not create or document product logic there.
+- See `docs/LOCAL-AGENT-ASSETS.md` for the current consolidation rule.
+
 ## 🧭 Runtime Surfaces
 - **Desktop Web**: full archive browsing plus local folder/browser-local persistence
 - **Mobile Web**: browse plus browser-local drafts only, not a full archive-management surface
@@ -24,14 +31,14 @@ Type: Next.js + Tauri (Desktop App)
 - Prefer extending existing contracts and boundaries over adding parallel paths.
 
 ## 🧠 Loaded Agent Skills (Local Context)
-I have installed specific agent skills in the `.claude/skills` directory. Please refer to them for all coding tasks:
+Use the shared skill bundles under `.agents/skills/`. `.claude/skills/` may exist locally as compatibility aliases to the same shared content.
 
 1.  **Vercel Best Practices**: 
-    - Reference: `./.claude/skills/vercel-agent-skills`
+    - Reference: `./.agents/skills/vercel-agent-skills`
     - Use this for all Next.js App Router, Server Actions, and caching logic.
 
 2.  **Tauri Desktop Integration**:
-    - Reference: `./.claude/skills/tauri-action/README.md`
+    - Reference: `./.agents/skills/tauri-action/README.md`
     - Use this when writing GitHub Actions workflows or modifying `src-tauri`.
     - Local CLI command: Use `npx tauri` (do not use global tauri).
 
@@ -64,4 +71,4 @@ These rules apply to Claude Code and should stay compatible with OpenAI Codex, G
 - **Docs Placement**: Keep multilingual `README*.md` at the repo root; place longer internal documentation in `docs/`.
 - **Docs Assets**: Store documentation-only images and screenshots in `docs/assets/`; keep `public/` for runtime assets only.
 - **Testing Baseline**: `npm run lint`, `npm run test`, and `npm run build` are the minimum checks for frontend/documentation changes. Rust or workflow changes may require extra validation.
-- **Source of Truth**: Use `docs/ARCHITECTURE.md`, `docs/ENGINEERING-GUARDRAILS.md`, `docs/TESTING-CI.md`, and `docs/RELEASE.md` as the living engineering references for this repo.
+- **Source of Truth**: Use `docs/ARCHITECTURE.md`, `docs/ENGINEERING-GUARDRAILS.md`, `docs/TESTING-CI.md`, `docs/RELEASE.md`, `docs/PROJECT-STRUCTURE.md`, `docs/LOCAL-AGENT-ASSETS.md`, and `docs/DESIGN-FOUNDATION.md` as the living engineering references for this repo.
