@@ -1,19 +1,16 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, ArrowRight, Save, X, Plus, Trash2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Toast } from '@/components/ui/Toast';
+import { useEntryEditorDraftBridge } from '@/hooks/useEntryEditorDraftBridge';
+import { useEntryEditorFormState } from '@/hooks/useEntryEditorFormState';
 import { useSaveShortcut } from '@/hooks/useKeyboardShortcut';
 import entryService from '@/services/entryService';
 import type { Entry } from '@/services/storage-repository';
-import {
-    clearMobileDraft,
-    getMobileDraft,
-    saveMobileDraft,
-} from '@/services/mobile-draft';
 
 // Simple Auto-Resizing Textarea Component
 const AutoResizeTextarea = ({
@@ -64,17 +61,6 @@ interface EntryEditorProps {
     onDraftStateChange?: () => void;
 }
 
-const hasDraftContent = (draft: Partial<Entry>): boolean => {
-    return Boolean(
-        draft.title ||
-        draft.figure ||
-        draft.moment ||
-        draft.narrative ||
-        draft.imageUrl ||
-        draft.keywords?.length
-    );
-};
-
 export function EntryEditor({
     mode = 'create',
     initialEntry,
@@ -84,97 +70,45 @@ export function EntryEditor({
 }: EntryEditorProps) {
     const isEditMode = mode === 'edit';
 
-    // --- State ---
-    const [image, setImage] = useState<string | null>(null);
-    const [title, setTitle] = useState('');
-    const [figure, setFigure] = useState('');
-    const [moment, setMoment] = useState('');
-    const [narrative, setNarrative] = useState('');
-    const [keywords, setKeywords] = useState<string[]>([]);
-    const [currentKeyword, setCurrentKeyword] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [isPublishing, setIsPublishing] = useState(false);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const draftStorage = useMemo(() => (mobileDraftMode
-        ? {
-            save: saveMobileDraft,
-            get: getMobileDraft,
-            clear: clearMobileDraft,
-        }
-        : {
-            save: entryService.saveDraft,
-            get: entryService.getDraft,
-            clear: entryService.clearDraft,
-        }), [mobileDraftMode]);
-
-    const persistDraft = useCallback(async (draft: Partial<Entry>) => {
-        if (isEditMode) {
-            return;
-        }
-
-        if (!hasDraftContent(draft)) {
-            await draftStorage.clear();
-            setLastSaved(null);
-            onDraftStateChange?.();
-            return;
-        }
-
-        await draftStorage.save({
-            ...draft,
-            dateModified: new Date().toISOString(),
-        });
-        setLastSaved(new Date());
-        onDraftStateChange?.();
-    }, [draftStorage, isEditMode, onDraftStateChange]);
-
-    // Full Entry Autosave Effect
-    useEffect(() => {
-        if (isEditMode) {
-            return;
-        }
-
-        const currentEntry: Partial<Entry> = {
-            title,
-            figure,
-            moment,
-            narrative,
-            keywords,
-            imageUrl: image || undefined,
-        };
-
-        const timer = setTimeout(() => {
-            void persistDraft(currentEntry);
-        }, 1500);
-        return () => clearTimeout(timer);
-    }, [image, title, figure, moment, narrative, keywords, isEditMode, persistDraft]);
-
-    useEffect(() => {
-        if (isEditMode && initialEntry) {
-            setTitle(initialEntry.title);
-            setFigure(initialEntry.figure);
-            setMoment(initialEntry.moment);
-            setNarrative(initialEntry.narrative);
-            setKeywords(initialEntry.keywords);
-            setImage(initialEntry.imageUrl ?? null);
-            setLastSaved(null);
-            return;
-        }
-
-        // Load draft on mount for new entries only
-        draftStorage.get().then(savedEntry => {
-            if (savedEntry) {
-                if (savedEntry.title) setTitle(savedEntry.title);
-                if (savedEntry.figure) setFigure(savedEntry.figure);
-                if (savedEntry.moment) setMoment(savedEntry.moment);
-                if (savedEntry.narrative) setNarrative(savedEntry.narrative);
-                if (savedEntry.keywords) setKeywords(savedEntry.keywords);
-                if (savedEntry.imageUrl) setImage(savedEntry.imageUrl);
-            }
-        });
-    }, [draftStorage, initialEntry, isEditMode]);
+    const {
+        applyDraft,
+        currentKeyword,
+        draftSnapshot,
+        figure,
+        handleKeywordKeyDown,
+        image,
+        keywords,
+        moment,
+        narrative,
+        removeKeyword,
+        resetForm,
+        setCurrentKeyword,
+        setFigure,
+        setImage,
+        setMoment,
+        setNarrative,
+        setTitle,
+        title,
+    } = useEntryEditorFormState();
+    const {
+        clearDraftStorage,
+        closeEditor,
+        discardDraft,
+        lastSaved,
+    } = useEntryEditorDraftBridge({
+        applyDraft,
+        draftSnapshot,
+        initialEntry,
+        isEditMode,
+        mobileDraftMode,
+        onClose,
+        onDraftStateChange,
+        resetForm,
+    });
 
     // --- Toast Helper ---
     const showToast = useCallback((message: string) => {
@@ -217,51 +151,8 @@ export function EntryEditor({
     };
 
     const handleDiscardDraft = async () => {
-        if (isEditMode) {
-            return;
-        }
-
-        setTitle('');
-        setFigure('');
-        setMoment('');
-        setNarrative('');
-        setKeywords([]);
-        setCurrentKeyword('');
-        setImage(null);
-        setLastSaved(null);
-        await draftStorage.clear();
-        onDraftStateChange?.();
+        await discardDraft();
         showToast('Local draft discarded');
-        onClose?.();
-    };
-
-    const handleCloseEditor = async () => {
-        if (!isEditMode) {
-            await persistDraft({
-                title,
-                figure,
-                moment,
-                narrative,
-                keywords,
-                imageUrl: image || undefined,
-            });
-        }
-
-        onClose?.();
-    };
-
-    const handleKeywordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && currentKeyword.trim()) {
-            e.preventDefault();
-            if (!keywords.includes(currentKeyword.trim())) {
-                setKeywords([...keywords, currentKeyword.trim()]);
-            }
-            setCurrentKeyword('');
-        }
-    };
-
-    const removeKeyword = (tag: string) => {
-        setKeywords(keywords.filter(t => t !== tag));
     };
 
     // --- Publish Handler ---
@@ -298,8 +189,7 @@ export function EntryEditor({
                 showToast(isEditMode ? 'Moment Updated in Archive' : 'Moment Preserved in Archive');
 
                 if (!isEditMode) {
-                    await draftStorage.clear();
-                    onDraftStateChange?.();
+                    await clearDraftStorage();
                 }
             } else {
                 console.error('Failed to save:', result.error);
@@ -320,7 +210,7 @@ export function EntryEditor({
                 {/* Close Button */}
                 {onClose && (
                     <button
-                        onClick={() => void handleCloseEditor()}
+                        onClick={() => void closeEditor()}
                         className="absolute top-8 left-8 p-3 bg-foreground/5 hover:bg-foreground/10 rounded-full transition-colors z-50 group"
                         title="Close Editor"
                     >
@@ -384,7 +274,7 @@ export function EntryEditor({
             {/* Global Close Button for Overlay */}
             {onClose && (
                 <button
-                    onClick={() => void handleCloseEditor()}
+                    onClick={() => void closeEditor()}
                     className="fixed top-8 left-8 p-3 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md z-[60] transition-all hover:scale-110"
                     title="Close Editor"
                 >
@@ -587,7 +477,7 @@ export function EntryEditor({
                             Discard Draft
                         </button>
                         <button
-                            onClick={() => void handleCloseEditor()}
+                            onClick={() => void closeEditor()}
                             className="flex items-center gap-3 px-6 py-4 bg-primary text-primary-foreground rounded-full shadow-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 group font-sans tracking-widest uppercase text-sm"
                         >
                             <Save className="w-4 h-4" />
