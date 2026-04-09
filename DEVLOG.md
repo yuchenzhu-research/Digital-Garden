@@ -2,6 +2,56 @@
 
 ---
 
+## 2026-04-09 / 第二阶段第一批：EntryEditor 草稿桥接与表单状态抽离
+
+### 相关 commits
+- `5b0cf31` Extract EntryEditor draft and form hooks
+
+### 本次修改
+- 从 `src/components/features/EntryEditor.tsx` 中抽出两个专用 hook：
+  - `src/hooks/useEntryEditorFormState.ts`
+  - `src/hooks/useEntryEditorDraftBridge.ts`
+- `useEntryEditorFormState.ts` 现在承载：
+  - 标题、figure、moment、narrative、keywords、image 的表单状态
+  - keyword add/remove 行为
+  - draft snapshot 生成
+- `useEntryEditorDraftBridge.ts` 现在承载：
+  - mobile draft / desktop draft adapter 选择
+  - draft hydrate
+  - autosave
+  - discard
+  - close 时持久化
+  - `lastSaved` 管理
+- `src/components/features/EntryEditor.tsx` 收口为：
+  - 图片上传/移除
+  - publish/update 调用
+  - toast
+  - 编辑器布局与交互渲染
+- 拆分后，`EntryEditor.tsx` 从 631 行降到 521 行。
+
+### 解决的问题
+- 解决了 `EntryEditor.tsx` 同时持有表单状态、draft storage bridge 和渲染层的问题。
+- 解决了 mobile draft 与 desktop draft 逻辑直接内联在组件主体里、继续扩大单文件复杂度的问题。
+- 为下一批继续拆 editor sub-sections 或 image/meta/publish actions 提供了更稳定的状态入口。
+
+### 影响范围
+- `src/components/features/EntryEditor.tsx`
+- `src/hooks/useEntryEditorFormState.ts`
+- `src/hooks/useEntryEditorDraftBridge.ts`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### 风险 / 未完成事项
+- `EntryEditor.tsx` 仍然保留了大量渲染结构、图片上传行为和 publish action，离最终目标还有距离。
+- `AutoResizeTextarea` 仍然内联在 Editor 文件里。
+- 这批还没有收 `SettingsPanel.tsx` 和 `DataManagement.tsx` 的 storage mode/fallback 逻辑。
+
+### 下一步
+- 继续拆 `EntryEditor.tsx` 的 render sections，把 image stage、metadata/sidebar、narrative body、floating actions 分离。
+- 再进入 `SettingsPanel.tsx` 与 `DataManagement.tsx`，把 UI 层里的 storage 切换和刷新逻辑继续收紧。
+
+---
+
 ## 2026-04-09 / 第一阶段：首页 orchestration 拆薄
 
 ### 相关 commits
