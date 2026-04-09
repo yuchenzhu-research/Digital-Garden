@@ -55,6 +55,7 @@ These rules apply to OpenAI Codex, Claude Code, Google Antigravity/Gemini-style 
 4. **Validate before closing**: run the smallest relevant verification set before reporting completion.
 5. **Sync docs with code**: if architecture, release expectations, or workflow behavior changes, update the corresponding docs in the same task.
 6. **Do not overclaim platform support**: Desktop web supports macOS, Windows, and Linux. Desktop app release automation must match what docs claim.
+7. **Release discipline**: treat Git tags as version anchors. GitHub Releases must be promoted manually from a draft workflow, not published implicitly by pushing a tag.
 
 ## 🛠️ Common Commands
 - **Dev (Web)**: `npm run dev`
@@ -63,7 +64,8 @@ These rules apply to OpenAI Codex, Claude Code, Google Antigravity/Gemini-style 
 - **Lint**: `npm run lint`
 - **Test**: `npm run test`
 - **Build (Web)**: `npm run build`
-- **Release**: `git tag v0.1.0 && git push origin v0.1.0` (Triggers GitHub Action)
+- **Version Tag**: `git tag v0.1.0 && git push origin v0.1.0` (Creates a version anchor only)
+- **Draft Release**: run the GitHub Actions `Release` workflow manually with an existing `v*` tag
 
 ## 🚨 Guidelines
 - **Local-First**: Prioritize saving data to local storage/fs.

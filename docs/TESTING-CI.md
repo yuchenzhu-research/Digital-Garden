@@ -11,6 +11,7 @@ This repo now treats CI as a lightweight engineering gate for:
 - backup contract behavior
 - web build regressions
 - basic Rust formatting checks for the Tauri layer
+- cross-platform desktop smoke coverage for the Tauri shell
 
 ## Baseline Commands
 
@@ -69,4 +70,12 @@ It is responsible for:
 - web build verification
 - Rust formatting checks
 
-`.github/workflows/release.yml` remains a delivery workflow. It is not a substitute for CI.
+`.github/workflows/desktop-smoke.yml` is the desktop validation workflow.
+
+It is responsible for:
+
+- cross-platform Tauri smoke builds on macOS, Windows, and Linux
+- catching desktop-shell regressions before release packaging
+- providing better confidence for large UI changes that still affect the shared desktop shell
+
+`.github/workflows/release.yml` remains a delivery workflow. It is not a substitute for CI and should stay manual.

@@ -1,9 +1,11 @@
 name: "Release"
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing version tag to package into a draft release (example: v3.1.0)"
+        required: true
+        type: string
 
 jobs:
   publish-tauri:
@@ -23,6 +25,20 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag input
+        shell: bash
+        run: |
+          TAG="${{ inputs.tag }}"
+          if [[ ! "$TAG" =~ ^v ]]; then
+            echo "Release workflow only accepts version tags starting with v"
+            exit 1
+          fi
+
+          git fetch --tags --force
+          git rev-parse "refs/tags/$TAG" >/dev/null
 
       - name: Setup node
         uses: actions/setup-node@v4
@@ -42,9 +58,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Bibliotheca Vitae v__VERSION__"
-          releaseBody: "Automated desktop app release via GitHub Actions."
+          tagName: ${{ inputs.tag }}
+          releaseName: "Bibliotheca Vitae ${{ inputs.tag }}"
+          releaseBody: "Manual draft release created from an existing version tag."
           releaseDraft: true
           prerelease: false
+          generateReleaseNotes: true
           args: ${{ matrix.args }}
