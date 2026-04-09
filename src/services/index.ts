@@ -43,6 +43,9 @@ export type {
 export type {
   StorageMode,
   StorageModeInfo,
+} from './storage-runtime';
+
+export type {
   FileExportResult,
   FileImportOptions,
   FileImportResult,
