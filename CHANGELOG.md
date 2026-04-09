@@ -1,127 +1,127 @@
 # CHANGELOG
 
-> 记录项目对外发布版本的可读变更。  
-> 不机械罗列所有 commits，只总结对用户、协作者、维护者真正重要的变化。
+> Human-readable release notes for the project.  
+> This file does not try to mirror every commit. It summarizes the changes that matter to users, collaborators, and maintainers.
 
 ---
 
 ## [Unreleased]
 
-### 新增
-- 新增首页 page orchestration 第一阶段收口：
-  - 新增 `src/hooks/useHomePageController.ts`
-  - 新增 `src/components/features/home/` 下的首页 section 组件
-- 新增 Editor 第一批状态收口：
-  - 新增 `src/hooks/useEntryEditorFormState.ts`
-  - 新增 `src/hooks/useEntryEditorDraftBridge.ts`
-- 新增 Editor section 组件目录 `src/components/features/editor/`，承接 image stage、hero、sidebar、body、floating actions。
-- 新增 `src/hooks/useSettingsPanelController.ts`，统一 settings 面板的环境判断、Folder Mode 连接和面板状态。
-- 新增 `src/hooks/useDataManagementController.ts`，统一数据导入导出、状态刷新和反馈消息生命周期。
-- 新增 `src/services/storage-runtime.ts`，统一 repository runtime、storage mode 和 lazy proxy。
-- 新增 `src/services/storage-backups.ts`，统一 backup payload、文件命名和 entries 解析 contract。
-- 新增 `tests/services-guardrails.test.mjs`，守卫 service facade 和 backup contract 的结构约束。
-- 从 2026-04-09 起，后续新版本和新工作请从这一节继续累积。
+### Added
+- Added the first-stage homepage orchestration consolidation:
+  - Added `src/hooks/useHomePageController.ts`
+  - Added homepage section components under `src/components/features/home/`
+- Added the first EntryEditor state consolidation batch:
+  - Added `src/hooks/useEntryEditorFormState.ts`
+  - Added `src/hooks/useEntryEditorDraftBridge.ts`
+- Added the `src/components/features/editor/` section component directory to hold the image stage, hero, sidebar, body, and floating actions.
+- Added `src/hooks/useSettingsPanelController.ts` to centralize environment gating, Folder Mode connection, and panel state.
+- Added `src/hooks/useDataManagementController.ts` to centralize import/export actions, state refresh, and status message lifecycle.
+- Added `src/services/storage-runtime.ts` to centralize repository runtime selection, storage mode, and the lazy proxy.
+- Added `src/services/storage-backups.ts` to centralize backup payloads, filename generation, and entry parsing.
+- Added `tests/services-guardrails.test.mjs` to guard the service facade and backup contract structure.
+- Starting from 2026-04-09, all new release notes and work logs should continue accumulating in this section.
 
-### 变更
-- `src/app/page.tsx` 进一步收薄，从“大页面同时持有逻辑与大段 JSX”收口为以 controller + section 组装为主的壳层。
-- `src/components/features/EntryEditor.tsx` 把草稿加载、自动保存、关闭时持久化、表单字段协调从组件主体中抽离，回到“发布动作 + 渲染骨架”为主。
-- `src/components/features/EntryEditor.tsx` 继续从巨型 JSX 文件收口为 editor shell，主文件现在主要负责 wiring 与 publish action。
-- `src/components/features/SettingsPanel.tsx` 不再直接持有 storage mode 判断、Folder Mode 连接流程和 reload 策略。
-- `src/components/ui/DataManagement.tsx` 不再直接持有 import/export、storage refresh、状态消息 timeout 等 orchestration 逻辑。
-- `src/services/entryService.ts` 从“runtime factory + backup utility + facade + proxy”混杂状态收口为以 facade 和 file operations 为主。
-- `src/services/native-storage.ts`、`src/services/web-storage.ts`、`src/services/web-fs-storage.ts` 现在共享同一套 backup entries 解析 contract。
+### Changed
+- `src/app/page.tsx` was further thinned down from a large page that mixed state and long JSX blocks into a shell that mostly composes a controller and sections.
+- `src/components/features/EntryEditor.tsx` no longer keeps draft loading, autosave, close-time persistence, and field coordination inline in the main component body. It now trends back toward a render shell plus publish actions.
+- `src/components/features/EntryEditor.tsx` was further reduced from a giant JSX file into an editor shell that mainly handles wiring and publish behavior.
+- `src/components/features/SettingsPanel.tsx` no longer holds storage mode checks, Folder Mode connection flow, and reload policy directly.
+- `src/components/ui/DataManagement.tsx` no longer holds import/export orchestration, storage refresh, and status timeout lifecycle directly.
+- `src/services/entryService.ts` was reduced from a mixed runtime factory + backup utility + facade + proxy file into a thinner facade centered on file operations.
+- `src/services/native-storage.ts`, `src/services/web-storage.ts`, and `src/services/web-fs-storage.ts` now share a single backup entry parsing contract.
 
-### 修复
-- 修复了首页主文件继续膨胀、页面壳体与具体 section 渲染混杂的问题。
-- 修复了 Editor 组件同时持有表单状态、draft bridge 与渲染层，继续向单文件堆积的问题。
-- 修复了 settings/data UI 直接耦合存储策略与 mutation lifecycle，导致 UI 层持续偷业务逻辑的问题。
-- 修复了 `entryService` 中 repository 选择逻辑重复出现两次、导致 facade 继续膨胀的问题。
-- 修复了不同 adapter 对 backup payload 的接受格式不一致、只有 service 层在暗中兜底的问题。
+### Fixed
+- Fixed the continued growth of the homepage shell file, where page-level orchestration and concrete section rendering were still mixed together.
+- Fixed the continued single-file buildup in the editor, where form state, draft bridging, and render structure all lived in one component.
+- Fixed the way settings/data UI components were directly coupled to storage strategy and mutation lifecycle.
+- Fixed the duplicated repository selection logic inside `entryService`, which kept inflating the facade.
+- Fixed the mismatch where adapters accepted backup payloads inconsistently and only the service layer silently normalized them.
 
-### 移除
-- 从 `src/app/page.tsx` 中移除了大块首页 section 的内联实现，改由独立 feature section 承载。
-- 从 `src/components/features/EntryEditor.tsx` 中移除了移动草稿与桌面 draft adapter 的内联桥接实现。
-- 从 `src/components/features/SettingsPanel.tsx` 与 `src/components/ui/DataManagement.tsx` 中移除了大部分内联 storage orchestration。
-- 从 `src/services/entryService.ts` 中移除了重复的 adapter instantiation 路径和本地 backup parser 实现。
+### Removed
+- Removed large inline homepage section implementations from `src/app/page.tsx` and moved them into dedicated feature sections.
+- Removed the inline mobile draft / desktop draft adapter bridge from `src/components/features/EntryEditor.tsx`.
+- Removed most inline storage orchestration from `src/components/features/SettingsPanel.tsx` and `src/components/ui/DataManagement.tsx`.
+- Removed duplicate adapter instantiation paths and the local backup parser from `src/services/entryService.ts`.
 
-### 兼容性影响
-- 无
+### Compatibility Impact
+- None.
 
-### 迁移提示
-- 后续如果继续收首页，不要再把 section 细节和页面控制逻辑重新塞回 `page.tsx`。
-- 后续继续拆 Editor 时，不要再把 autosave / discard / close / hydrate 逻辑重新塞回 `EntryEditor.tsx` 主体。
-- 后续继续扩 settings 或 data tooling 时，优先进入对应 controller hook，而不是把存储分支重新塞回 UI 组件。
-- 后续继续扩 storage adapters 或 backup contract 时，优先进入 `storage-runtime.ts` / `storage-backups.ts`，不要再把 mode 判断和 parser 散回各文件。
-- 2026-04-09 之前的历史已经压缩进下方“历史基线”节点；新的版本记录建议从本节开始继续累积。
-
----
-
-## [2026-04-09：工程守卫、CI 基线与 Agent 协作约束] - 2026-04-09
-
-### 新增
-- 新增 `docs/ENGINEERING-GUARDRAILS.md`，正式定义 App Shell、UI、Visual、Services、Tauri Native Boundary 的工程边界。
-- 新增 `docs/TESTING-CI.md`，明确默认验证命令、CI 职责与后续测试扩展方向。
-- 新增 `docs/RELEASE.md`，把 Desktop Web 与 Desktop App 的平台支持叙事拆开，避免发布说明继续混淆。
-- 新增 `.github/workflows/ci.yml`，为仓库建立 lint、guardrail tests、web build、Rust formatting 的最小工程守卫。
-- 新增 `tests/guardrails.test.mjs`，对关键工程文档、平台承诺与 Tauri 元数据做轻量回归保护。
-- 新增 `CHANGELOG.md` / `DEVLOG.md` 作为正式工程日志入口，后续从 2026-04-09 起持续滚动记录。
-
-### 变更
-- `AGENTS.md` 与 `CLAUDE.md` 升级为正式协作约束入口，不再只保留通用命令说明。
-- `README.md` / `README_zh-CN.md` 现在明确区分“Linux 桌面网页支持”与“Linux 桌面 App 发布自动化未确认”。
-- `package.json` 新增 `test` 与 `check` 脚本，把 `lint + test + build` 收口为默认验证基线。
-- `src-tauri/Cargo.toml` 从占位元数据调整为真实项目元数据。
-- `docs/PROJECT-STRUCTURE.md` 将 changelog/devlog 和新的工程守卫文档纳入正式文档层认知。
-
-### 修复
-- 修复了当前仓库缺少常规 CI 工作流、只能依赖 release workflow 充当事实验证入口的问题。
-- 修复了根目录缺少正式工程日志文件、历史演进难以按阶段追踪的问题。
-- 修复了 README 对 Linux 支持的表达过于宽泛、容易让人误解为 Linux 桌面 App 已经正式进入自动发布矩阵的问题。
-- 修复了 Tauri Rust 包元数据仍停留在模板默认值、容易继续对外暴露占位信息的问题。
-
-### 移除
-- 移除了“仅靠口头约定维护结构与协作规则”的状态，改由正式文档与测试守卫承载。
-
-### 兼容性影响
-- 本轮不改动运行时功能与用户数据结构，主要影响工程协作方式、发布表达和维护约束。
-- Desktop Web 的 macOS / Windows / Linux 支持表达不变，但 Desktop App 发布表述比过去更严格。
-
-### 迁移提示
-- 后续工程工作应优先遵守 `AGENTS.md`、`CLAUDE.md`、`docs/ENGINEERING-GUARDRAILS.md`、`docs/TESTING-CI.md`、`docs/RELEASE.md`。
-- 新的版本条目请继续累积到 `Unreleased`；详细日常过程请记录到 `DEVLOG.md`。
+### Migration Notes
+- If homepage work continues, do not move section details and page control logic back into `page.tsx`.
+- If the editor keeps evolving, do not move autosave / discard / close / hydrate logic back into the `EntryEditor.tsx` body.
+- If settings or data tooling grows further, prefer the corresponding controller hook instead of pushing storage branches back into UI components.
+- If storage adapters or the backup contract expand further, prefer `storage-runtime.ts` and `storage-backups.ts` instead of scattering mode checks and parsers across files again.
+- History before 2026-04-09 has been compressed into the “Historical Baseline” section below. New release notes should continue from this section.
 
 ---
 
-## [历史基线：项目启动至 2026-04-08] - 2026-04-08
+## [2026-04-09: Engineering Guardrails, CI Baseline, and Agent Collaboration Constraints] - 2026-04-09
 
-### 新增
-- 从最初的静态 Markdown / 展陈尝试，逐步建立了 Bibliotheca Vitae 作为 Digital Garden 的核心产品形态。
-- 建立了基于 Next.js 16 App Router、React 19、Tailwind CSS v4、Framer Motion、GSAP、Lenis、React Three Fiber 的前端骨架。
-- 建立了横向档案卷轴、详情叠层、视觉优先编辑器、搜索筛选、个人条目编辑、本地图片与备份导入导出等核心体验。
-- 建立了 Tauri v2 桌面壳、本地文件系统访问、全局快捷键、托盘、窗口视觉效果等桌面能力。
-- 建立了多存储模式：Browser Local、Folder Mode、Tauri Native，以及 Mobile Local Drafts。
-- 建立了多语言 README、架构文档、项目结构说明与长期蓝图文档。
+### Added
+- Added `docs/ENGINEERING-GUARDRAILS.md` to formally define the engineering boundaries for App Shell, UI, Visual, Services, and the Tauri native boundary.
+- Added `docs/TESTING-CI.md` to define default verification commands, CI responsibilities, and the direction for future test expansion.
+- Added `docs/RELEASE.md` to separate Desktop Web support from Desktop App support so release messaging no longer stays ambiguous.
+- Added `.github/workflows/ci.yml` to establish a minimal daily guardrail pipeline with lint, guardrail tests, web build, and Rust formatting checks.
+- Added `tests/guardrails.test.mjs` to provide lightweight regression protection for key engineering docs, platform claims, and Tauri metadata.
+- Added `CHANGELOG.md` and `DEVLOG.md` as the formal engineering log entry points, with ongoing updates starting from 2026-04-09.
 
-### 变更
-- 项目从早期 `Bibliotheca Markdown Museum / Bibliotheca Academica` 方向，逐步收口为当前的 `Bibliotheca Vitae` 本地优先数字花园。
-- 技术栈从 Astro/内容集合阶段切换到 Next.js SPA，再演进到共享的 Web + Tauri 桌面应用架构。
-- 产品叙事从“静态展览页面”演进为“可浏览、可追加、可编辑、可备份的本地档案系统”。
-- 项目结构从根目录堆叠逐步收口到 `src/`、`src-tauri/`、`docs/`、多语言 README 的分层方式。
-- 版本在 2026-03-23 收口到 `v3.0.0` 桌面 MVP 架构节点。
+### Changed
+- `AGENTS.md` and `CLAUDE.md` were upgraded into formal collaboration entry points instead of remaining generic command notes.
+- `README.md` and `README_zh-CN.md` now explicitly distinguish Linux desktop web support from unconfirmed Linux desktop app release automation.
+- `package.json` gained `test` and `check` scripts so `lint + test + build` becomes the default verification baseline.
+- `src-tauri/Cargo.toml` was updated from placeholder metadata to real project metadata.
+- `docs/PROJECT-STRUCTURE.md` now includes changelog/devlog and the new engineering guardrail docs as part of the formal documentation structure.
 
-### 修复
-- 修复了图像焦点、卡片布局、滚动触发、详情页滚动锁定、编辑器叠层集成、Tauri invoke 结果处理、WebFS 类型与生产构建、Folder Mode 图片渲染等关键问题。
-- 修复了文档边界、命名漂移、README 语言一致性、运行时状态和 lint 卫生、静态资源与文档素材混放等工程问题。
-- 修复了本地备份与图片嵌入闭环，使导出/导入在多存储模式下更一致。
+### Fixed
+- Fixed the lack of a regular CI workflow, where the project effectively relied on the release workflow as the main source of truth.
+- Fixed the lack of formal engineering log files at the repo root, which made staged evolution hard to trace.
+- Fixed README wording around Linux support that could be misread as meaning Linux desktop app publishing was already automated.
+- Fixed the Tauri Rust package metadata still exposing template-level placeholder values.
 
-### 移除
-- 移除了 Astro 时代和旧命名阶段遗留的主要结构。
-- 逐步降低了历史命名、旧视觉稿和根目录杂糅布局的影响。
+### Removed
+- Removed the previous state where structure and collaboration rules existed mostly as verbal conventions instead of explicit docs and tests.
 
-### 兼容性影响
-- Desktop Web 一直覆盖 macOS / Windows / Linux，但 Desktop App 发布能力到 2026-04-08 为止主要仍以 macOS / Windows 为明确文档范围。
-- Mobile 继续是受限运行面，重点是浏览与本地草稿，不等同于完整桌面归档工作流。
+### Compatibility Impact
+- This round did not change runtime behavior or the user data model. It mainly affects engineering collaboration, release messaging, and maintenance constraints.
+- Desktop Web support messaging for macOS / Windows / Linux remains intact, but Desktop App release wording is now intentionally stricter.
 
-### 迁移提示
-- 后续继续演进时，应优先沿 `src/services/` 的 contract 与 adapter 边界推进，而不是重新把复杂度堆回页面层。
-- 视觉系统、发布说明、工程守卫与多语言 README 应保持同步，不要再出现“代码一套、文档一套、workflow 一套”的漂移。
+### Migration Notes
+- Future engineering work should follow `AGENTS.md`, `CLAUDE.md`, `docs/ENGINEERING-GUARDRAILS.md`, `docs/TESTING-CI.md`, and `docs/RELEASE.md` first.
+- New release entries should continue accumulating under `Unreleased`; detailed day-to-day work should go into `DEVLOG.md`.
+
+---
+
+## [Historical Baseline: Project Start through 2026-04-08] - 2026-04-08
+
+### Added
+- The project gradually evolved from early static Markdown / exhibition experiments into Bibliotheca Vitae as a Digital Garden product.
+- Established a frontend foundation based on Next.js 16 App Router, React 19, Tailwind CSS v4, Framer Motion, GSAP, Lenis, and React Three Fiber.
+- Built the core experience around the horizontal archive rail, detail overlay, visual-first editor, search/filtering, personal entry editing, and local image + backup import/export workflows.
+- Added the Tauri v2 desktop shell, local file system access, global shortcuts, tray support, and desktop window visuals.
+- Added multiple storage modes: Browser Local, Folder Mode, Tauri Native, and Mobile Local Drafts.
+- Added multilingual READMEs, architecture docs, project structure docs, and a longer-term blueprint.
+
+### Changed
+- The project gradually converged from earlier `Bibliotheca Markdown Museum / Bibliotheca Academica` directions into the current local-first `Bibliotheca Vitae` digital garden.
+- The stack evolved from Astro/content-collection phases into a Next.js SPA and then into a shared Web + Tauri desktop application architecture.
+- Product framing evolved from a static exhibition page into a browsable, appendable, editable, backup-capable local archive system.
+- Project structure moved from a more cluttered root layout toward the current `src/`, `src-tauri/`, `docs/`, and multilingual README layering.
+- The project converged on the `v3.0.0` desktop MVP architecture milestone on 2026-03-23.
+
+### Fixed
+- Fixed key issues around image focus, card layout, scroll triggers, detail overlay scroll locking, editor overlay integration, Tauri invoke result handling, WebFS typing and production build behavior, and Folder Mode image rendering.
+- Fixed a range of engineering issues around doc boundaries, naming drift, README language alignment, runtime/lint hygiene, and mixing static assets with documentation assets.
+- Fixed the local backup + embedded image loop so export/import behaves more consistently across storage modes.
+
+### Removed
+- Removed most of the major structure left over from the Astro era and older naming phases.
+- Gradually reduced the influence of legacy naming, older visual drafts, and a more tangled root-level layout.
+
+### Compatibility Impact
+- Desktop Web has consistently targeted macOS / Windows / Linux, but as of 2026-04-08 Desktop App release capability was still explicitly documented mainly for macOS / Windows.
+- Mobile remains a constrained runtime focused on browsing and local drafts, not a full desktop publishing workflow.
+
+### Migration Notes
+- Future evolution should continue along the `src/services/` contract and adapter boundaries instead of moving complexity back into page-level code.
+- Visual system work, release messaging, engineering guardrails, and multilingual READMEs should stay aligned so the repo does not drift back into “code says one thing, docs say another, workflow says a third.”

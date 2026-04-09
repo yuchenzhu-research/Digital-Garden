@@ -2,45 +2,45 @@
 
 ---
 
-## 2026-04-09 / 第三阶段完成：services facade 与 backup contract 收口
+## 2026-04-09 / Phase 3 Complete: Service Facade and Backup Contract Consolidation
 
-### 相关 commits
+### Related commits
 - `60cf2b8` Extract storage runtime from entryService
 - `2d3cbd0` Align adapters on shared backup contract
 - `3f9df80` Add storage service guard tests
 
-### 本次修改
-- 新增 `src/services/storage-runtime.ts`：
-  - 统一 `StorageMode`
-  - 统一 `StorageModeInfo`
-  - 统一 `getRepository`
-  - 统一 shared WebFS / WebStorage runtime
-  - 统一 lazy repository proxy
-- `src/services/entryService.ts` 从 462 行降到 288 行，去掉了：
-  - 重复的 repository 实例选择逻辑
-  - 本地 backup parser
-  - 与 runtime 强耦合的大段 mode 分支
-- 新增 `src/services/storage-backups.ts`：
-  - 统一 `parseBackupEntries`
-  - 统一 `parseBackupJson`
-  - 统一 `createArchiveBackupPayload`
-  - 统一 `createArchiveBackupFilename`
-- 让三套 adapter 对 backup payload 行为对齐：
+### What changed
+- Added `src/services/storage-runtime.ts` to centralize:
+  - `StorageMode`
+  - `StorageModeInfo`
+  - `getRepository`
+  - shared WebFS / WebStorage runtime handling
+  - the lazy repository proxy
+- Reduced `src/services/entryService.ts` from 462 lines to 288 lines by removing:
+  - duplicated repository instance selection logic
+  - the local backup parser
+  - large runtime-coupled mode branches
+- Added `src/services/storage-backups.ts` to centralize:
+  - `parseBackupEntries`
+  - `parseBackupJson`
+  - `createArchiveBackupPayload`
+  - `createArchiveBackupFilename`
+- Aligned backup payload handling across all three adapters:
   - `src/services/web-storage.ts`
   - `src/services/web-fs-storage.ts`
   - `src/services/native-storage.ts`
-- 新增 `tests/services-guardrails.test.mjs`，守卫这些结构约束：
-  - `entryService.ts` 不再直接 `new` adapter
-  - backup parser 只在 `storage-backups.ts` 定义
-  - 三套 adapter 都显式接入共享 backup contract
+- Added `tests/services-guardrails.test.mjs` to guard these structural constraints:
+  - `entryService.ts` no longer directly instantiates adapters
+  - the backup parser is defined only in `storage-backups.ts`
+  - all three adapters explicitly consume the shared backup contract
 
-### 解决的问题
-- 解决了 `entryService.ts` 同时承担 runtime factory、storage mode、backup contract、lazy proxy 和 facade 的职责混杂问题。
-- 解决了 `getRepository` 和默认导出 proxy 各维护一套 adapter 选择逻辑的问题。
-- 解决了 backup payload 解析在 `entryService`、`native-storage` 等处重复定义的问题。
-- 解决了 adapter `importData()` 对“entries 数组 / backup payload 对象”支持不一致的问题。
+### Problems addressed
+- Fixed the mixed responsibility problem in `entryService.ts`, which had been handling runtime factory logic, storage mode logic, backup contract logic, the lazy proxy, and the facade at the same time.
+- Fixed the duplicated adapter selection logic maintained separately by `getRepository` and the default export proxy.
+- Fixed the repeated backup payload parsing logic that had existed in `entryService`, `native-storage`, and elsewhere.
+- Fixed the inconsistency where adapter `importData()` methods did not accept the same “entries array vs. backup payload object” shapes.
 
-### 影响范围
+### Impacted areas
 - `src/services/entryService.ts`
 - `src/services/storage-runtime.ts`
 - `src/services/storage-backups.ts`
@@ -52,65 +52,65 @@
 - `CHANGELOG.md`
 - `DEVLOG.md`
 
-### 风险 / 未完成事项
-- `entryService.ts` 仍保留 `exportToFile` / `importFromFile` 和浏览器下载逻辑，下一阶段如果继续收 service 层，还可以再向更细的 file operations 模块移动。
-- 三套 adapter 虽然已经共用 backup parser，但 draft persistence、storage location 表达、image import/export 仍然存在重复实现。
-- 当前新增的 service tests 仍属于结构守卫，不是行为级 contract tests。
+### Risks / unfinished work
+- `entryService.ts` still contains `exportToFile` / `importFromFile` and browser download logic. If service-layer cleanup continues, those could move into a more focused file-operations module.
+- Although all three adapters now share the backup parser, there is still duplication around draft persistence, storage location semantics, and image import/export behavior.
+- The new service tests are still structural guardrails, not behavior-level contract tests.
 
-### 下一步
-- 第四阶段进入更明确的测试守卫：
-  - storage runtime guard
-  - backup contract guard
-  - page/controller smoke
-- 如果继续收 services，本轮之后最值得优先看的是 `src/services/web-fs-storage.ts` 和 `src/services/native-storage.ts` 的 draft/image/path 重复逻辑。
+### Next step
+- Phase 4 should add clearer smoke/contract guards for:
+  - storage runtime behavior
+  - backup contract behavior
+  - page/controller smoke coverage
+- If service cleanup continues beyond this phase, the highest-value targets are still `src/services/web-fs-storage.ts` and `src/services/native-storage.ts`, especially around repeated draft/image/path logic.
 
 ---
 
-## 2026-04-09 / 第二阶段完成：Editor 与存储相关 UI 收口
+## 2026-04-09 / Phase 2 Complete: Editor and Storage-Related UI Consolidation
 
-### 相关 commits
+### Related commits
 - `5b0cf31` Extract EntryEditor draft and form hooks
 - `a02fec6` Split EntryEditor into section components
 - `43c2d36` Extract SettingsPanel storage controller
 - `e83e36c` Extract DataManagement controller hook
 
-### 本次修改
-- 第二阶段完整收口了三块高风险 UI：
+### What changed
+- Phase 2 fully consolidated three high-risk UI areas:
   - `src/components/features/EntryEditor.tsx`
   - `src/components/features/SettingsPanel.tsx`
   - `src/components/ui/DataManagement.tsx`
-- `EntryEditor` 现在分成两层：
-  - 状态/草稿桥接 hook：
+- `EntryEditor` now has two layers:
+  - state/draft bridge hooks:
     - `src/hooks/useEntryEditorFormState.ts`
     - `src/hooks/useEntryEditorDraftBridge.ts`
-  - editor section 组件：
+  - editor section components:
     - `src/components/features/editor/AutoResizeTextarea.tsx`
     - `src/components/features/editor/EntryEditorImageStage.tsx`
     - `src/components/features/editor/EntryEditorHero.tsx`
     - `src/components/features/editor/EntryEditorSidebar.tsx`
     - `src/components/features/editor/EntryEditorBody.tsx`
     - `src/components/features/editor/EntryEditorActions.tsx`
-- `SettingsPanel` 新增 `src/hooks/useSettingsPanelController.ts`：
-  - 承接 environment gating
-  - 承接 Folder Mode 连接行为
-  - 承接连接中状态与 reload 策略
-- `DataManagement` 新增 `src/hooks/useDataManagementController.ts`：
-  - 承接 export/import 动作
-  - 承接 storage state refresh
-  - 承接消息状态和 timeout 清理
-  - 承接 file input ref 与 dropdown state
-- 收口后主文件体积变化：
+- `SettingsPanel` now uses `src/hooks/useSettingsPanelController.ts` to handle:
+  - environment gating
+  - Folder Mode connection behavior
+  - connection-in-progress state and reload policy
+- `DataManagement` now uses `src/hooks/useDataManagementController.ts` to handle:
+  - export/import actions
+  - storage state refresh
+  - status message lifecycle and timeout cleanup
+  - file input refs and dropdown state
+- Main file sizes after the consolidation:
   - `EntryEditor.tsx`: `631 -> 250`
   - `SettingsPanel.tsx`: `138 -> 131`
   - `DataManagement.tsx`: `271 -> 181`
 
-### 解决的问题
-- 解决了 `EntryEditor.tsx` 同时持有状态、autosave、draft hydrate、发布动作和大段渲染结构的问题。
-- 解决了 `SettingsPanel.tsx` 直接持有环境判断、Folder Mode 连接和页面 reload 策略的问题。
-- 解决了 `DataManagement.tsx` 直接持有导入导出 orchestration、storage refresh 和 timeout 生命周期的问题。
-- 把第二阶段的目标真正落成了“UI 组件负责展示，controller hook 负责 orchestration”的结构，而不是只把 helper 换了个地方继续堆。
+### Problems addressed
+- Fixed the fact that `EntryEditor.tsx` held state, autosave, draft hydration, publish actions, and long render structure all at once.
+- Fixed the fact that `SettingsPanel.tsx` directly held environment checks, Folder Mode connection, and page reload policy.
+- Fixed the fact that `DataManagement.tsx` directly held import/export orchestration, storage refresh, and timeout lifecycle logic.
+- Turned the phase-2 goal into an actual “UI components render, controller hooks orchestrate” structure, instead of simply moving helpers around.
 
-### 影响范围
+### Impacted areas
 - `src/components/features/EntryEditor.tsx`
 - `src/components/features/editor/`
 - `src/hooks/useEntryEditorFormState.ts`
@@ -122,146 +122,146 @@
 - `CHANGELOG.md`
 - `DEVLOG.md`
 
-### 风险 / 未完成事项
-- `EntryEditor` 虽然已经不是大总管，但 publish action 和图片上传仍在主组件壳层里，后续还有继续收口空间。
-- `SettingsPanel` 和 `DataManagement` 目前只做到 controller 抽离，还没有统一成更高层级的 storage surface contract。
-- 这轮还没有补 UI/controller 的专项 smoke tests；目前仍主要依赖 lint、build 和仓库级 guardrails。
+### Risks / unfinished work
+- `EntryEditor` is no longer a full orchestrator, but publish behavior and image upload still live in the shell component, so there is still room to tighten it further.
+- `SettingsPanel` and `DataManagement` currently stop at controller extraction; they are not yet unified behind a higher-level storage surface contract.
+- This phase did not add dedicated UI/controller smoke tests. Validation still relies mostly on lint, build, and repo-level guardrails.
 
-### 下一步
-- 第三阶段进入 `src/services/entryService.ts` 与 storage adapters，把 facade 和 contract 真正对齐。
-- 优先检查 `src/services/web-fs-storage.ts`、`src/services/native-storage.ts`、`src/services/mobile-draft.ts` 的重复表达和环境切换逻辑。
+### Next step
+- Phase 3 should move into `src/services/entryService.ts` and the storage adapters so facade and contract boundaries actually line up.
+- Priority review targets after this phase were `src/services/web-fs-storage.ts`, `src/services/native-storage.ts`, and `src/services/mobile-draft.ts`.
 
 ---
 
-## 2026-04-09 / 第二阶段第一批：EntryEditor 草稿桥接与表单状态抽离
+## 2026-04-09 / Phase 2 Batch 1: EntryEditor Draft Bridge and Form State Extraction
 
-### 相关 commits
+### Related commits
 - `5b0cf31` Extract EntryEditor draft and form hooks
 
-### 本次修改
-- 从 `src/components/features/EntryEditor.tsx` 中抽出两个专用 hook：
+### What changed
+- Extracted two dedicated hooks from `src/components/features/EntryEditor.tsx`:
   - `src/hooks/useEntryEditorFormState.ts`
   - `src/hooks/useEntryEditorDraftBridge.ts`
-- `useEntryEditorFormState.ts` 现在承载：
-  - 标题、figure、moment、narrative、keywords、image 的表单状态
-  - keyword add/remove 行为
-  - draft snapshot 生成
-- `useEntryEditorDraftBridge.ts` 现在承载：
-  - mobile draft / desktop draft adapter 选择
-  - draft hydrate
+- `useEntryEditorFormState.ts` now owns:
+  - title, figure, moment, narrative, keywords, and image state
+  - keyword add/remove behavior
+  - draft snapshot generation
+- `useEntryEditorDraftBridge.ts` now owns:
+  - mobile draft / desktop draft adapter selection
+  - draft hydration
   - autosave
-  - discard
-  - close 时持久化
-  - `lastSaved` 管理
-- `src/components/features/EntryEditor.tsx` 收口为：
-  - 图片上传/移除
-  - publish/update 调用
-  - toast
-  - 编辑器布局与交互渲染
-- 拆分后，`EntryEditor.tsx` 从 631 行降到 521 行。
+  - discard behavior
+  - close-time persistence
+  - `lastSaved` tracking
+- `src/components/features/EntryEditor.tsx` was reduced to:
+  - image upload/removal
+  - publish/update calls
+  - toast handling
+  - editor layout and interaction rendering
+- After the split, `EntryEditor.tsx` went from 631 lines down to 521 lines.
 
-### 解决的问题
-- 解决了 `EntryEditor.tsx` 同时持有表单状态、draft storage bridge 和渲染层的问题。
-- 解决了 mobile draft 与 desktop draft 逻辑直接内联在组件主体里、继续扩大单文件复杂度的问题。
-- 为下一批继续拆 editor sub-sections 或 image/meta/publish actions 提供了更稳定的状态入口。
+### Problems addressed
+- Fixed the fact that `EntryEditor.tsx` held form state, draft storage bridging, and rendering in one place.
+- Fixed the fact that mobile draft and desktop draft logic were inlined directly into the component body, which kept growing the file.
+- Created a more stable state entry point for the next batch, where editor sub-sections and action layers would be split further.
 
-### 影响范围
+### Impacted areas
 - `src/components/features/EntryEditor.tsx`
 - `src/hooks/useEntryEditorFormState.ts`
 - `src/hooks/useEntryEditorDraftBridge.ts`
 - `CHANGELOG.md`
 - `DEVLOG.md`
 
-### 风险 / 未完成事项
-- `EntryEditor.tsx` 仍然保留了大量渲染结构、图片上传行为和 publish action，离最终目标还有距离。
-- `AutoResizeTextarea` 仍然内联在 Editor 文件里。
-- 这批还没有收 `SettingsPanel.tsx` 和 `DataManagement.tsx` 的 storage mode/fallback 逻辑。
+### Risks / unfinished work
+- `EntryEditor.tsx` still contained a large render structure, image upload logic, and publish behavior after this batch.
+- `AutoResizeTextarea` was still inlined inside the editor file at this point.
+- This batch had not yet touched `SettingsPanel.tsx` or `DataManagement.tsx`.
 
-### 下一步
-- 继续拆 `EntryEditor.tsx` 的 render sections，把 image stage、metadata/sidebar、narrative body、floating actions 分离。
-- 再进入 `SettingsPanel.tsx` 与 `DataManagement.tsx`，把 UI 层里的 storage 切换和刷新逻辑继续收紧。
+### Next step
+- Continue splitting `EntryEditor.tsx` render sections into image stage, metadata/sidebar, narrative body, and floating actions.
+- Then move into `SettingsPanel.tsx` and `DataManagement.tsx` to further tighten storage switching and refresh behavior in the UI layer.
 
 ---
 
-## 2026-04-09 / 第一阶段：首页 orchestration 拆薄
+## 2026-04-09 / Phase 1: Homepage Orchestration Thinning
 
-### 相关 commits
+### Related commits
 - `45d7a10` Extract home page controller hook
 - `d0a7c43` Extract home page sections
 
-### 本次修改
-- 把首页主控制逻辑从 `src/app/page.tsx` 抽到新的 `src/hooks/useHomePageController.ts`。
-- controller 现在集中承载这些职责：
-  - 用户条目加载
-  - mobile draft 状态刷新
-  - 搜索与分类筛选
-  - editor / detail overlay 状态
-  - dimming intensity 偏好
-  - 页面动作，如 create/edit/delete/clearFilters
-- 把首页中三块大 section 和 footer 从 `page.tsx` 中拆出，新增：
+### What changed
+- Moved the main homepage control logic out of `src/app/page.tsx` into `src/hooks/useHomePageController.ts`.
+- The controller now centralizes:
+  - user entry loading
+  - mobile draft state refresh
+  - search and category filtering
+  - editor / detail overlay state
+  - dimming intensity preference
+  - page actions such as create/edit/delete/clearFilters
+- Split three large homepage sections and the footer out of `page.tsx` into:
   - `src/components/features/home/FeaturedArchiveSection.tsx`
   - `src/components/features/home/PersonalCollectionSection.tsx`
   - `src/components/features/home/ArchiveBrowserSection.tsx`
   - `src/components/features/home/HomeFooter.tsx`
-- 拆分后，`src/app/page.tsx` 的职责收口为：
-  - 动态加载重型组件
-  - 消费 home controller
-  - 组装 section、overlay 与 editor
+- After the split, `src/app/page.tsx` was narrowed to:
+  - dynamic loading of heavier components
+  - consuming the home controller
+  - composing sections, overlays, and the editor
 
-### 解决的问题
-- 解决了首页文件同时持有大量状态编排和大段 section JSX 的问题。
-- 解决了“页面壳层”和“内容 section”没有明确边界，导致 `page.tsx` 持续增长的问题。
-- 为下一阶段继续拆 Editor 和 settings/data UI 打下了更稳定的页面层边界。
+### Problems addressed
+- Fixed the issue where the homepage file held a large amount of state orchestration and long section JSX at the same time.
+- Fixed the missing boundary between the page shell and section rendering, which had allowed `page.tsx` to keep growing.
+- Created a more stable page-layer boundary for the next phase, which moved into the editor and storage-related UI.
 
-### 影响范围
+### Impacted areas
 - `src/app/page.tsx`
 - `src/hooks/useHomePageController.ts`
 - `src/components/features/home/`
 - `CHANGELOG.md`
 - `DEVLOG.md`
 
-### 风险 / 未完成事项
-- 这轮还没有触及 `EntryEditor.tsx`、`SettingsPanel.tsx`、`DataManagement.tsx` 的职责收口。
-- `useHomePageController.ts` 目前仍然偏大，它是一个中间收口点，不是最终形态。
-- 搜索/filter、personal collection、archive browser 虽然已经拆成 section，但还没有进入更细的动作与 view-model 分层。
+### Risks / unfinished work
+- This phase did not yet touch `EntryEditor.tsx`, `SettingsPanel.tsx`, or `DataManagement.tsx`.
+- `useHomePageController.ts` remained fairly large; it was an intermediate consolidation point, not the final shape.
+- Search/filter, personal collection, and archive browser had been split into sections, but not yet into finer-grained action/view-model layers.
 
-### 下一步
-- 第二阶段进入 `EntryEditor.tsx` 与存储相关 UI。
-- 后续要继续把 `useHomePageController.ts` 内的部分逻辑沿 controller / selector / action 边界继续拆开。
+### Next step
+- Phase 2 should move into `EntryEditor.tsx` and storage-related UI.
+- After that, `useHomePageController.ts` could continue being thinned along controller / selector / action boundaries.
 
 ---
 
-## 2026-04-09 / 工程守卫、CI 基线与日志体系建立
+## 2026-04-09 / Engineering Guardrails, CI Baseline, and Log System Setup
 
-### 相关 commits
+### Related commits
 - `6b8b8c4` Establish engineering guardrails and CI baseline
 
-### 本次修改
-- 为当前仓库正式建立了工程守卫文档体系：
+### What changed
+- Established a formal engineering guardrail doc set for the repository:
   - `docs/ENGINEERING-GUARDRAILS.md`
   - `docs/TESTING-CI.md`
   - `docs/RELEASE.md`
-- 升级了 `AGENTS.md` 和 `CLAUDE.md`，把它们从“通用命令提示”提升为正式协作入口：
-  - 明确运行面：Desktop Web / Mobile Web / Tauri Desktop App
-  - 明确层级边界：App Shell / Feature / UI / Visual / Services / Tauri Native
-  - 明确 Agent pipeline：先审计、再改动、再验证、再同步文档
-- 给仓库补上了真正的日常 CI：
-  - 新增 `.github/workflows/ci.yml`
-  - 将 `lint`、`guardrail tests`、`web build`、`cargo fmt --check` 串成最小工程验证链路
-- 给当前工程补上了轻量级仓库守卫测试：
-  - 新增 `tests/guardrails.test.mjs`
-  - 用 `node --test` 守卫关键文档、平台承诺和 Tauri 元数据
-- 给根目录补上 `CHANGELOG.md` 和 `DEVLOG.md`，以后不再让历史变更只散落在 commit message 里。
-- 更新了 `README.md`、`README_zh-CN.md`、`docs/PROJECT-STRUCTURE.md`、`package.json`、`src-tauri/Cargo.toml`，让工程约束、发布表述和验证命令对齐到当前现实。
+- Upgraded `AGENTS.md` and `CLAUDE.md` from generic command notes into formal collaboration entry points:
+  - explicit runtime surfaces: Desktop Web / Mobile Web / Tauri Desktop App
+  - explicit layer boundaries: App Shell / Feature / UI / Visual / Services / Tauri Native
+  - explicit agent pipeline: audit first, then change, then verify, then sync docs
+- Added a real day-to-day CI workflow:
+  - new `.github/workflows/ci.yml`
+  - minimal verification chain for `lint`, `guardrail tests`, `web build`, and `cargo fmt --check`
+- Added lightweight repository guard tests:
+  - new `tests/guardrails.test.mjs`
+  - uses `node --test` to guard key docs, platform claims, and Tauri metadata
+- Added `CHANGELOG.md` and `DEVLOG.md` at the repo root so project history is no longer scattered only across commit messages.
+- Updated `README.md`, `README_zh-CN.md`, `docs/PROJECT-STRUCTURE.md`, `package.json`, and `src-tauri/Cargo.toml` so engineering constraints, release messaging, and verification commands all reflect current reality.
 
-### 解决的问题
-- 解决了当前仓库只有 release workflow、没有常规 CI 守卫的问题。
-- 解决了工程边界主要靠口头说明，没有正式文本和自动检查兜底的问题。
-- 解决了 README 对 Linux 支持说法容易被误解为 Linux 桌面 App 也已自动发版的问题。
-- 解决了根目录没有正式 changelog/devlog、项目演进脉络只能靠翻 git log 的问题。
-- 解决了 `Cargo.toml` 仍保留模板默认元数据的问题。
+### Problems addressed
+- Fixed the fact that the repository only had a release workflow and no regular CI guardrail.
+- Fixed the fact that engineering boundaries depended mostly on verbal agreement instead of explicit docs and automated checks.
+- Fixed the way Linux support wording in the README could be misread as meaning Linux desktop app releases were already automated.
+- Fixed the absence of formal changelog/devlog files at the root, which made staged project history difficult to follow.
+- Fixed the placeholder metadata still left in `Cargo.toml`.
 
-### 影响范围
+### Impacted areas
 - `AGENTS.md`
 - `CLAUDE.md`
 - `README.md`
@@ -277,22 +277,22 @@
 - `CHANGELOG.md`
 - `DEVLOG.md`
 
-### 风险 / 未完成事项
-- 这轮建立的是“仓库级 guardrails”，还没有进入页面 orchestrator、storage adapter、Tauri commands 的深层拆分。
-- 当前测试仍然偏轻，主要是文档/结构/发布承诺守卫，还没有覆盖 `src/services/` contract、页面状态编排、导入导出 smoke。
-- `next/font` 在受限网络环境下构建仍然依赖外部字体下载；本地验证时这一点需要区分“网络限制”与“真实构建错误”。
+### Risks / unfinished work
+- This round established repo-level guardrails, but it did not yet move into deeper cleanup of page orchestrators, storage adapters, or Tauri commands.
+- Tests were still light at this stage, focusing mainly on docs/structure/platform claims rather than `src/services/` contracts, page state orchestration, or import/export smoke coverage.
+- `next/font` still depended on external font downloads in restricted network environments, so local verification had to distinguish network failure from real build failure.
 
-### 下一步
-- 优先拆 `src/app/page.tsx`，把页面 orchestration 继续收薄。
-- 再拆 `src/components/features/EntryEditor.tsx`，把上传、草稿、发布和布局状态分层。
-- 然后收 `src/services/entryService.ts`、`src/services/web-fs-storage.ts`、`src/services/native-storage.ts`，让 facade 与 adapter 边界更稳定。
+### Next step
+- First thin down `src/app/page.tsx` further.
+- Then split `src/components/features/EntryEditor.tsx` so upload, draft handling, publish behavior, and layout state are separated.
+- After that, tighten `src/services/entryService.ts`, `src/services/web-fs-storage.ts`, and `src/services/native-storage.ts` so facade and adapter boundaries stabilize further.
 
 ---
 
-## 2026-04-08 / 历史基线：项目启动至正式日志体系建立前
+## 2026-04-08 / Historical Baseline: Project Start through Pre-Logging-System History
 
-### 相关 commits
-- `2026-02-12` ~ `2026-02-15`：从早期静态档案/展陈形态转向 Next.js SPA 与 Digital Renaissance UI
+### Related commits
+- `2026-02-12` ~ `2026-02-15`: moved from early static archive / exhibition experiments into a Next.js SPA and Digital Renaissance UI direction
 - `0ba233d` feat: initialize Tauri v2 desktop app environment
 - `fd45325` feat(tauri): integrate native file system, global shortcuts, and custom title bar
 - `d5a9db0` feat(web): implement dual-mode storage with local file import/export
@@ -303,38 +303,38 @@
 - `5e43a07` chore: setup desktop mvp architecture and capabilities
 - `176a1f5` docs: add long-term blueprint and architectural roadmap
 
-### 本次修改
-- 项目最初从静态 Markdown / 展陈方向起步，经历了多轮命名与定位变化，最终逐步收口为当前的 `Bibliotheca Vitae`。
-- 早期架构经历了 Astro 内容集合、静态档案与学术展陈阶段，随后在 2026-02-14 重构到 Next.js SPA。
-- 2026-02-14 至 2026-02-15 期间，项目集中完成了：
-  - 横向卷轴与卡片叙事
-  - 详情叠层
-  - 编辑器叠层
-  - 视觉主题与背景层次
-  - 自定义光标与更强的画册感编排
-- 2026-02-16 起，项目进入 Tauri v2 与本地存储集成阶段：
-  - 原生文件系统
-  - 全局快捷键
-  - 桌面标题栏/窗口能力
-  - Web 端 dual-mode storage
-  - 搜索、筛选、图片管理
-- 2026-02-22 到 2026-03-11，逐步建立了更完整的本地优先体验：
+### What changed
+- The project began as a static Markdown / exhibition-style concept, went through several naming and positioning changes, and gradually converged on the current `Bibliotheca Vitae`.
+- The early architecture went through Astro content-collection and static archive / academic exhibition phases, then moved into a Next.js SPA refactor on 2026-02-14.
+- Between 2026-02-14 and 2026-02-15, the project concentrated on:
+  - horizontal rail and card storytelling
+  - detail overlays
+  - editor overlays
+  - visual theme and background layering
+  - custom cursor and a stronger gallery-book composition style
+- Starting 2026-02-16, the project entered a Tauri v2 + local storage integration phase:
+  - native file system
+  - global shortcuts
+  - desktop title bar / window capabilities
+  - web dual-mode storage
+  - search, filtering, and image management
+- From 2026-02-22 to 2026-03-11, the project gradually built a fuller local-first experience:
   - native desktop visuals
   - Web File System parity
-  - 个人条目编辑
-  - 跨 adapter 备份管理
-  - 本地图片嵌入备份
+  - personal entry editing
+  - cross-adapter backup management
+  - embedded local image backups
   - mobile local draft mode
-  - 架构文档与 repo boundary 文档
-- 2026-03-23，完成 `v3.0.0` 桌面 MVP 架构节点，并补齐 Blueprint 与下载安装说明。
+  - architecture docs and repo-boundary docs
+- On 2026-03-23, the project reached the `v3.0.0` desktop MVP architecture milestone and added the blueprint plus install/download docs.
 
-### 解决的问题
-- 解决了项目早期定位不断变化导致命名、UI 语言和技术栈不稳定的问题，逐步收口到当前产品方向。
-- 解决了“只有展陈、没有本地归档闭环”的问题，补上了编辑、存储、导入导出与桌面壳能力。
-- 解决了多存储模式下图片和备份不一致的问题。
-- 解决了多语言 README、架构说明、结构边界与实际代码逐步脱节的问题。
+### Problems addressed
+- Fixed the instability caused by the project’s early shifting identity, naming, UI language, and stack choices, gradually converging on the current product direction.
+- Fixed the earlier “exhibition only, no local archive loop” limitation by adding editing, storage, import/export, and desktop shell capabilities.
+- Fixed inconsistencies around images and backups across multiple storage modes.
+- Fixed gradual drift between multilingual READMEs, architecture docs, structure boundaries, and the real codebase.
 
-### 影响范围
+### Impacted areas
 - `src/app/`
 - `src/components/features/`
 - `src/components/ui/`
@@ -345,10 +345,10 @@
 - `README*.md`
 - `docs/`
 
-### 风险 / 未完成事项
-- 到 2026-04-08 为止，页面 orchestration、Editor 状态、storage facade 与 adapter、Tauri commands 仍然有明显大文件压力。
-- 虽然视觉体验已经成型，但 motion 和 section choreography 还没有充分 primitive 化。
-- Desktop Web / Mobile Web / Tauri Desktop 的能力边界虽然已有文档表达，但工程收束和测试守卫还不够完整。
+### Risks / unfinished work
+- As of 2026-04-08, there was still clear large-file pressure in page orchestration, editor state, storage facade/adapters, and Tauri commands.
+- The visual experience had matured, but motion and section choreography were still not sufficiently primitive-ized.
+- The Desktop Web / Mobile Web / Tauri Desktop boundaries were already documented, but engineering consolidation and test guardrails were still incomplete.
 
-### 下一步
-- 从 2026-04-09 开始，后续工作不再继续追加“泛历史回顾”，而是按日把真正进行的工程工作记录在上面的新条目里。
+### Next step
+- Starting 2026-04-09, new work should no longer extend a generic historical recap. Instead, actual engineering work should be logged above on a day-by-day basis.
