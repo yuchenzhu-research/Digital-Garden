@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start -p 4321",
     "lint": "eslint",
+    "test": "node --test",
+    "check": "npm run lint && npm run test && npm run build",
     "app:dev": "tauri dev",
     "app:build": "tauri build"
   },

@@ -42,10 +42,14 @@
 - `docs/`：放结构说明、架构说明、发布说明等长文档
 - `docs/assets/`：仅供 README 或内部文档使用的截图、示意图等素材
 - `docs/ARCHITECTURE.md`：说明运行时分层、存储适配器、Web/Tauri 边界
+- `docs/ENGINEERING-GUARDRAILS.md`：说明项目架构守卫、Agent 协作 pipeline 与工程边界
+- `docs/TESTING-CI.md`：说明默认验证命令、CI 职责与测试扩展方向
+- `docs/RELEASE.md`：说明当前发布矩阵与桌面 Web / 桌面 App 的支持差异
 
 建议后续逐步补充：
 
-- `docs/RELEASE.md`
+- 更细的 `docs/DESIGN-SYSTEM.md`
+- 更细的 `docs/STORAGE-CONTRACTS.md`
 
 ### 3. 本地产物层
 

@@ -32,6 +32,7 @@
 **Bibliotheca Vitae** 超越了博客的定义。这是一座数字花园，15 世纪手抄本美学与 21 世纪工程技艺在此交汇，将原始数据升华为被策展的生命叙事。
 
 仓库分层与目录约定见 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。
+工程守卫、测试/CI 与发布现状见 [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md)、[docs/TESTING-CI.md](docs/TESTING-CI.md)、[docs/RELEASE.md](docs/RELEASE.md)。
 
 ## 🏛️ 项目愿景：生命叙事
 
@@ -87,7 +88,9 @@
 
 ## 📥 下载与安装
 
-你可以前往 [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) 页面下载为你平台预编译的桌面端客户端（`.dmg` 或 `.exe`）。
+你可以前往 [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) 页面下载适用于 macOS 和 Windows 的预编译桌面端客户端。
+
+Linux 目前仍是受支持的 **桌面网页版** 运行平台；但当前 workflow 尚未明确声明 Linux 桌面 App 发布自动化已启用。详见 [docs/RELEASE.md](docs/RELEASE.md)。
 
 ### 🍎 macOS 用户请注意
 由于目前的 MVP 版本是直接通过 GitHub Actions 构建的，未配置 Apple 开发者证书签名，苹果系统的安全隔离机制会拦截它，并在首次打开时提示 **“文件已损坏，你应该将它移到废纸篓”**。
@@ -106,10 +109,11 @@ xattr -cr "/Applications/Bibliotheca Vitae.app"
 
 1.  克隆仓库。
 2.  执行 `npm install` 安装依赖。
-3.  通过 `npm run dev` 启动网页开发环境。
-4.  打开 `http://localhost:4321`
-5.  如需桌面壳体，执行 `npm run app:dev`
-6.  如需网页生产构建，执行 `npm run build`
+3.  先执行基线校验：`npm run lint && npm run test`
+4.  通过 `npm run dev` 启动网页开发环境。
+5.  打开 `http://localhost:4321`
+6.  如需桌面壳体，执行 `npm run app:dev`
+7.  如需网页生产构建，执行 `npm run build`
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
