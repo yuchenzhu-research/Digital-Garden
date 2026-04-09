@@ -2,6 +2,64 @@
 
 ---
 
+## 2026-04-09 / Phase 4 Complete: Test Guardrail Expansion
+
+### Related commits
+- `84a55c7` Add controller guardrail tests
+- `56d5bfe` Add storage backup behavior tests
+- `c12b9cb` Align CI and docs with guardrail suite
+
+### What changed
+- Added `tests/controller-guardrails.test.mjs` to lock the boundaries created in earlier phases:
+  - homepage shell must stay wired through `useHomePageController`
+  - `EntryEditor.tsx` must stay layered through hooks and editor sections
+  - `SettingsPanel.tsx` and `DataManagement.tsx` must keep orchestration inside controller hooks
+  - extracted controller hooks must remain the owners of the moved orchestration branches
+- Added `tests/storage-backups.test.mjs` with real helper-behavior checks for:
+  - `createArchiveBackupFilename`
+  - `createArchiveBackupPayload`
+  - `parseBackupEntries`
+  - `parseBackupJson`
+- Updated `package.json` so `npm run test` now uses:
+  - `node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test`
+- Updated `.github/workflows/ci.yml` so the CI step name reflects the broader guardrail/smoke scope.
+- Updated `docs/TESTING-CI.md` so the documentation matches the current suite instead of describing it as docs-only repo checks.
+- After this phase, `npm run test` covers 17 passing guardrail tests across:
+  - repo/docs constraints
+  - controller boundaries
+  - service/runtime boundaries
+  - backup helper behavior
+
+### Problems addressed
+- Fixed the lack of explicit tests protecting the controller/shell boundaries created in phases 1 through 3.
+- Fixed the gap where backup helpers were only guarded structurally, not behaviorally.
+- Fixed the mismatch between the actual test suite and the CI/testing docs.
+- Reduced CI log noise by removing the typeless-package warning from the default test script.
+
+### Impacted areas
+- `tests/controller-guardrails.test.mjs`
+- `tests/storage-backups.test.mjs`
+- `package.json`
+- `.github/workflows/ci.yml`
+- `docs/TESTING-CI.md`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### Risks / unfinished work
+- The current test suite is still mostly guardrail-oriented. It does not yet exercise full adapter behavior with fixtures or UI interaction flows in a renderer.
+- `storage-runtime.ts` is still primarily protected through source-aware tests, not runtime mocks.
+- Visual-system work has not started yet, so there are no style-token or motion-system guardrails yet.
+
+### Next step
+- Phase 5 should begin the actual visual-system upgrade:
+  - global tokens
+  - typography hierarchy
+  - motion primitives
+  - homepage narrative rhythm
+- Once the visual system starts, add lightweight visual guardrails so the new design language does not drift across pages and overlays.
+
+---
+
 ## 2026-04-09 / Phase 3 Complete: Service Facade and Backup Contract Consolidation
 
 ### Related commits

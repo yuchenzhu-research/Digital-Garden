@@ -20,6 +20,8 @@
 - Added `src/services/storage-runtime.ts` to centralize repository runtime selection, storage mode, and the lazy proxy.
 - Added `src/services/storage-backups.ts` to centralize backup payloads, filename generation, and entry parsing.
 - Added `tests/services-guardrails.test.mjs` to guard the service facade and backup contract structure.
+- Added `tests/controller-guardrails.test.mjs` to lock the extracted homepage/editor/settings/data shell-controller boundaries.
+- Added `tests/storage-backups.test.mjs` to verify backup helper behavior, not just source structure.
 - Starting from 2026-04-09, all new release notes and work logs should continue accumulating in this section.
 
 ### Changed
@@ -30,6 +32,8 @@
 - `src/components/ui/DataManagement.tsx` no longer holds import/export orchestration, storage refresh, and status timeout lifecycle directly.
 - `src/services/entryService.ts` was reduced from a mixed runtime factory + backup utility + facade + proxy file into a thinner facade centered on file operations.
 - `src/services/native-storage.ts`, `src/services/web-storage.ts`, and `src/services/web-fs-storage.ts` now share a single backup entry parsing contract.
+- `npm run test` now runs the Node test runner with `--experimental-strip-types`, which allows lightweight pure TypeScript utility tests without introducing a new framework.
+- `.github/workflows/ci.yml` and `docs/TESTING-CI.md` now reflect the expanded controller/service/backup guardrail suite instead of describing the tests as docs-only checks.
 
 ### Fixed
 - Fixed the continued growth of the homepage shell file, where page-level orchestration and concrete section rendering were still mixed together.
@@ -37,12 +41,15 @@
 - Fixed the way settings/data UI components were directly coupled to storage strategy and mutation lifecycle.
 - Fixed the duplicated repository selection logic inside `entryService`, which kept inflating the facade.
 - Fixed the mismatch where adapters accepted backup payloads inconsistently and only the service layer silently normalized them.
+- Fixed the lack of guardrails around controller extraction, which would have made it easy to push orchestration back into page and UI shells.
+- Fixed the previous gap where backup helper functions were only guarded structurally and not checked for actual payload behavior.
 
 ### Removed
 - Removed large inline homepage section implementations from `src/app/page.tsx` and moved them into dedicated feature sections.
 - Removed the inline mobile draft / desktop draft adapter bridge from `src/components/features/EntryEditor.tsx`.
 - Removed most inline storage orchestration from `src/components/features/SettingsPanel.tsx` and `src/components/ui/DataManagement.tsx`.
 - Removed duplicate adapter instantiation paths and the local backup parser from `src/services/entryService.ts`.
+- Removed the noisy `MODULE_TYPELESS_PACKAGE_JSON` warning from the default test command so CI logs stay focused on actual failures.
 
 ### Compatibility Impact
 - None.
@@ -52,6 +59,7 @@
 - If the editor keeps evolving, do not move autosave / discard / close / hydrate logic back into the `EntryEditor.tsx` body.
 - If settings or data tooling grows further, prefer the corresponding controller hook instead of pushing storage branches back into UI components.
 - If storage adapters or the backup contract expand further, prefer `storage-runtime.ts` and `storage-backups.ts` instead of scattering mode checks and parsers across files again.
+- If test coverage expands further, prefer lightweight contract/smoke guards first before introducing a heavier frontend test runner.
 - History before 2026-04-09 has been compressed into the “Historical Baseline” section below. New release notes should continue from this section.
 
 ---
