@@ -97,6 +97,36 @@
 - Let the new desktop smoke workflow run in GitHub and confirm whether all three platforms go green.
 - If Linux desktop app artifacts become a real delivery target later, expand `release.yml`, `docs/RELEASE.md`, and the README platform claims together.
 
+---
+
+## 2026-04-09 / Desktop Smoke Workflow Follow-up: Fix Invalid Tauri CLI Flag
+
+### What changed
+- Updated `.github/workflows/desktop-smoke.yml` to use:
+  - `npm run app:build -- --no-bundle`
+  instead of:
+  - `npm run app:build -- --bundles none`
+- Updated `tests/guardrails.test.mjs` so the repo now guards the correct Tauri 2 smoke-build flag.
+- Refreshed `src-tauri/Cargo.lock` during local verification so the package version entry now matches `src-tauri/Cargo.toml` at `3.0.0`.
+
+### Problems addressed
+- Fixed the immediate failure in all three desktop smoke jobs. The workflow was not “too strict”; it was passing an invalid CLI value to Tauri.
+- Tauri 2 accepts `--no-bundle` to skip packaging. It does not accept `--bundles none`.
+
+### Impacted areas
+- `.github/workflows/desktop-smoke.yml`
+- `tests/guardrails.test.mjs`
+- `src-tauri/Cargo.lock`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### Risks / unfinished work
+- This fix only removes the invalid-argument failure. After rerunning the workflow, real platform-specific issues may still surface.
+
+### Next step
+- Re-run the desktop smoke workflow in GitHub Actions.
+- If any platform still fails after this, inspect that platform’s actual build error instead of the previous CLI-argument error.
+
 ## 2026-04-09 / Phase 4 Complete: Test Guardrail Expansion
 
 ### Related commits

@@ -47,6 +47,8 @@
 - `.github/workflows/ci.yml` and `docs/TESTING-CI.md` now reflect the expanded controller/service/backup guardrail suite instead of describing the tests as docs-only checks.
 
 ### Fixed
+- Fixed the new desktop smoke workflow command, which incorrectly used `tauri build --bundles none` even though Tauri 2 expects `--no-bundle` for bundle-free smoke builds.
+- Fixed the stale `src-tauri/Cargo.lock` package version entry so local Tauri verification matches the current `3.0.0` desktop shell metadata.
 - Fixed the release policy ambiguity where pushing a `v*` tag implicitly created a release, which made it too easy to treat tags and published releases as the same thing.
 - Fixed the lack of a dedicated cross-platform desktop smoke workflow, which left Linux/macOS/Windows desktop-shell confidence too dependent on inference.
 - Fixed the local tooling ambiguity where `.agents/` and `.claude/` looked like parallel repo structures instead of local-only agent assets with different responsibilities.

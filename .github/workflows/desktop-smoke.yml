@@ -43,4 +43,4 @@ jobs:
         run: npm ci
 
       - name: Tauri desktop smoke build
-        run: npm run app:build -- --bundles none
+        run: npm run app:build -- --no-bundle

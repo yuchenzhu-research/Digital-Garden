@@ -116,7 +116,7 @@ test('release docs do not overclaim Linux desktop app automation', () => {
   assert.match(desktopSmokeWorkflow, /ubuntu-latest/);
   assert.match(desktopSmokeWorkflow, /macos-latest/);
   assert.match(desktopSmokeWorkflow, /windows-latest/);
-  assert.match(desktopSmokeWorkflow, /npm run app:build -- --bundles none/);
+  assert.match(desktopSmokeWorkflow, /npm run app:build -- --no-bundle/);
   assert.ok(!/ubuntu-latest/.test(releaseWorkflow), 'release workflow should not silently imply Linux packaging if docs say it is unconfirmed');
   assert.ok(!/push:\s*\n\s*tags:/m.test(releaseWorkflow), 'release workflow should stay manual instead of auto-publishing from tag pushes');
   assert.match(releaseWorkflow, /workflow_dispatch:/);
