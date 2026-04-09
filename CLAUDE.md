@@ -4,7 +4,7 @@ Type: Next.js + Tauri (Desktop App)
 
 ## 🗂️ Repo Boundaries
 - **Product source**: `src/`, `src-tauri/`, `public/`
-- **Root docs**: `README*.md`, `LICENSE`
+- **Root docs**: `README*.md`, `CHANGELOG.md`, `DEVLOG.md`, `LICENSE`
 - **Long-form docs**: `docs/`
 - **Local-only agent assets**: `.claude/`, `.agents/`, `.Codex/`, `.agent/` (tooling only; not product source)
 - **Build outputs**: `.next/`, `out/`, `node_modules/`, `src-tauri/target/` (generated artifacts; not project structure)

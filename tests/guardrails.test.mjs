@@ -12,6 +12,8 @@ test('core engineering docs exist', () => {
   const required = [
     'AGENTS.md',
     'CLAUDE.md',
+    'CHANGELOG.md',
+    'DEVLOG.md',
     'docs/ARCHITECTURE.md',
     'docs/PROJECT-STRUCTURE.md',
     'docs/ENGINEERING-GUARDRAILS.md',
@@ -33,6 +35,19 @@ test('agent docs reference the shared engineering pipeline', () => {
     assert.match(content, /Audit first/i);
     assert.match(content, /Google Antigravity|Gemini-style/i);
   }
+});
+
+test('project structure includes changelog and devlog as root docs', () => {
+  const agents = read('AGENTS.md');
+  const claude = read('CLAUDE.md');
+  const structure = read('docs', 'PROJECT-STRUCTURE.md');
+
+  assert.match(agents, /CHANGELOG\.md/);
+  assert.match(agents, /DEVLOG\.md/);
+  assert.match(claude, /CHANGELOG\.md/);
+  assert.match(claude, /DEVLOG\.md/);
+  assert.match(structure, /CHANGELOG\.md/);
+  assert.match(structure, /DEVLOG\.md/);
 });
 
 test('engineering guardrails document the architecture boundaries', () => {
