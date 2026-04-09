@@ -2,6 +2,70 @@
 
 ---
 
+## 2026-04-09 / 第三阶段完成：services facade 与 backup contract 收口
+
+### 相关 commits
+- `60cf2b8` Extract storage runtime from entryService
+- `2d3cbd0` Align adapters on shared backup contract
+- `3f9df80` Add storage service guard tests
+
+### 本次修改
+- 新增 `src/services/storage-runtime.ts`：
+  - 统一 `StorageMode`
+  - 统一 `StorageModeInfo`
+  - 统一 `getRepository`
+  - 统一 shared WebFS / WebStorage runtime
+  - 统一 lazy repository proxy
+- `src/services/entryService.ts` 从 462 行降到 288 行，去掉了：
+  - 重复的 repository 实例选择逻辑
+  - 本地 backup parser
+  - 与 runtime 强耦合的大段 mode 分支
+- 新增 `src/services/storage-backups.ts`：
+  - 统一 `parseBackupEntries`
+  - 统一 `parseBackupJson`
+  - 统一 `createArchiveBackupPayload`
+  - 统一 `createArchiveBackupFilename`
+- 让三套 adapter 对 backup payload 行为对齐：
+  - `src/services/web-storage.ts`
+  - `src/services/web-fs-storage.ts`
+  - `src/services/native-storage.ts`
+- 新增 `tests/services-guardrails.test.mjs`，守卫这些结构约束：
+  - `entryService.ts` 不再直接 `new` adapter
+  - backup parser 只在 `storage-backups.ts` 定义
+  - 三套 adapter 都显式接入共享 backup contract
+
+### 解决的问题
+- 解决了 `entryService.ts` 同时承担 runtime factory、storage mode、backup contract、lazy proxy 和 facade 的职责混杂问题。
+- 解决了 `getRepository` 和默认导出 proxy 各维护一套 adapter 选择逻辑的问题。
+- 解决了 backup payload 解析在 `entryService`、`native-storage` 等处重复定义的问题。
+- 解决了 adapter `importData()` 对“entries 数组 / backup payload 对象”支持不一致的问题。
+
+### 影响范围
+- `src/services/entryService.ts`
+- `src/services/storage-runtime.ts`
+- `src/services/storage-backups.ts`
+- `src/services/web-storage.ts`
+- `src/services/web-fs-storage.ts`
+- `src/services/native-storage.ts`
+- `src/services/index.ts`
+- `tests/services-guardrails.test.mjs`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### 风险 / 未完成事项
+- `entryService.ts` 仍保留 `exportToFile` / `importFromFile` 和浏览器下载逻辑，下一阶段如果继续收 service 层，还可以再向更细的 file operations 模块移动。
+- 三套 adapter 虽然已经共用 backup parser，但 draft persistence、storage location 表达、image import/export 仍然存在重复实现。
+- 当前新增的 service tests 仍属于结构守卫，不是行为级 contract tests。
+
+### 下一步
+- 第四阶段进入更明确的测试守卫：
+  - storage runtime guard
+  - backup contract guard
+  - page/controller smoke
+- 如果继续收 services，本轮之后最值得优先看的是 `src/services/web-fs-storage.ts` 和 `src/services/native-storage.ts` 的 draft/image/path 重复逻辑。
+
+---
+
 ## 2026-04-09 / 第二阶段完成：Editor 与存储相关 UI 收口
 
 ### 相关 commits
