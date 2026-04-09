@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### Added
+- Added `.github/workflows/desktop-smoke.yml` to give the Tauri shell a dedicated macOS / Windows / Linux smoke-build workflow instead of relying only on repo-level CI checks.
 - Added `docs/LOCAL-AGENT-ASSETS.md` to define the local-only agent directory split:
   - `.agent/` for Antigravity rules
   - `.agents/skills/` as the canonical shared repo-local skill library
@@ -31,6 +32,8 @@
 - Starting from 2026-04-09, all new release notes and work logs should continue accumulating in this section.
 
 ### Changed
+- `release.yml` no longer auto-creates releases from pushed tags. Releases now require a manual workflow dispatch with an existing `v*` tag and always start as draft releases.
+- `AGENTS.md`, `CLAUDE.md`, `docs/RELEASE.md`, and `docs/TESTING-CI.md` now distinguish version tags, draft releases, desktop smoke validation, and release publishing more explicitly.
 - `AGENTS.md`, `CLAUDE.md`, `docs/PROJECT-STRUCTURE.md`, and `docs/ENGINEERING-GUARDRAILS.md` now treat `.agent/` as the Antigravity-specific local config, `.agents/skills/` as the canonical shared skill source, and `.claude/` as a compatibility layer.
 - `src/app/globals.css` now starts from semantic design-system primitives instead of only hardcoded “Alet-style” naming, while keeping the current warm editorial baseline visually intact.
 - `src/app/page.tsx` was further thinned down from a large page that mixed state and long JSX blocks into a shell that mostly composes a controller and sections.
@@ -44,6 +47,8 @@
 - `.github/workflows/ci.yml` and `docs/TESTING-CI.md` now reflect the expanded controller/service/backup guardrail suite instead of describing the tests as docs-only checks.
 
 ### Fixed
+- Fixed the release policy ambiguity where pushing a `v*` tag implicitly created a release, which made it too easy to treat tags and published releases as the same thing.
+- Fixed the lack of a dedicated cross-platform desktop smoke workflow, which left Linux/macOS/Windows desktop-shell confidence too dependent on inference.
 - Fixed the local tooling ambiguity where `.agents/` and `.claude/` looked like parallel repo structures instead of local-only agent assets with different responsibilities.
 - Fixed the lack of a neutral UI-preparation layer, where future visual exploration would otherwise have started directly from component-level hardcoded colors and motion timings.
 - Fixed the continued growth of the homepage shell file, where page-level orchestration and concrete section rendering were still mixed together.
@@ -65,6 +70,8 @@
 - None.
 
 ### Migration Notes
+- If you want a rollback point only, create and push a tag without running the release workflow.
+- If you want release artifacts, run the `Release` workflow manually with an existing `v*` tag, review the generated draft release, and publish it manually in GitHub.
 - If local agent tooling changes further, keep `.agent/` for Antigravity-only rules and keep shared skills converged under `.agents/skills/`.
 - If the visual direction changes later, start by extending the semantic foundation in `docs/DESIGN-FOUNDATION.md` and `src/app/globals.css` before rewriting feature components.
 - If homepage work continues, do not move section details and page control logic back into `page.tsx`.

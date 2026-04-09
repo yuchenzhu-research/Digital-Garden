@@ -48,6 +48,55 @@
 - Consolidate local ignored agent folders so `.claude/skills/` points back to shared skill sources instead of carrying duplicate copies.
 - Then continue Phase 5 with non-destructive visual-system groundwork in shared components before choosing a full aesthetic direction.
 
+---
+
+## 2026-04-09 / Release Discipline and Desktop Smoke Alignment
+
+### What changed
+- Updated `.github/workflows/release.yml` so releases are no longer created automatically by pushing `v*` tags.
+- The release workflow is now manual-only and requires an existing `v*` tag as input.
+- The workflow now always creates or updates a **draft release**, which preserves a human review step before publication.
+- Added `.github/workflows/desktop-smoke.yml` to run Tauri smoke builds on:
+  - `ubuntu-latest`
+  - `macos-latest`
+  - `windows-latest`
+- Updated release/testing constraints in:
+  - `AGENTS.md`
+  - `CLAUDE.md`
+  - `docs/RELEASE.md`
+  - `docs/TESTING-CI.md`
+- Expanded `tests/guardrails.test.mjs` so the repo now guards:
+  - manual-only release policy
+  - explicit draft-release wording
+  - existence of a desktop smoke workflow
+  - three-OS desktop smoke coverage
+
+### Problems addressed
+- Fixed the ambiguity between “tagging a commit” and “publishing a release”.
+- Fixed the risk that a pushed `v*` tag could create a release before a human had reviewed notes and artifacts.
+- Fixed the lack of explicit desktop-shell validation coverage across macOS, Windows, and Linux.
+- Tightened the repo-level policy so future maintainers cannot quietly drift back to an implicit release trigger model.
+
+### Impacted areas
+- `.github/workflows/release.yml`
+- `.github/workflows/desktop-smoke.yml`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `docs/RELEASE.md`
+- `docs/TESTING-CI.md`
+- `tests/guardrails.test.mjs`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### Risks / unfinished work
+- The new desktop smoke workflow is intended to validate cross-platform desktop builds, but its Linux/macOS/Windows success still needs real CI runs to be confirmed in GitHub Actions.
+- Linux desktop app release automation is still not documented as active. This round improves validation coverage, not artifact publishing coverage.
+- The release workflow now enforces a human-controlled draft step, but publish/reject decisions still happen manually in the GitHub UI.
+
+### Next step
+- Let the new desktop smoke workflow run in GitHub and confirm whether all three platforms go green.
+- If Linux desktop app artifacts become a real delivery target later, expand `release.yml`, `docs/RELEASE.md`, and the README platform claims together.
+
 ## 2026-04-09 / Phase 4 Complete: Test Guardrail Expansion
 
 ### Related commits
