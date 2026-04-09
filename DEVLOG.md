@@ -2,6 +2,73 @@
 
 ---
 
+## 2026-04-09 / 第二阶段完成：Editor 与存储相关 UI 收口
+
+### 相关 commits
+- `5b0cf31` Extract EntryEditor draft and form hooks
+- `a02fec6` Split EntryEditor into section components
+- `43c2d36` Extract SettingsPanel storage controller
+- `e83e36c` Extract DataManagement controller hook
+
+### 本次修改
+- 第二阶段完整收口了三块高风险 UI：
+  - `src/components/features/EntryEditor.tsx`
+  - `src/components/features/SettingsPanel.tsx`
+  - `src/components/ui/DataManagement.tsx`
+- `EntryEditor` 现在分成两层：
+  - 状态/草稿桥接 hook：
+    - `src/hooks/useEntryEditorFormState.ts`
+    - `src/hooks/useEntryEditorDraftBridge.ts`
+  - editor section 组件：
+    - `src/components/features/editor/AutoResizeTextarea.tsx`
+    - `src/components/features/editor/EntryEditorImageStage.tsx`
+    - `src/components/features/editor/EntryEditorHero.tsx`
+    - `src/components/features/editor/EntryEditorSidebar.tsx`
+    - `src/components/features/editor/EntryEditorBody.tsx`
+    - `src/components/features/editor/EntryEditorActions.tsx`
+- `SettingsPanel` 新增 `src/hooks/useSettingsPanelController.ts`：
+  - 承接 environment gating
+  - 承接 Folder Mode 连接行为
+  - 承接连接中状态与 reload 策略
+- `DataManagement` 新增 `src/hooks/useDataManagementController.ts`：
+  - 承接 export/import 动作
+  - 承接 storage state refresh
+  - 承接消息状态和 timeout 清理
+  - 承接 file input ref 与 dropdown state
+- 收口后主文件体积变化：
+  - `EntryEditor.tsx`: `631 -> 250`
+  - `SettingsPanel.tsx`: `138 -> 131`
+  - `DataManagement.tsx`: `271 -> 181`
+
+### 解决的问题
+- 解决了 `EntryEditor.tsx` 同时持有状态、autosave、draft hydrate、发布动作和大段渲染结构的问题。
+- 解决了 `SettingsPanel.tsx` 直接持有环境判断、Folder Mode 连接和页面 reload 策略的问题。
+- 解决了 `DataManagement.tsx` 直接持有导入导出 orchestration、storage refresh 和 timeout 生命周期的问题。
+- 把第二阶段的目标真正落成了“UI 组件负责展示，controller hook 负责 orchestration”的结构，而不是只把 helper 换了个地方继续堆。
+
+### 影响范围
+- `src/components/features/EntryEditor.tsx`
+- `src/components/features/editor/`
+- `src/hooks/useEntryEditorFormState.ts`
+- `src/hooks/useEntryEditorDraftBridge.ts`
+- `src/components/features/SettingsPanel.tsx`
+- `src/hooks/useSettingsPanelController.ts`
+- `src/components/ui/DataManagement.tsx`
+- `src/hooks/useDataManagementController.ts`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### 风险 / 未完成事项
+- `EntryEditor` 虽然已经不是大总管，但 publish action 和图片上传仍在主组件壳层里，后续还有继续收口空间。
+- `SettingsPanel` 和 `DataManagement` 目前只做到 controller 抽离，还没有统一成更高层级的 storage surface contract。
+- 这轮还没有补 UI/controller 的专项 smoke tests；目前仍主要依赖 lint、build 和仓库级 guardrails。
+
+### 下一步
+- 第三阶段进入 `src/services/entryService.ts` 与 storage adapters，把 facade 和 contract 真正对齐。
+- 优先检查 `src/services/web-fs-storage.ts`、`src/services/native-storage.ts`、`src/services/mobile-draft.ts` 的重复表达和环境切换逻辑。
+
+---
+
 ## 2026-04-09 / 第二阶段第一批：EntryEditor 草稿桥接与表单状态抽离
 
 ### 相关 commits

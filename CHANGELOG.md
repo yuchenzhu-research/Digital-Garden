@@ -14,19 +14,27 @@
 - 新增 Editor 第一批状态收口：
   - 新增 `src/hooks/useEntryEditorFormState.ts`
   - 新增 `src/hooks/useEntryEditorDraftBridge.ts`
+- 新增 Editor section 组件目录 `src/components/features/editor/`，承接 image stage、hero、sidebar、body、floating actions。
+- 新增 `src/hooks/useSettingsPanelController.ts`，统一 settings 面板的环境判断、Folder Mode 连接和面板状态。
+- 新增 `src/hooks/useDataManagementController.ts`，统一数据导入导出、状态刷新和反馈消息生命周期。
 - 从 2026-04-09 起，后续新版本和新工作请从这一节继续累积。
 
 ### 变更
 - `src/app/page.tsx` 进一步收薄，从“大页面同时持有逻辑与大段 JSX”收口为以 controller + section 组装为主的壳层。
 - `src/components/features/EntryEditor.tsx` 把草稿加载、自动保存、关闭时持久化、表单字段协调从组件主体中抽离，回到“发布动作 + 渲染骨架”为主。
+- `src/components/features/EntryEditor.tsx` 继续从巨型 JSX 文件收口为 editor shell，主文件现在主要负责 wiring 与 publish action。
+- `src/components/features/SettingsPanel.tsx` 不再直接持有 storage mode 判断、Folder Mode 连接流程和 reload 策略。
+- `src/components/ui/DataManagement.tsx` 不再直接持有 import/export、storage refresh、状态消息 timeout 等 orchestration 逻辑。
 
 ### 修复
 - 修复了首页主文件继续膨胀、页面壳体与具体 section 渲染混杂的问题。
 - 修复了 Editor 组件同时持有表单状态、draft bridge 与渲染层，继续向单文件堆积的问题。
+- 修复了 settings/data UI 直接耦合存储策略与 mutation lifecycle，导致 UI 层持续偷业务逻辑的问题。
 
 ### 移除
 - 从 `src/app/page.tsx` 中移除了大块首页 section 的内联实现，改由独立 feature section 承载。
 - 从 `src/components/features/EntryEditor.tsx` 中移除了移动草稿与桌面 draft adapter 的内联桥接实现。
+- 从 `src/components/features/SettingsPanel.tsx` 与 `src/components/ui/DataManagement.tsx` 中移除了大部分内联 storage orchestration。
 
 ### 兼容性影响
 - 无
@@ -34,6 +42,7 @@
 ### 迁移提示
 - 后续如果继续收首页，不要再把 section 细节和页面控制逻辑重新塞回 `page.tsx`。
 - 后续继续拆 Editor 时，不要再把 autosave / discard / close / hydrate 逻辑重新塞回 `EntryEditor.tsx` 主体。
+- 后续继续扩 settings 或 data tooling 时，优先进入对应 controller hook，而不是把存储分支重新塞回 UI 组件。
 - 2026-04-09 之前的历史已经压缩进下方“历史基线”节点；新的版本记录建议从本节开始继续累积。
 
 ---
