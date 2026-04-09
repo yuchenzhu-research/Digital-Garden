@@ -21,6 +21,7 @@ test('core engineering docs exist', () => {
     'docs/DESIGN-FOUNDATION.md',
     'docs/TESTING-CI.md',
     'docs/RELEASE.md',
+    '.github/workflows/desktop-smoke.yml',
     '.github/workflows/release.yml',
   ];
 
@@ -102,13 +103,25 @@ test('release docs do not overclaim Linux desktop app automation', () => {
   const readmeZh = read('README_zh-CN.md');
   const releaseDoc = read('docs', 'RELEASE.md');
   const releaseWorkflow = read('.github', 'workflows', 'release.yml');
+  const desktopSmokeWorkflow = read('.github', 'workflows', 'desktop-smoke.yml');
 
   assert.match(readme, /macOS and Windows/i);
   assert.match(readme, /Linux .*desktop web/i);
   assert.match(readmeZh, /macOS 和 Windows/);
   assert.match(readmeZh, /Linux .*桌面网页版/);
+  assert.match(releaseDoc, /Tags do \*\*not\*\* publish releases automatically/i);
+  assert.match(releaseDoc, /Draft Release/i);
   assert.match(releaseDoc, /Linux desktop app release automation is \*\*not currently documented as active\*\*/);
+  assert.match(releaseDoc, /Desktop app smoke validation/i);
+  assert.match(desktopSmokeWorkflow, /ubuntu-latest/);
+  assert.match(desktopSmokeWorkflow, /macos-latest/);
+  assert.match(desktopSmokeWorkflow, /windows-latest/);
+  assert.match(desktopSmokeWorkflow, /npm run app:build -- --bundles none/);
   assert.ok(!/ubuntu-latest/.test(releaseWorkflow), 'release workflow should not silently imply Linux packaging if docs say it is unconfirmed');
+  assert.ok(!/push:\s*\n\s*tags:/m.test(releaseWorkflow), 'release workflow should stay manual instead of auto-publishing from tag pushes');
+  assert.match(releaseWorkflow, /workflow_dispatch:/);
+  assert.match(releaseWorkflow, /inputs:\s*\n\s*tag:/m);
+  assert.match(releaseWorkflow, /releaseDraft: true/);
 });
 
 test('cargo metadata is no longer placeholder content', () => {
