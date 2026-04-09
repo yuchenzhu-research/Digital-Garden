@@ -2,6 +2,54 @@
 
 ---
 
+## 2026-04-09 / 第一阶段：首页 orchestration 拆薄
+
+### 相关 commits
+- `45d7a10` Extract home page controller hook
+- `d0a7c43` Extract home page sections
+
+### 本次修改
+- 把首页主控制逻辑从 `src/app/page.tsx` 抽到新的 `src/hooks/useHomePageController.ts`。
+- controller 现在集中承载这些职责：
+  - 用户条目加载
+  - mobile draft 状态刷新
+  - 搜索与分类筛选
+  - editor / detail overlay 状态
+  - dimming intensity 偏好
+  - 页面动作，如 create/edit/delete/clearFilters
+- 把首页中三块大 section 和 footer 从 `page.tsx` 中拆出，新增：
+  - `src/components/features/home/FeaturedArchiveSection.tsx`
+  - `src/components/features/home/PersonalCollectionSection.tsx`
+  - `src/components/features/home/ArchiveBrowserSection.tsx`
+  - `src/components/features/home/HomeFooter.tsx`
+- 拆分后，`src/app/page.tsx` 的职责收口为：
+  - 动态加载重型组件
+  - 消费 home controller
+  - 组装 section、overlay 与 editor
+
+### 解决的问题
+- 解决了首页文件同时持有大量状态编排和大段 section JSX 的问题。
+- 解决了“页面壳层”和“内容 section”没有明确边界，导致 `page.tsx` 持续增长的问题。
+- 为下一阶段继续拆 Editor 和 settings/data UI 打下了更稳定的页面层边界。
+
+### 影响范围
+- `src/app/page.tsx`
+- `src/hooks/useHomePageController.ts`
+- `src/components/features/home/`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### 风险 / 未完成事项
+- 这轮还没有触及 `EntryEditor.tsx`、`SettingsPanel.tsx`、`DataManagement.tsx` 的职责收口。
+- `useHomePageController.ts` 目前仍然偏大，它是一个中间收口点，不是最终形态。
+- 搜索/filter、personal collection、archive browser 虽然已经拆成 section，但还没有进入更细的动作与 view-model 分层。
+
+### 下一步
+- 第二阶段进入 `EntryEditor.tsx` 与存储相关 UI。
+- 后续要继续把 `useHomePageController.ts` 内的部分逻辑沿 controller / selector / action 边界继续拆开。
+
+---
+
 ## 2026-04-09 / 工程守卫、CI 基线与日志体系建立
 
 ### 相关 commits

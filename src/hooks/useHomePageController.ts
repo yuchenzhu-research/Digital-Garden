@@ -33,7 +33,7 @@ const matchesDocumentQuery = (document: Document, rawQuery: string): boolean => 
   const matchesTitle = document.title.toLowerCase().includes(query);
   const matchesAuthor = document.author.toLowerCase().includes(query);
   const matchesDescription = document.description.toLowerCase().includes(query);
-  const matchesTags = document.tags?.some((tag) => tag.toLowerCase().includes(query));
+  const matchesTags = document.tags?.some((tag) => tag.toLowerCase().includes(query)) ?? false;
 
   return matchesTitle || matchesAuthor || matchesDescription || matchesTags;
 };

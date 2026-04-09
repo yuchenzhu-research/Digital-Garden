@@ -8,21 +8,25 @@
 ## [Unreleased]
 
 ### 新增
+- 新增首页 page orchestration 第一阶段收口：
+  - 新增 `src/hooks/useHomePageController.ts`
+  - 新增 `src/components/features/home/` 下的首页 section 组件
 - 从 2026-04-09 起，后续新版本和新工作请从这一节继续累积。
 
 ### 变更
-- 无
+- `src/app/page.tsx` 进一步收薄，从“大页面同时持有逻辑与大段 JSX”收口为以 controller + section 组装为主的壳层。
 
 ### 修复
-- 无
+- 修复了首页主文件继续膨胀、页面壳体与具体 section 渲染混杂的问题。
 
 ### 移除
-- 无
+- 从 `src/app/page.tsx` 中移除了大块首页 section 的内联实现，改由独立 feature section 承载。
 
 ### 兼容性影响
 - 无
 
 ### 迁移提示
+- 后续如果继续收首页，不要再把 section 细节和页面控制逻辑重新塞回 `page.tsx`。
 - 2026-04-09 之前的历史已经压缩进下方“历史基线”节点；新的版本记录建议从本节开始继续累积。
 
 ---
