@@ -10,6 +10,7 @@ const read = (...segments) =>
 
 test('core engineering docs exist', () => {
   const required = [
+    'CONSTITUTION.md',
     'AGENTS.md',
     'CLAUDE.md',
     'CHANGELOG.md',
