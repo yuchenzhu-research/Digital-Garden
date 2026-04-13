@@ -101,7 +101,10 @@ export class WebStorageAdapter implements StorageRepository {
    * Constructor
    * @param prefix - Optional prefix for storage keys (useful for multi-user)
    */
-  constructor(private prefix: string = '') { }
+  private prefix: string;
+  constructor(prefix: string = '') {
+    this.prefix = prefix;
+  }
 
   // ==========================================================================
   // Entry Operations
