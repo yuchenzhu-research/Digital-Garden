@@ -20,7 +20,7 @@ export function TitleBar({ title = "Bibliotheca Vitae" }: TitleBarProps) {
       <div
         className="fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-4 z-[9999] select-none"
         style={{
-          background: 'linear-gradient(180deg, rgba(61, 52, 40, 0.08) 0%, rgba(61, 52, 40, 0.02) 100%)',
+          background: 'var(--glass-titlebar)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
         }}
@@ -39,7 +39,7 @@ export function TitleBar({ title = "Bibliotheca Vitae" }: TitleBarProps) {
       data-tauri-drag-region
       className={`fixed top-0 left-0 right-0 h-10 flex items-center justify-between z-[9999] select-none ${isMac ? 'pl-[80px]' : ''}`}
       style={{
-        background: 'linear-gradient(180deg, rgba(61, 52, 40, 0.08) 0%, rgba(61, 52, 40, 0.02) 100%)',
+        background: 'var(--glass-titlebar)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
       }}
