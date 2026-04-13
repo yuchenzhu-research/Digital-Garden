@@ -30,7 +30,7 @@ export function SearchBar({
             <motion.div
                 animate={{
                     boxShadow: isFocused
-                        ? '0 0 0 2px rgba(var(--primary), 0.2)'
+                        ? '0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent)'
                         : '0 0 0 0 transparent'
                 }}
                 className={cn(
