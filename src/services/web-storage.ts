@@ -16,6 +16,7 @@ import {
 } from './storage-repository';
 import { parseBackupJson } from './storage-backups';
 import { isManagedImagePath } from './portable-images';
+import { generateId, toEntrySummaries } from './storage-shared';
 
 // ============================================================================
 // Storage Keys
@@ -31,12 +32,6 @@ const STORAGE_KEYS = {
 // Utility Functions
 // ============================================================================
 
-/**
- * Generate a unique ID
- */
-const generateId = (): string => {
-  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-};
 
 /**
  * Check if running in browser
@@ -113,7 +108,7 @@ export class WebStorageAdapter implements StorageRepository {
   // ==========================================================================
 
   async saveEntry(entry: Entry): Promise<SaveResult> {
-    const id = generateId();
+    const id = entry.id || generateId();
     const now = new Date().toISOString();
 
     const savedEntry: SavedEntry = {
@@ -171,18 +166,7 @@ export class WebStorageAdapter implements StorageRepository {
   }
 
   async getEntrySummaries(): Promise<EntrySummary[]> {
-    const entries = loadEntries();
-    return entries.map((entry) => {
-      const saved = entry as SavedEntry;
-      return {
-        id: saved.id || generateId(),
-        title: entry.title,
-        figure: entry.figure,
-        imageUrl: entry.imageUrl,
-        dateCreated: entry.dateCreated,
-        keywords: entry.keywords,
-      };
-    });
+    return toEntrySummaries(loadEntries());
   }
 
   async updateEntry(id: string, data: Partial<Entry>): Promise<SaveResult> {
