@@ -60,7 +60,7 @@ El corazón del proyecto es un Editor Visual-First.
 Construido como una aplicación compartida **Web + Tauri de escritorio**:
 
 -   **Núcleo**: Next.js 16 App Router, React 19, TypeScript
--   **Movimiento**: Framer Motion, GSAP, Lenis
+-   **Movimiento**: Framer Motion, Lenis
 -   **Visual**: Tailwind CSS v4, Lucide Icons
 -   **Gráficos**: React Three Fiber / Drei WebGL Particle System
 -   **Escritorio**: Tauri 2
@@ -85,14 +85,36 @@ Construido como una aplicación compartida **Web + Tauri de escritorio**:
 - Publicar en una carpeta conectada, importar/exportar y la gestión completa del archivo siguen siendo flujos de escritorio
 - Para el flujo archivístico completo, usa un navegador de escritorio o la aplicación de escritorio
 
+## 📥 Descarga e Instalación
+
+Puedes descargar la aplicación de escritorio precompilada para macOS y Windows desde la página de [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases).
+
+Linux sigue siendo una plataforma de **escritorio web** compatible. La automatización de lanzamiento de la app de escritorio para Linux aún no está confirmada. Consulta [docs/RELEASE.md](docs/RELEASE.md).
+
+### 🍎 Usuarios de macOS
+La versión MVP actual se compila mediante GitHub Actions sin certificado de desarrollador de Apple, por lo que macOS puede mostrar que la app "está dañada".
+**Solución:**
+1. Arrastra la aplicación `.dmg` a tu carpeta `/Applications`.
+2. Abre la Terminal y ejecuta el siguiente comando para eliminar la marca de cuarentena:
+```bash
+xattr -cr "/Applications/Bibliotheca Vitae.app"
+```
+3. Ahora puedes abrir la app normalmente.
+
+### 🪟 Usuarios de Windows
+Windows SmartScreen puede marcar el `.exe` como una app no reconocida. Haz clic en **"Más información"** y luego en **"Ejecutar de todos modos"**.
+
 ## 🚀 Inicio Rápido
 
 1.  Clona el repositorio.
 2.  Instala dependencias: `npm install`
-3.  Inicia el servidor web de desarrollo: `npm run dev`
-4.  Abre `http://localhost:4321`
-5.  Shell de escritorio opcional: `npm run app:dev`
-6.  Build web opcional de producción: `npm run build`
+3.  Valida la línea base: `npm run lint && npm run test`
+4.  Inicia el servidor web de desarrollo: `npm run dev`
+5.  Abre `http://localhost:4321`
+6.  Shell de escritorio opcional: `npm run app:dev`
+7.  Build web opcional de producción: `npm run build`
+
+Guías de ingeniería detalladas: [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
