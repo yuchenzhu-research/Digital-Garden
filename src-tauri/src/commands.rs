@@ -104,9 +104,11 @@ fn initialize_entries(_state: &State<AppState>) -> Vec<EntryPayload> {
 // ============================================================================
 
 fn get_archive_dir() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home)
-        .join("Documents")
+    dirs::document_dir()
+        .unwrap_or_else(|| {
+            let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+            PathBuf::from(home).join("Documents")
+        })
         .join("DigitalGarden")
         .join("Archive")
 }
