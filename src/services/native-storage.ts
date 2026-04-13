@@ -21,6 +21,7 @@ import {
   isManagedImagePath,
 } from './portable-images';
 import { parseBackupJson } from './storage-backups';
+import { toEntrySummaries } from './storage-shared';
 
 // ============================================================================
 // Tauri Types (duplicated from Rust for TypeScript)
@@ -189,15 +190,7 @@ export class NativeStorageAdapter implements StorageRepository {
   }
 
   async getEntrySummaries(): Promise<EntrySummary[]> {
-    const entries = await this.getEntries();
-    return entries.map((entry) => ({
-      id: (entry as SavedEntry).id || '',
-      title: entry.title,
-      figure: entry.figure,
-      imageUrl: entry.imageUrl,
-      dateCreated: entry.dateCreated,
-      keywords: entry.keywords,
-    }));
+    return toEntrySummaries(await this.getEntries());
   }
 
   async updateEntry(id: string, data: Partial<Entry>): Promise<SaveResult> {
