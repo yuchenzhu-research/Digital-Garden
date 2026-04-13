@@ -61,7 +61,7 @@
 基于共享的 Web + Tauri 桌面应用架构：
 
 -   **核心**: Next.js 16 App Router, React 19, TypeScript
--   **动效**: Framer Motion, GSAP, Lenis
+-   **动效**: Framer Motion, Lenis
 -   **视觉**: Tailwind CSS v4, Lucide Icons
 -   **图形**: React Three Fiber / Drei WebGL Particle System
 -   **桌面端**: Tauri 2

@@ -61,7 +61,7 @@ The heart of the project is a Visual-First Editor.
 Built as a shared **Web + Tauri desktop application**:
 
 -   **Core**: Next.js 16 App Router, React 19, TypeScript
--   **Motion**: Framer Motion, GSAP, Lenis
+-   **Motion**: Framer Motion, Lenis
 -   **Visual**: Tailwind CSS v4, Lucide Icons
 -   **Graphics**: React Three Fiber / Drei WebGL Particle System
 -   **Desktop**: Tauri 2
