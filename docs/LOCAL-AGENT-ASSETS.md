@@ -53,7 +53,15 @@ Current preferred local layout:
 
 - These directories are ignored by Git and are local-only by design.
 - The tracked source of truth for collaborators is:
+  - `CONSTITUTION.md`
   - `AGENTS.md`
   - `CLAUDE.md`
   - `docs/PROJECT-STRUCTURE.md`
   - this document
+
+## Reading Model
+
+- `CONSTITUTION.md` defines repository-wide governance and invariants.
+- `AGENTS.md` defines the shared cross-agent workflow and reading order.
+- `CLAUDE.md` is intentionally thin and only exists as a compatibility shim for tools that auto-read it.
+- Local directories such as `.agent/`, `.agents/`, `.claude/`, and `.Codex/` are tooling surfaces, not the primary tracked source of truth.

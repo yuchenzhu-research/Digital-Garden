@@ -2,6 +2,46 @@
 
 ---
 
+## 2026-04-13 / Governance Document Stack Clarification
+
+### What changed
+- Clarified the governance stack in `CONSTITUTION.md` so the repository now explicitly distinguishes:
+  - `CONSTITUTION.md` as the highest-level governance file
+  - `AGENTS.md` as the shared cross-agent operating handbook
+  - `CLAUDE.md` as a thin compatibility shim rather than a second handbook
+- Expanded `AGENTS.md` with:
+  - a default reading order
+  - document responsibilities
+  - a specialist-document index
+  - a tool-specific shim rule
+- Updated `CLAUDE.md` to state directly that it is a compatibility shim and not an independent source of repository rules.
+- Updated `docs/LOCAL-AGENT-ASSETS.md` and `docs/PROJECT-STRUCTURE.md` so local agent folders and tracked governance files are described consistently.
+- Added a new guardrail in `tests/guardrails.test.mjs` to keep the governance document stack explicit and prevent `CLAUDE.md` from drifting into a second full rulebook.
+
+### Problems addressed
+- Fixed the ambiguity where the repository already had `CONSTITUTION.md`, `AGENTS.md`, and `CLAUDE.md`, but their exact hierarchy and reading order were still partly implicit.
+- Fixed the long-term drift risk where `CLAUDE.md` could quietly grow back into a second parallel handbook.
+- Fixed the mismatch between tracked governance files and local-only tool directories, making the agent reading model more explicit for future contributors.
+
+### Impacted areas
+- `CONSTITUTION.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `docs/LOCAL-AGENT-ASSETS.md`
+- `docs/PROJECT-STRUCTURE.md`
+- `tests/guardrails.test.mjs`
+- `CHANGELOG.md`
+- `DEVLOG.md`
+
+### Risks / unfinished work
+- This round intentionally does not decide whether `CLAUDE.md` should be deleted in this repository; it only makes the current split explicit and safe.
+- Tool-specific entry files for other ecosystems are still optional and should only exist when a tool truly requires them.
+
+### Next step
+- Use this clearer governance stack as the baseline when upgrading the reusable skills in `prompt-refinement-lab`.
+
+---
+
 ## 2026-04-13 / Final Bug Sweep Before Dev Phase
 
 ### Related commits

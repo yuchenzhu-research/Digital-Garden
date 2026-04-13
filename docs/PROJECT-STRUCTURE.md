@@ -71,11 +71,12 @@
 - 判断“项目架构”时，应只看 `src/`、`src-tauri/`、`public/`、`docs/` 和根目录入口文件
 
 ### 4. Agent 配置层
-
-- `AGENTS.md`、`CLAUDE.md` 是可跟踪的入口说明
-- `.agents/`、`.claude/`、`.Codex/`、`.agent/` 属于本地工具目录
-- 这些目录用于技能、缓存、规则或工具配置，不应视为业务源码或产品文档
-- 当前推荐职责：
+ 
+ - `CONSTITUTION.md` 是最高治理文件；`AGENTS.md` 是共享 agent 手册；`CLAUDE.md` 是薄兼容层
+ - `AGENTS.md`、`CLAUDE.md` 是可跟踪的 agent 入口说明
+ - `.agents/`、`.claude/`、`.Codex/`、`.agent/` 属于本地工具目录
+ - 这些目录用于技能、缓存、规则或工具配置，不应视为业务源码或产品文档
+ - 当前推荐职责：
   - `.agent/`：Antigravity 系统配置与规则，保留
   - `.agents/skills/`：共享 repo-local 技能源，作为 canonical source
   - `.claude/`：Claude 兼容层，尽量通过别名或链接复用 `.agents/skills/`

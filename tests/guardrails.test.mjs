@@ -42,6 +42,24 @@ test('agent docs reference the shared engineering pipeline', () => {
   assert.match(claude, /AGENTS\.md/);
 });
 
+test('governance document stack stays explicit and non-duplicative', () => {
+  const constitution = read('CONSTITUTION.md');
+  const agents = read('AGENTS.md');
+  const claude = read('CLAUDE.md');
+  const localAssets = read('docs', 'LOCAL-AGENT-ASSETS.md');
+
+  assert.match(constitution, /最高级别治理文档/);
+  assert.match(constitution, /治理文档栈/);
+  assert.match(agents, /shared cross-agent operating handbook/i);
+  assert.match(agents, /Default Reading Order/);
+  assert.match(agents, /CLAUDE\.md.*thin Claude compatibility shim/i);
+  assert.match(claude, /compatibility shim/i);
+  assert.doesNotMatch(claude, /Repo Boundaries/);
+  assert.doesNotMatch(claude, /Common Commands/);
+  assert.match(localAssets, /CONSTITUTION\.md/);
+  assert.match(localAssets, /Reading Model/);
+});
+
 test('project structure includes changelog and devlog as root docs', () => {
   const agents = read('AGENTS.md');
   const claude = read('CLAUDE.md');

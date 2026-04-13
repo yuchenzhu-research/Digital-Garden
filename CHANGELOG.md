@@ -29,9 +29,15 @@
 - Added `tests/services-guardrails.test.mjs` to guard the service facade and backup contract structure.
 - Added `tests/controller-guardrails.test.mjs` to lock the extracted homepage/editor/settings/data shell-controller boundaries.
 - Added `tests/storage-backups.test.mjs` to verify backup helper behavior, not just source structure.
+- Added unreleased notes for the governance document stack clarification and guardrail coverage.
 - Starting from 2026-04-09, all new release notes and work logs should continue accumulating in this section.
 
 ### Changed
+- `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md`, `docs/LOCAL-AGENT-ASSETS.md`, and `docs/PROJECT-STRUCTURE.md` now define a clearer governance-document stack:
+  - `CONSTITUTION.md` = highest-level governance
+  - `AGENTS.md` = shared cross-agent handbook
+  - `CLAUDE.md` = thin compatibility shim
+- `AGENTS.md` now documents a default reading order and a specialist-document index so agents read the same tracked sources before acting.
 - `release.yml` no longer auto-creates releases from pushed tags. Releases now require a manual workflow dispatch with an existing `v*` tag and always start as draft releases.
 - `AGENTS.md`, `CLAUDE.md`, `docs/RELEASE.md`, and `docs/TESTING-CI.md` now distinguish version tags, draft releases, desktop smoke validation, and release publishing more explicitly.
 - `AGENTS.md`, `CLAUDE.md`, `docs/PROJECT-STRUCTURE.md`, and `docs/ENGINEERING-GUARDRAILS.md` now treat `.agent/` as the Antigravity-specific local config, `.agents/skills/` as the canonical shared skill source, and `.claude/` as a compatibility layer.
@@ -47,6 +53,7 @@
 - `.github/workflows/ci.yml` and `docs/TESTING-CI.md` now reflect the expanded controller/service/backup guardrail suite instead of describing the tests as docs-only checks.
 
 ### Fixed
+- Fixed the governance-doc ambiguity where `CONSTITUTION.md`, `AGENTS.md`, and `CLAUDE.md` were present but their exact responsibilities and reading order were not explicitly locked together.
 - Fixed the new desktop smoke workflow command, which incorrectly used `tauri build --bundles none` even though Tauri 2 expects `--no-bundle` for bundle-free smoke builds.
 - Fixed the stale `src-tauri/Cargo.lock` package version entry so local Tauri verification matches the current `3.0.0` desktop shell metadata.
 - Fixed the release policy ambiguity where pushing a `v*` tag implicitly created a release, which made it too easy to treat tags and published releases as the same thing.
@@ -62,6 +69,7 @@
 - Fixed the previous gap where backup helper functions were only guarded structurally and not checked for actual payload behavior.
 
 ### Removed
+- Removed the remaining expectation that `CLAUDE.md` might evolve into a second full repository handbook separate from `AGENTS.md`.
 - Removed large inline homepage section implementations from `src/app/page.tsx` and moved them into dedicated feature sections.
 - Removed the inline mobile draft / desktop draft adapter bridge from `src/components/features/EntryEditor.tsx`.
 - Removed most inline storage orchestration from `src/components/features/SettingsPanel.tsx` and `src/components/ui/DataManagement.tsx`.
