@@ -2,9 +2,8 @@
 mod commands;
 
 use commands::{
-    delete_entry, get_all_entries, get_entry,
-    get_storage_path, import_entries, init_app_state, save_entry, save_image,
-    save_image_from_bytes, update_entry, AppState,
+    delete_entry, get_all_entries, get_entry, get_storage_path, import_entries, init_app_state,
+    save_entry, save_image, save_image_from_bytes, update_entry, AppState,
 };
 use tauri::Manager;
 
