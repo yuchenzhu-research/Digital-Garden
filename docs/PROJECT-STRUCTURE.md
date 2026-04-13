@@ -11,7 +11,7 @@
 
 ## 根目录规则
 
-- 根目录保留面向仓库入口的文件：`README*.md`、`CHANGELOG.md`、`DEVLOG.md`、`LICENSE`、`package.json`、`next.config.ts`、`tailwind.config.ts`、`tsconfig.json`
+- 根目录保留面向仓库入口的文件：`README*.md`、`CONSTITUTION.md`、`CHANGELOG.md`、`DEVLOG.md`、`LICENSE`、`package.json`、`next.config.ts`、`tailwind.config.ts`、`tsconfig.json`
 - 多语言 `README*.md` 继续放在仓库最外层，方便 GitHub 首页与多语言切换
 - 较长的内部说明文档统一收敛到 `docs/`
 - 根目录不堆放构建产物，也不把本地 Agent 技能目录当成产品结构的一部分
@@ -21,7 +21,7 @@
 | 层级 | 当前目录 | 说明 |
 | --- | --- | --- |
 | 源码层 | `src/`, `src-tauri/`, `public/` | Web 前端、Tauri 桌面端、运行时静态资源 |
-| 文档层 | `README*.md`, `CHANGELOG.md`, `DEVLOG.md`, `LICENSE`, `docs/` | 对外入口文档、工程日志与内部结构说明 |
+| 文档层 | `README*.md`, `CONSTITUTION.md`, `CHANGELOG.md`, `DEVLOG.md`, `LICENSE`, `docs/` | 对外入口文档、项目宪法、工程日志与内部结构说明 |
 | 本地产物层 | `.next/`, `out/`, `node_modules/`, `src-tauri/target/` | 构建产物、依赖、导出结果，应忽略提交 |
 | Agent 配置层 | `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, `.Codex/`, `.agent/` | AI 工具入口说明与本地技能/缓存 |
 
@@ -39,6 +39,7 @@
 ### 2. 文档层
 
 - 根目录 `README*.md`：项目首页与多语言说明
+- 根目录 `CONSTITUTION.md`：项目宪法，最高级别治理文档，所有 Agent 和架构级变更必须先读
 - 根目录 `CHANGELOG.md`：对外可读的版本变化摘要
 - 根目录 `DEVLOG.md`：面向维护者的按日工作记录
 - `docs/`：放结构说明、架构说明、发布说明等长文档

@@ -2,6 +2,9 @@
 Project: Digital Garden | Bibliotheca Vitae
 Type: Next.js + Tauri (Desktop App)
 
+## ⚖️ Read First: Project Constitution
+**Before starting any work, read [`CONSTITUTION.md`](CONSTITUTION.md) in full.** It is the highest-level governance document for this repository, covering project invariants, architecture guardrails, known risks, and anti-patterns. This file (`CLAUDE.md`) provides Claude-specific configuration; `CONSTITUTION.md` provides the project-wide rules that every contributor — human or agent — must follow.
+
 ## 🗂️ Repo Boundaries
 - **Product source**: `src/`, `src-tauri/`, `public/`
 - **Root docs**: `README*.md`, `CHANGELOG.md`, `DEVLOG.md`, `LICENSE`
