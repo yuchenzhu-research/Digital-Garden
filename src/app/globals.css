@@ -126,6 +126,12 @@
   --scrim-strong: rgba(28, 22, 18, 0.4);
   --glow-warm: color-mix(in oklch, var(--accent-strong) 16%, white 84%);
 
+  /* ===== Glassmorphism Foundation ===== */
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  --glass-titlebar: linear-gradient(180deg, rgba(61, 52, 40, 0.08) 0%, rgba(61, 52, 40, 0.02) 100%);
+
   /* ===== Motion Foundation ===== */
   --motion-duration-fast: 180ms;
   --motion-duration-base: 320ms;
