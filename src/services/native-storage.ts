@@ -118,6 +118,7 @@ export class NativeStorageAdapter implements StorageRepository {
       const { invoke } = await this.initCore();
 
       const payload: RustEntryPayload = {
+        id: entry.id,
         title: entry.title,
         figure: entry.figure,
         moment: entry.moment,
@@ -284,22 +285,6 @@ export class NativeStorageAdapter implements StorageRepository {
         error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
-  }
-
-  /**
-   * Convert File/Blob to base64 string
-   */
-  private async fileToBase64(file: File | Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove the data URL prefix
-        resolve(result.replace(/^data:image\/\w+;base64,/, ''));
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   }
 
   // ==========================================================================

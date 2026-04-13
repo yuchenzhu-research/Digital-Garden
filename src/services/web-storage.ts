@@ -43,11 +43,12 @@ const isBrowser = (): boolean => {
 /**
  * Load entries from localStorage
  */
-const loadEntries = (): Entry[] => {
+const loadEntries = (prefix: string = ''): Entry[] => {
   if (!isBrowser()) return [];
 
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.ENTRIES);
+    const key = prefix ? `${prefix}_${STORAGE_KEYS.ENTRIES}` : STORAGE_KEYS.ENTRIES;
+    const stored = localStorage.getItem(key);
     if (!stored) return [];
 
     const parsed = JSON.parse(stored);
@@ -62,11 +63,12 @@ const loadEntries = (): Entry[] => {
  * Save entries to localStorage
  * @returns true if successful, false if storage is full or unavailable
  */
-const saveEntries = (entries: Entry[]): boolean => {
+const saveEntries = (entries: Entry[], prefix: string = ''): boolean => {
   if (!isBrowser()) return false;
 
   try {
-    localStorage.setItem(STORAGE_KEYS.ENTRIES, JSON.stringify(entries));
+    const key = prefix ? `${prefix}_${STORAGE_KEYS.ENTRIES}` : STORAGE_KEYS.ENTRIES;
+    localStorage.setItem(key, JSON.stringify(entries));
     return true;
   } catch (error) {
     // QuotaExceededError or other storage errors
@@ -122,9 +124,9 @@ export class WebStorageAdapter implements StorageRepository {
     };
 
     try {
-      const entries = loadEntries();
+      const entries = loadEntries(this.prefix);
       entries.push(savedEntry);
-      const saved = saveEntries(entries);
+      const saved = saveEntries(entries, this.prefix);
 
       if (!saved) {
         return {
@@ -159,22 +161,22 @@ export class WebStorageAdapter implements StorageRepository {
   }
 
   async getEntry(id: string): Promise<Entry | null> {
-    const entries = loadEntries();
+    const entries = loadEntries(this.prefix);
     const entry = entries.find((e) => (e as SavedEntry).id === id);
     return entry || null;
   }
 
   async getEntries(): Promise<Entry[]> {
-    return loadEntries();
+    return loadEntries(this.prefix);
   }
 
   async getEntrySummaries(): Promise<EntrySummary[]> {
-    return toEntrySummaries(loadEntries());
+    return toEntrySummaries(loadEntries(this.prefix));
   }
 
   async updateEntry(id: string, data: Partial<Entry>): Promise<SaveResult> {
     try {
-      const entries = loadEntries();
+      const entries = loadEntries(this.prefix);
       const index = entries.findIndex((e) => (e as SavedEntry).id === id);
 
       if (index === -1) {
@@ -187,7 +189,7 @@ export class WebStorageAdapter implements StorageRepository {
         dateModified: new Date().toISOString(),
       };
 
-      saveEntries(entries);
+      saveEntries(entries, this.prefix);
 
       return {
         success: true,
@@ -202,9 +204,9 @@ export class WebStorageAdapter implements StorageRepository {
   }
 
   async deleteEntry(id: string): Promise<void> {
-    const entries = loadEntries();
+    const entries = loadEntries(this.prefix);
     const filtered = entries.filter((e) => (e as SavedEntry).id !== id);
-    saveEntries(filtered);
+    saveEntries(filtered, this.prefix);
   }
 
   // ==========================================================================
@@ -261,7 +263,7 @@ export class WebStorageAdapter implements StorageRepository {
   // ==========================================================================
 
   async exportData(): Promise<string> {
-    const entries = loadEntries();
+    const entries = loadEntries(this.prefix);
     return JSON.stringify(entries, null, 2);
   }
 
@@ -269,7 +271,7 @@ export class WebStorageAdapter implements StorageRepository {
     try {
       const entries = parseBackupJson(json);
 
-      const existingEntries = loadEntries();
+      const existingEntries = loadEntries(this.prefix);
       const merged = [...existingEntries];
 
       for (const entry of entries) {
@@ -283,7 +285,7 @@ export class WebStorageAdapter implements StorageRepository {
         }
       }
 
-      saveEntries(merged);
+      saveEntries(merged, this.prefix);
     } catch (error) {
       throw new Error(
         `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'
@@ -346,135 +348,6 @@ export class WebStorageAdapter implements StorageRepository {
     return this.metadata;
   }
 }
-
-// ============================================================================
-// Factory Function
-// ============================================================================
-
-/**
- * Create a WebStorageAdapter instance
- */
-export const createWebStorage = (prefix?: string): WebStorageAdapter => {
-  return new WebStorageAdapter(prefix);
-};
-
-// ============================================================================
-// File-based Export/Import Functions (Browser Download/Upload)
-// ============================================================================
-
-/**
- * Export all entries to a downloadable JSON file
- * Triggers browser download dialog
- */
-export const exportToFile = async (): Promise<{ success: boolean; filename?: string; error?: string }> => {
-  if (!isBrowser()) {
-    return { success: false, error: 'Not running in browser' };
-  }
-
-  try {
-    const entries = loadEntries();
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `bibliotheca_backup_${timestamp}.json`;
-
-    const exportData = {
-      version: '1.0',
-      exportedAt: new Date().toISOString(),
-      entryCount: entries.length,
-      entries,
-    };
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    return { success: true, filename };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to export',
-    };
-  }
-};
-
-/**
- * Import entries from an uploaded JSON file
- * @param file - The file to import
- * @param options - Import options
- * @returns Result with count of imported entries
- */
-export const importFromFile = async (
-  file: File,
-  options: { merge?: boolean; onProgress?: (count: number) => void } = {}
-): Promise<{ success: boolean; importedCount?: number; error?: string }> => {
-  if (!isBrowser()) {
-    return { success: false, error: 'Not running in browser' };
-  }
-
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-
-    // Validate format
-    if (!data.entries || !Array.isArray(data.entries)) {
-      return { success: false, error: 'Invalid file format: missing entries array' };
-    }
-
-    const entries: Entry[] = data.entries;
-    const existingEntries = loadEntries();
-    let merged: Entry[];
-
-    if (options.merge !== false) {
-      // Merge with existing entries (skip duplicates)
-      merged = [...existingEntries];
-      for (const entry of entries) {
-        const exists = merged.some(
-          (e) => (e as SavedEntry).id === (entry as SavedEntry).id
-        );
-        if (!exists) {
-          merged.push(entry);
-          options.onProgress?.(merged.length - existingEntries.length);
-        }
-      }
-    } else {
-      // Replace all entries
-      merged = entries;
-    }
-
-    saveEntries(merged);
-    return {
-      success: true,
-      importedCount: merged.length - existingEntries.length,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to import',
-    };
-  }
-};
-
-/**
- * Check if any user entries exist
- */
-export const hasUserEntries = (): boolean => {
-  if (!isBrowser()) return false;
-  const entries = loadEntries();
-  return entries.length > 0;
-};
-
-/**
- * Get count of user entries
- */
-export const getUserEntryCount = (): number => {
-  return loadEntries().length;
-};
 
 // ============================================================================
 // Default Export

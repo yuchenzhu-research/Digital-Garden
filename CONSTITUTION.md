@@ -142,10 +142,14 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
   - 应评估提取 base adapter 或 shared mixins 的可行性
 - 🔴 **适配器无运行时 contract tests** — 2026-04-13
   - 当前测试只有 guardrail（文件存在性 + 导出检查），缺少对 `saveEntry`→`getEntry` 往返的实际验证
-- � **`WebStorageAdapter.saveEntry()` 忽略入参 ID** — 2026-04-13（审计发现）
-  - 总是 `generateId()` 生成新 ID，与 WebFS/Native 适配器行为不一致
-  - 影响：通过 localStorage 适配器保存的条目无法保留原始 ID
-- � **`storage-runtime.ts` lazy proxy 的边界条件** — 2026-04-13
+- 🟢 **`WebStorageAdapter.saveEntry()` 忽略入参 ID** — 2026-04-13 → 已修复 2026-04-13
+  - 现在使用 `entry.id || generateId()`，prefix 也已正确应用到 ENTRIES 键
+- 🟢 **`NativeStorageAdapter.saveEntry()` 未转发入参 ID 到 Rust** — 发现并修复 2026-04-13
+  - payload 构建时漏掉 `id` 字段，导致 Rust 端每次都生成新 UUID
+- 🟢 **`web-storage.ts` 残留 130 行死代码** — 清理 2026-04-13
+  - 独立的 `exportToFile`/`importFromFile`/`hasUserEntries`/`getUserEntryCount` 已移除
+  - 死代码中的 `importFromFile` 使用了非标准解析路径（绕过 `parseBackupJson`）
+- 🟡 **`storage-runtime.ts` lazy proxy 的边界条件** — 2026-04-13
   - SSR 环境、HMR 热切换、adapter 不存在时的行为需要进一步验证
 - 🔴 **全量加载瓶颈** — 2026-04-13
   - 当前 `getEntries()` 全量反序列化，条目量 >500 时可能成为性能瓶颈
@@ -188,11 +192,13 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
   - 两个文件维护成本高，漂移风险已存在
 
 ### Tauri 层
-- � **Rust `get_archive_dir()` Windows 兼容性问题** — 2026-04-13（审计发现）
-  - `commands.rs` 使用 `std::env::var("HOME")` 获取主目录，但 Windows 上 HOME 可能不存在
-  - 已引入 `dirs = "6"` crate 但未使用，应改用 `dirs::document_dir()`
-- 🟡 **Tauri legacy commands 残留** — 2026-04-13（审计确认）
-  - `backup_to_documents` / `get_backup_path` / `LegacyPayload` 仍注册在 invoke_handler 中
+- 🟢 **Rust `get_archive_dir()` Windows 兼容性问题** — 2026-04-13 → 已修复 2026-04-13
+  - 现在使用 `dirs::document_dir()` 作为首选，`HOME` 仅作 fallback
+- 🟢 **`lib.rs` init_app_state 竞态条件** — 发现并修复 2026-04-13
+  - 之前用 `async_runtime::spawn` 跑同步函数，error 被 `let _` 吞掉
+  - 现在改为同步调用 + `eprintln!` 错误日志
+- � **Tauri legacy commands 残留** — 2026-04-13 → 已清理 2026-04-13
+  - `backup_to_documents` / `get_backup_path` / `LegacyPayload` 已移除
 - 🟡 **版本号三处同步已确认** — 2026-04-13（审计确认 3.0.0 一致）
 
 ---

@@ -13,12 +13,10 @@ pub fn run() {
             entries: std::sync::Mutex::new(Vec::new()),
         })
         .setup(|app| {
-            let handle = app.handle().clone();
-
-            // Initialize app state with existing entries
-            tauri::async_runtime::spawn(async move {
-                let _ = init_app_state(handle.state::<AppState>());
-            });
+            // Initialize app state with existing entries (synchronous to avoid race)
+            if let Err(e) = init_app_state(app.state::<AppState>()) {
+                eprintln!("Failed to initialize app state: {}", e);
+            }
 
             if cfg!(debug_assertions) {
                 app.handle().plugin(
