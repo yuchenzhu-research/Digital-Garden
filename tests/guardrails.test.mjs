@@ -32,13 +32,14 @@ test('core engineering docs exist', () => {
 });
 
 test('agent docs reference the shared engineering pipeline', () => {
-  for (const file of ['AGENTS.md', 'CLAUDE.md']) {
-    const content = read(file);
-    assert.match(content, /Engineering-GUARDRAILS|ENGINEERING-GUARDRAILS/i);
-    assert.match(content, /TESTING-CI\.md/);
-    assert.match(content, /Audit first/i);
-    assert.match(content, /Google Antigravity|Gemini-style/i);
-  }
+  const agents = read('AGENTS.md');
+  assert.match(agents, /Engineering-GUARDRAILS|ENGINEERING-GUARDRAILS/i);
+  assert.match(agents, /TESTING-CI\.md/);
+  assert.match(agents, /Audit first/i);
+  assert.match(agents, /Google Antigravity|Gemini-style/i);
+
+  const claude = read('CLAUDE.md');
+  assert.match(claude, /AGENTS\.md/);
 });
 
 test('project structure includes changelog and devlog as root docs', () => {
@@ -48,8 +49,7 @@ test('project structure includes changelog and devlog as root docs', () => {
 
   assert.match(agents, /CHANGELOG\.md/);
   assert.match(agents, /DEVLOG\.md/);
-  assert.match(claude, /CHANGELOG\.md/);
-  assert.match(claude, /DEVLOG\.md/);
+  assert.match(claude, /AGENTS\.md/);
   assert.match(structure, /CHANGELOG\.md/);
   assert.match(structure, /DEVLOG\.md/);
 });
@@ -62,8 +62,7 @@ test('agent asset docs define a canonical local tooling split', () => {
 
   assert.match(agents, /\.agent\//);
   assert.match(agents, /\.agents\/skills\//);
-  assert.match(claude, /\.agent\//);
-  assert.match(claude, /\.agents\/skills\//);
+  assert.match(claude, /AGENTS\.md/);
   assert.match(structure, /\.agent\//);
   assert.match(structure, /\.claude\//);
   assert.match(localAssets, /Antigravity/i);
