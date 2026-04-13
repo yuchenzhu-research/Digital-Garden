@@ -484,69 +484,6 @@ pub async fn import_entries(json: String, state: State<'_, AppState>) -> Result<
 }
 
 // ============================================================================
-// Legacy Commands (Keep for compatibility)
-// ============================================================================
-
-/// Original backup command - kept for backward compatibility
-#[tauri::command]
-pub async fn backup_to_documents(payload: LegacyPayload) -> Result<String, String> {
-    let archive_dir = get_archive_dir();
-    fs::create_dir_all(&archive_dir)
-        .map_err(|e| format!("Failed to create archive directory: {}", e))?;
-
-    let sanitized_title: String = payload
-        .title
-        .chars()
-        .take(30)
-        .map(|c| {
-            if c.is_alphanumeric() || c == '-' || c == '_' {
-                c
-            } else {
-                '_'
-            }
-        })
-        .collect();
-
-    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let filename = format!("{}_{}.json", sanitized_title, timestamp);
-    let file_path = archive_dir.join(&filename);
-
-    let payload_for_save = serde_json::json!({
-        "title": payload.title,
-        "figure": payload.figure,
-        "moment": payload.moment,
-        "narrative": payload.narrative,
-        "keywords": payload.keywords,
-        "date_created": payload.date_created,
-    });
-
-    let json_content = serde_json::to_string_pretty(&payload_for_save)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
-
-    fs::write(&file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))?;
-
-    Ok(file_path.to_string_lossy().to_string())
-}
-
-/// Original get backup path command
-#[tauri::command]
-pub fn get_backup_path() -> Result<String, String> {
-    Ok(get_archive_dir().to_string_lossy().to_string())
-}
-
-/// Legacy payload type
-#[derive(Serialize, Deserialize)]
-pub struct LegacyPayload {
-    pub image: Option<String>,
-    pub title: String,
-    pub figure: String,
-    pub moment: String,
-    pub narrative: String,
-    pub keywords: Vec<String>,
-    pub date_created: String,
-}
-
-// ============================================================================
 // Helper Functions
 // ============================================================================
 
