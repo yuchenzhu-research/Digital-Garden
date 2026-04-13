@@ -2,6 +2,87 @@
 
 ---
 
+## 2026-04-13 / Final Bug Sweep Before Dev Phase
+
+### Related commits
+- `ddfec6b` fix: final bug sweep before dev phase
+
+### What changed
+- Fixed `NativeStorageAdapter.saveEntry()` not forwarding `entry.id` to Rust, causing the Rust side to always generate a new UUID. This was the same bug class as the earlier WebStorageAdapter P0 fix.
+- Fixed `lib.rs` `init_app_state` race condition: replaced `tauri::async_runtime::spawn` (async wrapper around a sync function) with a direct synchronous call. Also replaced `let _ =` with `if let Err(e)` so initialization errors are logged via `eprintln!` instead of silently swallowed.
+- Fixed `WebStorageAdapter` prefix inconsistency: the `prefix` parameter was only applied to `LAST_BACKUP` and `DRAFT` localStorage keys but not the main `ENTRIES` key. All 8 call sites of `loadEntries()` and `saveEntries()` now pass `this.prefix`.
+- Removed 130 lines of dead standalone functions from `web-storage.ts`: `exportToFile`, `importFromFile`, `hasUserEntries`, `getUserEntryCount`, and `createWebStorage`. The app exclusively uses the versions from `entryService.ts`. The dead `importFromFile` also used a non-standard parsing path that bypassed `parseBackupJson`.
+- Removed unused `fileToBase64` private method from `NativeStorageAdapter`. The `uploadImage` method uses `arrayBuffer` + `save_image_from_bytes` instead.
+- Updated `CONSTITUTION.md` risk register: marked 5 items as 🟢 resolved, added 2 newly discovered and fixed entries.
+
+### Problems addressed
+- Fixed a data-loss-class bug where entries saved through the native adapter could not preserve their original IDs during import or re-save operations.
+- Fixed a startup race condition where the frontend could request entries before `init_app_state` had finished reading files from disk, getting an empty result.
+- Fixed an API contract inconsistency where `WebStorageAdapter` accepted a `prefix` parameter but silently ignored it for the most important storage key.
+- Removed dead code that contained a divergent import parsing path, which could have caused confusion if accidentally imported from the wrong module.
+
+### Impacted areas
+- `src/services/native-storage.ts`
+- `src/services/web-storage.ts`
+- `src-tauri/src/lib.rs`
+- `CONSTITUTION.md`
+
+### Risks / unfinished work
+- The three storage adapters still share significant duplicated logic (~51KB total). Extracting a `BaseStorageAdapter` remains a future task.
+- Runtime contract tests (actual `saveEntry`→`getEntry` round-trips) are still missing.
+- Two `rgba()` hardcodes remain in `layout.tsx` (dot pattern) and `Hero.tsx` (CRT scanline effect) — both are decorative pixel-level effects, not semantic colors.
+
+### Next step
+- Begin development on the `visual-overhaul` branch. The codebase is now at a clean baseline with all known bugs resolved.
+
+---
+
+## 2026-04-13 / Project Audit and Remediation
+
+### Related commits
+- Multiple commits across audit and remediation work
+
+### What changed
+- Created `CONSTITUTION.md` as the highest-level governance document covering project invariants, architecture guardrails, quality gates, risk register, and anti-patterns.
+- Fixed `WebStorageAdapter.saveEntry()` to preserve input ID instead of always generating a new one.
+- Fixed Rust `get_archive_dir()` to use `dirs::document_dir()` for Windows compatibility.
+- Removed `gsap` dependency (0 imports in `src/`). Moved `@types/three` to `devDependencies`.
+- Extracted `src/services/storage-shared.ts` with `generateId` and `toEntrySummaries` shared across adapters.
+- Cleaned up Tauri legacy commands (`backup_to_documents`, `get_backup_path`, `LegacyPayload`).
+- Slimmed `CLAUDE.md` to inherit from `AGENTS.md` instead of duplicating content.
+- Added storage contract tests in `tests/storage-contract.test.mjs`.
+- Updated all 7 multilingual READMEs with download/install instructions, baseline verification steps, and engineering documentation links.
+- Added `docs/HEALTH-REPORT-2026-04-13.md` and `docs/REMEDIATION-PLAN.md`.
+- Added glassmorphism CSS tokens (`--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-titlebar`, `--card-scrim`) to `globals.css`.
+- Added `CONSTITUTION.md` reference sections to `AGENTS.md` and `CLAUDE.md`.
+
+### Problems addressed
+- Fixed 2 P0 bugs (WebStorage ID, Rust Windows path).
+- Fixed dependency hygiene (gsap removal, @types/three placement).
+- Fixed adapter code duplication by extracting shared utilities.
+- Fixed documentation drift across 7 language versions of README.
+- Established formal project governance via CONSTITUTION.md.
+
+### Impacted areas
+- `CONSTITUTION.md`, `AGENTS.md`, `CLAUDE.md`
+- `src/services/web-storage.ts`, `src/services/storage-shared.ts`, `src/services/native-storage.ts`
+- `src-tauri/src/commands.rs`, `src-tauri/src/lib.rs`
+- `src/app/globals.css`
+- `tests/storage-contract.test.mjs`
+- `docs/HEALTH-REPORT-2026-04-13.md`, `docs/REMEDIATION-PLAN.md`
+- `README.md`, `README_zh-CN.md`, `README_ja.md`, `README_ko.md`, `README_es.md`, `README_la.md`, `README_zh-TW.md`
+- `package.json`
+
+### Risks / unfinished work
+- Storage adapter duplication (51KB+) still exists; base adapter extraction deferred.
+- Remaining `rgba()` hardcodes in components not yet migrated to CSS tokens.
+- Contract tests gracefully skip under `--experimental-strip-types`.
+
+### Next step
+- Final bug sweep (completed above), then begin visual-overhaul development.
+
+---
+
 ## 2026-04-09 / Phase 5 Preparation: Project Structure Cleanup and Visual Foundation Setup
 
 ### What changed
