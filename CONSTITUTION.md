@@ -142,16 +142,20 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
   - 应评估提取 base adapter 或 shared mixins 的可行性
 - 🔴 **适配器无运行时 contract tests** — 2026-04-13
   - 当前测试只有 guardrail（文件存在性 + 导出检查），缺少对 `saveEntry`→`getEntry` 往返的实际验证
-- 🟡 **`storage-runtime.ts` lazy proxy 的边界条件** — 2026-04-13
+- � **`WebStorageAdapter.saveEntry()` 忽略入参 ID** — 2026-04-13（审计发现）
+  - 总是 `generateId()` 生成新 ID，与 WebFS/Native 适配器行为不一致
+  - 影响：通过 localStorage 适配器保存的条目无法保留原始 ID
+- � **`storage-runtime.ts` lazy proxy 的边界条件** — 2026-04-13
   - SSR 环境、HMR 热切换、adapter 不存在时的行为需要进一步验证
 - 🔴 **全量加载瓶颈** — 2026-04-13
   - 当前 `getEntries()` 全量反序列化，条目量 >500 时可能成为性能瓶颈
   - 长期方案见 `docs/BLUEPRINT.md` Phase 1（SQLite 热索引）
 
 ### 样式与设计系统
-- 🔴 **语义 token 落地率不明** — 2026-04-13
+- 🔴 **语义 token 落地率不足** — 2026-04-13（审计确认）
   - `globals.css` 已定义 canvas/surface/ink/accent 等 token
-  - 但组件可能仍大量硬编码颜色值，token 实际引用率需审计
+  - 5 个组件中存在 10+ 处 `rgba()` 硬编码：Toast(5) / TitleBar(2) / Hero(1) / FilterBar(1) / featured-card(1)
+  - `.decoration-red-circle::before` 硬编码 `oklch(0.55 0.18 20)` 而非引用 `var(--accent-strong)`
 - 🟡 **Motion 碎片化** — 2026-04-13
   - 组件中可能散布大量 inline Framer Motion 配置
   - `docs/DESIGN-FOUNDATION.md` 定义了 motion semantics 但代码中落地程度未确认
@@ -169,21 +173,27 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
 
 ### 依赖
 - 🟡 **`@types/three` 在 dependencies 而非 devDependencies** — 2026-04-13
-- 🟡 **三套动画库共存** — 2026-04-13
-  - `framer-motion` + `gsap` + `lenis`，是否全部在用、是否有合并空间需确认
+- � **`gsap` 废弃依赖残留** — 2026-04-13（审计确认）
+  - `package.json` 中 `gsap: "^3.12.7"` 依然存在，但 `src/` 目录中 0 处 import
+  - 应安全移除
+- 🟡 **`lenis` 使用面窄** — 2026-04-13（审计确认）
+  - 仅 `SmoothScrollWrapper.tsx` 一处使用，値得评估是否值得保留
 - 🟡 **Next.js 16 + React 19 前沿版本** — 2026-04-13
   - 兼容性问题需要持续关注
 
 ### 文档同步
-- 🟡 **7 个语言版本的 README 同步风险** — 2026-04-13
-  - 英 / 中 / 繁中 / 日 / 韩 / 西 / 拉丁 — 每次功能变更需要同步 7 个文件
-  - 各语言版本可能已存在信息差异
+- � **7 个语言版本的 README 信息差异** — 2026-04-13（审计确认）
+  - EN 和 zh-CN 是完整版本，ja/ko/es/la/zh-TW 缺失：快速开始基线校验步骤、macOS/Windows 安装提示、工程文档链接、下载与安装章节
 - 🟡 **`AGENTS.md` vs `CLAUDE.md` 近乎相同** — 2026-04-13
   - 两个文件维护成本高，漂移风险已存在
 
 ### Tauri 层
-- 🟡 **Tauri capabilities 权限最小化未确认** — 2026-04-13
-- 🟡 **`tauri.conf.json` 版本号与 `package.json` 同步状态未确认** — 2026-04-13
+- � **Rust `get_archive_dir()` Windows 兼容性问题** — 2026-04-13（审计发现）
+  - `commands.rs` 使用 `std::env::var("HOME")` 获取主目录，但 Windows 上 HOME 可能不存在
+  - 已引入 `dirs = "6"` crate 但未使用，应改用 `dirs::document_dir()`
+- 🟡 **Tauri legacy commands 残留** — 2026-04-13（审计确认）
+  - `backup_to_documents` / `get_backup_path` / `LegacyPayload` 仍注册在 invoke_handler 中
+- 🟡 **版本号三处同步已确认** — 2026-04-13（审计确认 3.0.0 一致）
 
 ---
 
@@ -245,34 +255,7 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
 
 ---
 
-## VIII. 整顿路线图 — 推荐的演进顺序
-
-### Phase 0：零风险高收益（随时可做）
-- 检查并修复多语言 README 信息差异
-- 确认 `package.json` / `tauri.conf.json` / `Cargo.toml` 版本号一致
-- 确认 `AGENTS.md` 与 `CLAUDE.md` 内容一致，考虑让一个引用另一个
-- 清理 `CHANGELOG.md` [Unreleased] 中已过时的条目
-
-### Phase 1：加固基础（近期冲刺）
-- 为存储适配器添加 contract tests（fixture-driven）
-- 审计 `globals.css` token 的组件引用率，推进实际落地
-- 评估三个适配器的公共逻辑提取空间
-- 补充 `docs/PROJECT-STRUCTURE.md` 中"后续可做的事"的完成状态
-
-### Phase 2：结构收敛（中期演进）
-- 提取适配器 base adapter 或 shared mixins
-- 归拢 Framer Motion 配置为共享 motion primitives
-- 在 `StorageRepository` 中预留分页查询接口
-- 推进 `docs/DESIGN-FOUNDATION.md` 中的设计系统实质建设
-
-### Phase 3：架构预留（远期准备）
-- 为 SQLite 热索引设计 migration path
-- 为 CRDT 同步在 Entry 类型中预留 vector clock
-- 评估 Tauri Mobile 或 React Native 移动端方案
-
----
-
-## IX. 本文件的维护规则
+## VIII. 本文件的维护规则
 
 1. **谁维护**：任何对项目架构有影响的变更，负责人应同步更新本文件
 2. **怎么更新**：
@@ -281,12 +264,4 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
    - 架构变更 → 更新 §II 对应段落
    - 新的不变量 → 追加到 §I
 3. **不要另起炉灶**：不要为同类信息创建新的根级 .md 文件，在本文件对应章节追加
-4. **版本追踪**：重大变更在文件末尾的变更日志中记录
-
----
-
-## 变更日志
-
-| 日期 | 变更 |
-|---|---|
-| 2026-04-13 | 初始版本：基于全仓库审计创建，覆盖项目身份、架构守卫、风险登记、演进路线 |
+4. **具体修复计划**：见 `docs/REMEDIATION-PLAN.md`，本文件只记录治理规则与风险，不放操作性任务清单
