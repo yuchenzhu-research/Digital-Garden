@@ -45,7 +45,7 @@ export function FeaturedCard({
       </div>
 
       {/* Light Theme: Warm Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[rgba(30,30,30,0.85)] via-[rgba(30,30,30,0.3)] to-transparent" />
+      <div className="absolute inset-0" style={{ background: 'var(--card-scrim)' }} />
 
       {/* Content */}
       <div className="absolute bottom-0 left-0 right-0 p-8">
