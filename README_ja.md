@@ -60,7 +60,7 @@ Appleの美学にインスパイアされたスティッキーな横スクロー
 共有された **Web + Tauri デスクトップアプリ** 構成：
 
 -   **Core**: Next.js 16 App Router, React 19, TypeScript
--   **Motion**: Framer Motion, GSAP, Lenis
+-   **Motion**: Framer Motion, Lenis
 -   **Visual**: Tailwind CSS v4, Lucide Icons
 -   **グラフィック**: React Three Fiber / Drei WebGL Particle System
 -   **Desktop**: Tauri 2
@@ -85,14 +85,36 @@ Appleの美学にインスパイアされたスティッキーな横スクロー
 - 接続済みフォルダへの保存、インポート/エクスポート、完全なアーカイブ管理はデスクトップ向けです
 - 完全なアーカイブ運用には、デスクトップブラウザまたはデスクトップアプリを使用してください
 
-## 🚀 クイックスタート
+## � ダウンロードとインストール
+
+macOS および Windows 向けのビルド済みデスクトップアプリは [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) からダウンロードできます。
+
+Linux はデスクトップ **Web** プラットフォームとしてサポートされています。Linux 向けデスクトップアプリの自動リリースはまだ確認されていません。詳細は [docs/RELEASE.md](docs/RELEASE.md) を参照してください。
+
+### 🍎 macOS ユーザー
+現在の MVP リリースは Apple 開発者証明書なしで GitHub Actions により構築されているため、macOS のゲートキーパーが「アプリが破損しています」と表示する場合があります。
+**解決方法：**
+1. `.dmg` アプリケーションを `/Applications` フォルダにドラッグします。
+2. ターミナルで次のコマンドを実行して隔離フラグを解除します：
+```bash
+xattr -cr "/Applications/Bibliotheca Vitae.app"
+```
+3. これでアプリを通常通り開くことができます。
+
+### 🪟 Windows ユーザー
+Windows SmartScreen が `.exe` を認識できないアプリとして警告する場合があります。**「詳細情報」** をクリックし、**「実行」** を選択してください。
+
+## �🚀 クイックスタート
 
 1.  リポジトリをクローンします。
 2.  依存関係をインストール：`npm install`
-3.  Web 開発サーバーを起動：`npm run dev`
-4.  `http://localhost:4321` を開く
-5.  デスクトップシェルを試す場合：`npm run app:dev`
-6.  Web 本番ビルドを作る場合：`npm run build`
+3.  ベースラインを検証：`npm run lint && npm run test`
+4.  Web 開発サーバーを起動：`npm run dev`
+5.  `http://localhost:4321` を開く
+6.  デスクトップシェルを試す場合：`npm run app:dev`
+7.  Web 本番ビルドを作る場合：`npm run build`
+
+詳細なエンジニアリングガイドライン：[docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

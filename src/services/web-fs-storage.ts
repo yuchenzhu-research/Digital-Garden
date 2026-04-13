@@ -21,15 +21,13 @@ import {
     isDataUrl,
     isManagedImagePath,
 } from './portable-images';
+import { parseBackupJson } from './storage-backups';
+import { generateId, toEntrySummaries } from './storage-shared';
 
 const DIRECTORY_HANDLE_KEY = 'bibliotheca_fs_handle';
 const DRAFT_FILE_NAME = '.draft.json';
 type JsonRecord = Record<string, unknown>;
 
-// Helper to generate UUID-like IDs
-const generateId = (): string => {
-    return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-};
 
 const sanitizeFilename = (title: string): string => {
     return title
@@ -362,15 +360,7 @@ export class WebFSStorageAdapter implements StorageRepository {
     }
 
     async getEntrySummaries(): Promise<EntrySummary[]> {
-        const entries = await this.getEntries();
-        return entries.map((entry) => ({
-            id: (entry as SavedEntry).id || generateId(),
-            title: entry.title,
-            figure: entry.figure,
-            imageUrl: entry.imageUrl,
-            dateCreated: entry.dateCreated,
-            keywords: entry.keywords,
-        }));
+        return toEntrySummaries(await this.getEntries());
     }
 
     async updateEntry(id: string, data: Partial<Entry>): Promise<SaveResult> {
@@ -554,14 +544,10 @@ export class WebFSStorageAdapter implements StorageRepository {
     }
 
     async importData(json: string): Promise<void> {
-        const entries: unknown = JSON.parse(json);
-        if (Array.isArray(entries)) {
-            for (const entry of entries) {
-                if (isJsonRecord(entry)) {
-                    const preparedEntry = await this.prepareImportedEntry(toEntry(entry));
-                    await this.saveEntry(preparedEntry);
-                }
-            }
+        const entries = parseBackupJson(json);
+        for (const entry of entries) {
+            const preparedEntry = await this.prepareImportedEntry(entry);
+            await this.saveEntry(preparedEntry);
         }
     }
 

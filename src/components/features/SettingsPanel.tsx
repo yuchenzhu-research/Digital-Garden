@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Sun, Moon, X, FolderOpen } from 'lucide-react';
-import { isTauri } from '@/utils/env';
-import { getWebFS } from '@/services/entryService';
-import { useMobileDevice } from '@/hooks/useMobileDevice';
+import { useSettingsPanelController } from '@/hooks/useSettingsPanelController';
 
 interface SettingsPanelProps {
     dimmingIntensity: number;
@@ -13,29 +11,22 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsPanelProps) {
-    const [isOpen, setIsOpen] = useState(false);
-    const mobileDevice = useMobileDevice();
-    const [fsConnected, setFsConnected] = useState<boolean>(
-        !isTauri() && getWebFS().isReady()
-    );
-
-    const handleConnectFS = async () => {
-        try {
-            const success = await getWebFS().requestDirectoryAccess();
-            if (success) {
-                setFsConnected(true);
-                // Force a page reload so all data fetching immediately switches to the new adapter
-                window.location.reload();
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    const {
+        connectFolderMode,
+        fsConnected,
+        isConnectingFolderMode,
+        isOpen,
+        openPanel,
+        setIsOpen,
+        showFolderModeControls,
+        showMobileDraftNotice,
+        storageModeLabel,
+    } = useSettingsPanelController();
 
     return (
         <>
             <button
-                onClick={() => setIsOpen(true)}
+                onClick={openPanel}
                 className="fixed bottom-6 left-6 z-50 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-foreground/60 hover:text-foreground transition-all border border-foreground/10 shadow-lg hover:scale-110 active:scale-95 group"
                 title="Settings"
             >
@@ -86,23 +77,25 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                             </p>
                         </div>
 
-                        {!isTauri() && !mobileDevice && (
+                        {showFolderModeControls && (
                             <>
                                 <hr className="my-6 border-foreground/10" />
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
                                         <span>Storage Mode</span>
                                         <span className={`font-mono ${fsConnected ? 'text-green-500' : ''}`}>
-                                            {fsConnected ? 'Folder Mode' : 'Browser Local'}
+                                            {storageModeLabel}
                                         </span>
                                     </div>
                                     <button
-                                        onClick={handleConnectFS}
-                                        disabled={fsConnected}
+                                        onClick={() => void connectFolderMode()}
+                                        disabled={fsConnected || isConnectingFolderMode}
                                         className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-foreground/5 hover:bg-foreground/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-sm font-sans"
                                     >
                                         <FolderOpen className="w-4 h-4" />
-                                        {fsConnected ? 'Folder Connected' : 'Connect Folder Mode'}
+                                        {fsConnected
+                                            ? 'Folder Connected'
+                                            : (isConnectingFolderMode ? 'Connecting Folder…' : 'Connect Folder Mode')}
                                     </button>
                                     <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
                                         Folder Mode is recommended. It writes your archive as native `.json` files in a local directory you control.
@@ -114,7 +107,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                             </>
                         )}
 
-                        {!isTauri() && mobileDevice && (
+                        {showMobileDraftNotice && (
                             <>
                                 <hr className="my-6 border-foreground/10" />
                                 <div className="space-y-4">

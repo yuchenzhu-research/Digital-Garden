@@ -32,6 +32,7 @@
 **Bibliotheca Vitae** transcends the concept of a blog. It is a Digital Garden where 15th-century manuscript aesthetics merge with 21st-century engineering, elevating raw data into a curated narrative.
 
 Repository layout and boundary rules live in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md).
+Engineering and delivery guardrails live in [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md), [docs/TESTING-CI.md](docs/TESTING-CI.md), and [docs/RELEASE.md](docs/RELEASE.md).
 
 ## 🏛️ Vision: Living Narrative
 
@@ -60,7 +61,7 @@ The heart of the project is a Visual-First Editor.
 Built as a shared **Web + Tauri desktop application**:
 
 -   **Core**: Next.js 16 App Router, React 19, TypeScript
--   **Motion**: Framer Motion, GSAP, Lenis
+-   **Motion**: Framer Motion, Lenis
 -   **Visual**: Tailwind CSS v4, Lucide Icons
 -   **Graphics**: React Three Fiber / Drei WebGL Particle System
 -   **Desktop**: Tauri 2
@@ -87,7 +88,9 @@ Built as a shared **Web + Tauri desktop application**:
 
 ## 📥 Download & Install
 
-You can download the pre-compiled desktop application for your platform from the [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) page.
+You can download the pre-compiled desktop application for macOS and Windows from the [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) page.
+
+Linux remains a supported **desktop web** platform. Linux desktop app release automation is not yet documented as active in the current workflow. See [docs/RELEASE.md](docs/RELEASE.md).
 
 ### 🍎 macOS Users
 Because the current MVP release is built via GitHub Actions without an Apple Developer certificate, macOS will trigger its quarantine mechanism and prompt that the app is "damaged". 
@@ -106,10 +109,11 @@ Windows SmartScreen might flag the `.exe` as an unrecognized app. Click **"More 
 
 1.  Clone the repository.
 2.  Install dependencies: `npm install`
-3.  Start the web development server: `npm run dev`
-4.  Open `http://localhost:4321`
-5.  Optional desktop shell: `npm run app:dev`
-6.  Optional production web build: `npm run build`
+3.  Validate the baseline: `npm run lint && npm run test`
+4.  Start the web development server: `npm run dev`
+5.  Open `http://localhost:4321`
+6.  Optional desktop shell: `npm run app:dev`
+7.  Optional production web build: `npm run build`
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

@@ -2,9 +2,8 @@
 mod commands;
 
 use commands::{
-    backup_to_documents, delete_entry, get_all_entries, get_backup_path, get_entry,
-    get_storage_path, import_entries, init_app_state, save_entry, save_image,
-    save_image_from_bytes, update_entry, AppState,
+    delete_entry, get_all_entries, get_entry, get_storage_path, import_entries, init_app_state,
+    save_entry, save_image, save_image_from_bytes, update_entry, AppState,
 };
 use tauri::Manager;
 
@@ -142,8 +141,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            backup_to_documents,
-            get_backup_path,
             get_all_entries,
             get_entry,
             save_entry,
