@@ -33,15 +33,11 @@ export function Toast({ message, visible, onClose }: ToastProps) {
             className="flex items-center gap-3 px-6 py-4 rounded-full"
             style={{
               // Glassmorphism effect - Digital Renaissance aesthetic
-              background: 'rgba(255, 255, 255, 0.25)',
+              background: 'var(--glass-bg)',
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-              boxShadow: `
-                0 8px 32px rgba(0, 0, 0, 0.1),
-                0 2px 8px rgba(0, 0, 0, 0.05),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3)
-              `,
+              border: '1px solid var(--glass-border)',
+              boxShadow: 'var(--glass-shadow)',
             }}
           >
             {/* Success indicator */}
