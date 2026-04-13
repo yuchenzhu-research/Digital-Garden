@@ -6,7 +6,6 @@
 
 import {
   Entry,
-  SavedEntry,
   EntrySummary,
   SaveResult,
   ImageUploadResult,
