@@ -60,7 +60,7 @@ Cor proiecti est Editor "Imago Primo".
 Structura communis inter telam et applicationem desktopianam Tauri:
 
 -   **Nucleus**: Next.js 16 App Router, React 19, TypeScript
--   **Motus**: Framer Motion, GSAP, Lenis
+-   **Motus**: Framer Motion, Lenis
 -   **Visus**: Tailwind CSS v4, Lucide Icons
 -   **Graphica**: React Three Fiber / Drei WebGL Particle System
 -   **Desktop**: Tauri 2
@@ -85,14 +85,36 @@ Structura communis inter telam et applicationem desktopianam Tauri:
 - Publicatio in directorium connexum, importatio/exportatio, et plena administratio archivi ad usum desktop reservantur
 - Ad plenam rationem archivi, navigatorem desktopum vel applicationem desktopam utere
 
+## 📥 Deprehensio et Installatio
+
+Applicationem desktopianam praecompilatam pro macOS et Windows e pagina [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) deprehendere potes.
+
+Linux ut platforma **telaris desktopiana** sustentatur. Automatizatio publicationis applicationis desktopianae pro Linux nondum confirmata est. Vide [docs/RELEASE.md](docs/RELEASE.md).
+
+### 🍎 Usores macOS
+Publicatio MVP currens sine certificato Apple constructa est per GitHub Actions, ergo macOS indicare potest applicationem "corruptam" esse.
+**Solutio:**
+1. Applicationem `.dmg` in directorium `/Applications` trahe.
+2. In Terminali mandatum hoc exsequere ut signum quarantinae removeas:
+```bash
+xattr -cr "/Applications/Bibliotheca Vitae.app"
+```
+3. Nunc applicationem normaliter aperire potes.
+
+### 🪟 Usores Windows
+Windows SmartScreen `.exe` ut applicationem ignotam signare potest. **"More info"** clicca, deinde **"Run anyway"** elige.
+
 ## 🚀 Initium Celeriter
 
 1.  Repositorium describe.
 2.  Dependentias instala: `npm install`
-3.  Ambitum evolutionis telaris incipe: `npm run dev`
-4.  Aperi `http://localhost:4321`
-5.  Si vis crustam desktopianam, utere `npm run app:dev`
-6.  Si vis constructionem telarem finalem, utere `npm run build`
+3.  Basem verifica: `npm run lint && npm run test`
+4.  Ambitum evolutionis telaris incipe: `npm run dev`
+5.  Aperi `http://localhost:4321`
+6.  Si vis crustam desktopianam, utere `npm run app:dev`
+7.  Si vis constructionem telarem finalem, utere `npm run build`
+
+Documenta technica detaliata: [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
