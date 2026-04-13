@@ -60,7 +60,7 @@
 基於共享的 Web + Tauri 桌面應用架構：
 
 -   **核心**: Next.js 16 App Router, React 19, TypeScript
--   **動效**: Framer Motion, GSAP, Lenis
+-   **動效**: Framer Motion, Lenis
 -   **視覺**: Tailwind CSS v4, Lucide Icons
 -   **圖形**: React Three Fiber / Drei WebGL Particle System
 -   **桌面端**: Tauri 2
@@ -85,14 +85,36 @@
 - 發布到已連接資料夾、匯入/匯出以及完整檔案管理，仍建議在桌面端完成
 - 如需完整歸檔流程，請使用桌面瀏覽器或桌面應用
 
+## 📥 下載與安裝
+
+可從 [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) 頁面下載 macOS 和 Windows 版本的預編譯桌面應用程式。
+
+Linux 作為桌面**網頁版**平台受支援。Linux 桌面應用的自動發佈尚未確認。詳見 [docs/RELEASE.md](docs/RELEASE.md)。
+
+### 🍎 macOS 使用者
+當前 MVP 版本通過 GitHub Actions 構建，未使用 Apple 開發者證書，因此 macOS 可能顯示「應用程式已損壞」。
+**解決方法：**
+1. 將 `.dmg` 應用程式拖入 `/Applications` 資料夾。
+2. 開啟終端機並執行以下命令以移除隔離標記：
+```bash
+xattr -cr "/Applications/Bibliotheca Vitae.app"
+```
+3. 現在可以正常開啟應用程式。
+
+### 🪟 Windows 使用者
+Windows SmartScreen 可能將 `.exe` 標記為無法識別的應用。請點擊**「詳細資訊」**，然後選擇**「仍要執行」**。
+
 ## 🚀 快速開始
 
 1.  克隆倉庫。
 2.  執行 `npm install` 安裝依賴。
-3.  通過 `npm run dev` 啟動網頁開發環境。
-4.  打開 `http://localhost:4321`
-5.  如需桌面殼體，執行 `npm run app:dev`
-6.  如需網頁正式構建，執行 `npm run build`
+3.  驗證基線：`npm run lint && npm run test`
+4.  通過 `npm run dev` 啟動網頁開發環境。
+5.  打開 `http://localhost:4321`
+6.  如需桌面殼體，執行 `npm run app:dev`
+7.  如需網頁正式構建，執行 `npm run build`
+
+詳細工程指南：[docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
