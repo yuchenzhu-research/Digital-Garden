@@ -2,11 +2,12 @@
 
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArchiveBrowserSection } from '@/components/features/home/ArchiveBrowserSection';
-import { FeaturedArchiveSection } from '@/components/features/home/FeaturedArchiveSection';
-import { Hero } from '@/components/features/Hero';
-import { HomeFooter } from '@/components/features/home/HomeFooter';
-import { PersonalCollectionSection } from '@/components/features/home/PersonalCollectionSection';
+import { MuseumHero } from '@/components/features/home/MuseumHero';
+import { FeaturedArchive } from '@/components/features/home/FeaturedArchive';
+import { CuratedShelf } from '@/components/features/home/CuratedShelf';
+import { ArchiveBrowser } from '@/components/features/home/ArchiveBrowser';
+import { ArchivalFooter } from '@/components/features/home/ArchivalFooter';
+import { ExhibitDetail } from '@/components/features/home/ExhibitDetail';
 import { SettingsPanel } from '@/components/features/SettingsPanel';
 import { useHomePageController } from '@/hooks/useHomePageController';
 
