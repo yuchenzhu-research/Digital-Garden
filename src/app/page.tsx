@@ -93,8 +93,8 @@ export default function Home() {
         />
 
         {/* Hero Section */}
-        <Hero
-          onAppendClick={handleCreateEntry}
+        <MuseumHero
+          onAppend={handleCreateEntry}
           appendLabel={heroAppendLabel}
           mobileNote={heroMobileNote}
         />
