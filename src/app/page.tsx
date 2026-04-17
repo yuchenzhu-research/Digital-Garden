@@ -125,17 +125,12 @@ export default function Home() {
         <ArchivalFooter />
       </SmoothScrollWrapper>
 
-      {/* Archive Detail View Overlay */}
-      <AnimatePresence>
-        {selectedDoc && (
-          <ArchiveDetailView
-            document={selectedDoc}
-            onClose={() => setSelectedDocId(null)}
-            onEdit={isMobileMode ? undefined : handleEditEntry}
-            onDelete={isMobileMode ? undefined : handleDeleteEntry}
-          />
-        )}
-      </AnimatePresence>
+      {/* Archive Exhibit Detail Overlay */}
+      <ExhibitDetail
+        document={selectedDoc ?? null}
+        isOpen={!!selectedDoc}
+        onClose={() => setSelectedDocId(null)}
+      />
 
       {/* Entry Editor Overlay */}
       <AnimatePresence>
