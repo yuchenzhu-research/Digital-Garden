@@ -117,15 +117,9 @@ export default function Home() {
           onDocumentClick={(doc) => setSelectedDocId(doc.id)}
         />
 
-        <ArchiveBrowserSection
-          allDocumentsCount={allDocuments.length}
-          category={category}
+        <ArchiveBrowser
           documents={filteredDocuments}
-          onCategoryChange={setCategory}
-          onClearFilters={clearFilters}
-          onDocumentSelect={setSelectedDocId}
-          onSearchChange={setSearchQuery}
-          searchQuery={searchQuery}
+          onDocumentClick={(doc) => setSelectedDocId(doc.id)}
         />
 
         <HomeFooter userEntryCount={userEntries.length} />
