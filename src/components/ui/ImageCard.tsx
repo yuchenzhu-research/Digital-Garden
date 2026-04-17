@@ -54,7 +54,7 @@ export function ImageCard({
             data-entry-id={id}
             aria-label={`Open ${title}${author ? ` by ${author}` : ''}${year ? ` (${year})` : ''}`}
             className={cn(
-                'surface-card group relative block flex-none cursor-pointer overflow-hidden rounded-[28px] scroll-snap-align-start transition-transform duration-500 hover:-translate-y-1',
+                'group relative block flex-none cursor-pointer overflow-hidden rounded-[2px] transition-all duration-[1.2s] ease-out hover:shadow-2xl',
                 aspectRatioClasses[aspectRatio],
                 className,
             )}
@@ -64,48 +64,52 @@ export function ImageCard({
                 }
             }}
         >
-            <div className="absolute inset-0 z-0 overflow-hidden">
+            {/* Background Image Stage */}
+            <div className="absolute inset-0 z-0 overflow-hidden bg-surface-1">
                 <Image
                     src={imageUrl}
                     alt={title}
                     fill
-                    className="object-cover transition-transform duration-[1.5s] cubic-bezier(0.2,0,0.2,1) group-hover:scale-105"
-                    sizes={isSmall ? "400px" : "800px"}
+                    className="object-cover transition-transform duration-[2.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+                    sizes={isSmall ? "400px" : "1200px"}
                     style={{ objectPosition: focalPoint || 'center' }}
                 />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_30%)]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-black/10 mix-blend-multiply transition-opacity duration-700 group-hover:opacity-0" />
             </div>
 
-            <div className="absolute inset-0 z-10 bg-[linear-gradient(180deg,rgba(4,4,4,0.14)_0%,rgba(4,4,4,0.02)_22%,rgba(4,4,4,0.38)_62%,rgba(4,4,4,0.84)_100%)] transition-opacity duration-500 group-hover:opacity-95" />
-            <div className="absolute inset-[10px] z-20 rounded-[22px] border border-white/8 opacity-80 transition-all duration-500 group-hover:border-white/14" />
+            {/* Hairline Frame */}
+            <div className="absolute inset-[1px] z-20 border-[0.5px] border-white/10 opacity-60 transition-all duration-700 group-hover:inset-[12px] group-hover:border-primary/40 group-hover:opacity-100" />
 
+            {/* Floating Metadata */}
             {floatingTexts && (
                 <div className="pointer-events-none absolute inset-0 z-20">
                     {floatingTexts.topLeft && (
-                        <div className="absolute left-6 top-6 flex items-center gap-3 rounded-full border border-white/10 bg-black/25 px-3 py-2 backdrop-blur-md">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            <span className="font-sans text-[9px] font-medium uppercase tracking-[0.22em] text-white/88">
+                        <div className="absolute left-6 top-6 flex items-center gap-3 overflow-hidden">
+                            <motion.div 
+                                initial={{ width: 0 }}
+                                whileInView={{ width: 12 }}
+                                className="h-[1px] bg-primary" 
+                            />
+                            <span className="font-sans text-[8px] font-medium uppercase tracking-[0.4em] text-primary/80">
                                 {floatingTexts.topLeft}
                             </span>
                         </div>
                     )}
 
                     {floatingTexts.centerLeft && (
-                        <div className="absolute left-5 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3">
-                            <div className="h-10 w-px bg-white/18" />
-                            <span className="py-2 font-sans text-[8px] uppercase tracking-[0.42em] text-white/44 writing-mode-vertical">
+                        <div className="absolute left-6 top-1/2 flex -translate-y-1/2 flex-col items-center gap-4">
+                            <div className="h-12 w-px bg-primary/20" />
+                            <span className="py-2 font-sans text-[8px] uppercase tracking-[0.5em] text-white/30 writing-mode-vertical">
                                 {floatingTexts.centerLeft}
                             </span>
-                            <div className="h-10 w-px bg-white/18" />
+                            <div className="h-12 w-px bg-primary/20" />
                         </div>
                     )}
 
                     {floatingTexts.bottomRight && (
-                        <div className="absolute bottom-6 right-6 flex flex-col items-end">
-                            <span className="mb-0.5 font-sans text-[8px] uppercase tracking-[0.3em] text-white/50">
-                                Ref.
-                            </span>
-                            <span className="font-mono text-[9px] uppercase tracking-widest text-white/78">
+                        <div className="absolute bottom-8 right-8 flex flex-col items-end opacity-40 group-hover:opacity-80 transition-opacity duration-700">
+                            <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">
                                 {floatingTexts.bottomRight}
                             </span>
                         </div>
@@ -113,43 +117,37 @@ export function ImageCard({
                 </div>
             )}
 
+            {/* Content Overlay */}
             <div className={cn(
-                "pointer-events-none absolute inset-x-4 bottom-4 z-30",
-                isSmall ? "md:inset-x-4" : "md:inset-x-6 md:bottom-6",
+                "pointer-events-none absolute inset-x-6 bottom-6 z-30 transition-transform duration-700 group-hover:translate-y-[-10px]",
+                isSmall ? "md:inset-x-8 md:bottom-8" : "md:inset-x-12 md:bottom-12",
             )}>
-                <div className="surface-panel rounded-[24px] px-4 py-4 md:px-5 md:py-5">
-                    <div className="mb-3 flex items-center justify-between gap-4">
-                        <span className="font-sans text-[9px] uppercase tracking-[0.32em] text-primary">
-                            Archive Entry
-                        </span>
-                        <ArrowRight className="h-3.5 w-3.5 text-white/40 transition-transform duration-300 group-hover:translate-x-1 group-hover:text-white/72" />
-                    </div>
-
+                <div className="mb-4">
+                    <span className="text-kicker mb-3 block opacity-0 translate-y-4 transition-all duration-700 group-hover:opacity-100 group-hover:translate-y-0">
+                        {author || "Archival Entry"}
+                    </span>
                     <h3 className={cn(
-                        "font-epic-serif font-light leading-[1] text-white",
-                        isSmall ? "text-2xl md:text-[2rem]" : "text-3xl md:text-5xl",
+                        "font-serif font-light leading-[1.05] text-white text-glow-gold",
+                        isSmall ? "text-3xl md:text-5xl" : "text-5xl md:text-7xl lg:text-8xl",
                     )}>
                         {title}
                     </h3>
-
-                    {(author || year) && (
-                        <p className="mt-2 font-sans text-[10px] uppercase tracking-[0.24em] text-white/56">
-                            {[author, year].filter(Boolean).join(' • ')}
-                        </p>
-                    )}
-
-                    {description && (
-                        <p className={cn(
-                            "mt-4 max-w-xl font-elegant-sans italic leading-relaxed text-white/70 line-clamp-3",
-                            isSmall ? "text-sm" : "text-sm md:text-base",
-                        )}>
-                            — {description}
-                        </p>
-                    )}
                 </div>
+
+                {description && (
+                    <p className={cn(
+                        "max-w-xl font-serif italic leading-relaxed text-reading-soft opacity-0 translate-y-4 transition-all duration-1000 delay-100 group-hover:opacity-80 group-hover:translate-y-0",
+                        isSmall ? "text-sm" : "text-sm md:text-lg",
+                    )}>
+                        {description}
+                    </p>
+                )}
+                
+                <div className="mt-8 overflow-hidden h-px w-0 bg-primary/40 transition-all duration-1000 delay-300 group-hover:w-full" />
             </div>
 
-            <div className="absolute bottom-5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary/80 opacity-0 transition-opacity duration-700 group-hover:opacity-100" />
+            {/* Highlight Line */}
+            <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-primary transition-all duration-1000 ease-out group-hover:w-full" />
         </div>
     );
 }
