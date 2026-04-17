@@ -40,11 +40,20 @@ export function ArchivalFooter() {
         </div>
       </div>
 
-      {/* Decorative Stamp */}
-      <div className="absolute bottom-12 right-12 w-24 h-24 border border-primary/10 rounded-full flex items-center justify-center opacity-20 rotate-12">
-        <span className="text-[8px] uppercase tracking-[0.4em] text-primary text-center leading-tight">
-          Curated<br/>Archive<br/>System
-        </span>
+      {/* Decorative Stamp (Seal) */}
+      <div className="absolute bottom-12 right-12 w-32 h-32 opacity-40 group pointer-events-none">
+        <motion.div
+           initial={{ rotate: 12 }}
+           whileHover={{ rotate: 0, scale: 1.1 }}
+           transition={{ duration: 1.5, ease: "circOut" }}
+           className="relative w-full h-full"
+        >
+          <img 
+            src="/archive/seal.png" 
+            alt="Archival Seal" 
+            className="w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(219,184,102,0.3)] grayscale hover:grayscale-0 transition-all duration-1000"
+          />
+        </motion.div>
       </div>
     </footer>
   );
