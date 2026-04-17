@@ -193,7 +193,7 @@ export function EntryEditor({
             {onClose && (
                 <button
                     onClick={() => void closeEditor()}
-                    className="fixed top-8 left-8 p-3 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md z-[60] transition-all hover:scale-110"
+                    className="surface-panel fixed left-8 top-8 z-[60] rounded-full p-3 text-white transition-all hover:scale-110"
                     title="Close Editor"
                 >
                     <X className="w-5 h-5" />

@@ -18,7 +18,7 @@ export function EntryEditorBody({
   return (
     <article className="lg:col-span-8 space-y-16">
       <section>
-        <h2 className="flex items-center gap-3 font-epic-serif text-3xl md:text-4xl text-foreground mb-8 text-black/20">
+        <h2 className="mb-8 flex items-center gap-3 font-epic-serif text-3xl text-foreground md:text-4xl">
           Moment in Time
         </h2>
         <div className="w-full">
@@ -32,7 +32,7 @@ export function EntryEditorBody({
       </section>
 
       <section>
-        <h2 className="flex items-center gap-3 font-epic-serif text-3xl md:text-4xl text-foreground mb-8 text-black/20">
+        <h2 className="mb-8 flex items-center gap-3 font-epic-serif text-3xl text-foreground md:text-4xl">
           The Narrative
         </h2>
         <div className="w-full">

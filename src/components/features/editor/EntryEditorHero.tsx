@@ -38,14 +38,14 @@ export function EntryEditorHero({
         <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-colors"
+            className="surface-panel rounded-full p-2 text-white transition-colors"
             title="Change Image"
           >
             <RotateCcw className="w-4 h-4" />
           </button>
           <button
             onClick={onRemoveImage}
-            className="p-2 bg-red-500/60 hover:bg-red-500/80 text-white rounded-full backdrop-blur-md transition-colors"
+            className="rounded-full border border-red-400/20 bg-red-500/25 p-2 text-white backdrop-blur-md transition-colors hover:bg-red-500/35"
             title="Remove Image"
           >
             <Trash2 className="w-4 h-4" />

@@ -94,7 +94,7 @@ export function EntryEditorSidebar({
       )}
 
       {mobileDraftMode && !isEditMode && (
-        <div className="space-y-3 rounded-2xl border border-foreground/10 bg-card/40 p-4">
+        <div className="surface-panel space-y-3 rounded-[24px] p-4">
           <p className="font-sans text-[10px] uppercase tracking-[0.24em] text-muted-foreground/60">
             Local Draft Mode
           </p>
