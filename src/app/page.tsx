@@ -107,10 +107,9 @@ export default function Home() {
           </section>
         )}
 
-        <FeaturedArchiveSection
+        <FeaturedArchive
           documents={featuredDocs}
-          onDocumentSelect={setSelectedDocId}
-          onScrollProgressChange={setScrollProgress}
+          onDocumentClick={(doc) => setSelectedDocId(doc.id)}
         />
 
         <PersonalCollectionSection
