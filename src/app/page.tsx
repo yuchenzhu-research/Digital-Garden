@@ -112,12 +112,9 @@ export default function Home() {
           onDocumentClick={(doc) => setSelectedDocId(doc.id)}
         />
 
-        <PersonalCollectionSection
-          entries={userEntries}
-          hasLocalMobileDraft={hasLocalMobileDraft}
-          isMobileMode={isMobileMode}
-          onDataChanged={refreshUserEntries}
-          onEntrySelect={setSelectedDocId}
+        <CuratedShelf
+          documents={userEntries.map((e, i) => ({ ...documents[0], ...e, id: e.id || `user-${i}` } as any))}
+          onDocumentClick={(doc) => setSelectedDocId(doc.id)}
         />
 
         <ArchiveBrowserSection
