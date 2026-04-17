@@ -33,55 +33,54 @@ export function ArchiveDetailView({ document: data, onClose, onEdit, onDelete }:
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-background overflow-y-auto selection:bg-primary/20"
-            data-lenis-prevent // Prevent Lenis from hijacking scroll on this element
+            className="fixed inset-0 z-[100] overflow-y-auto bg-background text-foreground selection:bg-primary/20"
+            data-lenis-prevent
         >
-            {/* Navigation */}
-            <nav className="fixed top-0 left-0 w-full z-50 px-6 py-6 md:px-12 md:py-8 flex justify-between items-center pointer-events-none">
+            <div className="pointer-events-none fixed inset-x-0 top-0 z-40 h-40 bg-gradient-to-b from-black/65 via-black/20 to-transparent" />
+
+            <nav className="pointer-events-none fixed left-0 top-0 z-50 flex w-full items-center justify-between px-6 py-6 md:px-12 md:py-8">
                 <button
                     onClick={onClose}
-                    className="pointer-events-auto flex items-center gap-2 group text-muted-foreground hover:text-foreground transition-colors bg-background/80 backdrop-blur-md px-4 py-2 rounded-full border border-elegant shadow-sm"
+                    className="surface-panel group pointer-events-auto flex items-center gap-2 rounded-full px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
                 >
-                    <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-                    <span className="font-sans text-xs tracking-widest uppercase">Back to Archive</span>
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                    <span className="font-sans text-xs uppercase tracking-widest">Back to Archive</span>
                 </button>
-                <div className="hidden md:block font-sans text-xs tracking-[0.2em] text-muted-foreground/30 uppercase">
+                <div className="hidden font-sans text-xs uppercase tracking-[0.2em] text-muted-foreground/40 md:block">
                     Bibliotheca Vitae / {itemLabel}
                 </div>
 
-                <div className="flex items-center gap-2 pointer-events-auto">
+                <div className="pointer-events-auto flex items-center gap-2">
                     {onEdit && isUserDocument(data) && (
                         <button
                             onClick={() => onEdit(data)}
-                            className="p-2 text-foreground/70 hover:text-foreground hover:bg-foreground/10 rounded-full transition-colors"
+                            className="surface-panel rounded-full p-2 text-foreground/70 transition-colors hover:text-foreground"
                             title="Edit Entry"
                         >
-                            <Pencil className="w-5 h-5" />
+                            <Pencil className="h-5 w-5" />
                         </button>
                     )}
 
-                    {/* Delete Button - Only for user entries (detected via onDelete presence or ID pattern) */}
                     {onDelete && isUserDocument(data) && (
                         <button
                             onClick={() => onDelete(data)}
-                            className="p-2 text-destructive/60 hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors mr-2"
+                            className="surface-panel mr-2 rounded-full p-2 text-destructive/60 transition-colors hover:text-destructive"
                             title="Delete Entry"
                         >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="h-5 w-5" />
                         </button>
                     )}
 
                     <button
                         onClick={onClose}
-                        className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="surface-panel rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground"
                     >
-                        <X className="w-6 h-6" />
+                        <X className="h-6 w-6" />
                     </button>
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <header className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden">
+            <header className="relative min-h-[72vh] overflow-hidden border-b border-[var(--line-subtle)] md:min-h-[80vh]">
                 <div className="absolute inset-0">
                     <Image
                         src={data.imageUrl}
@@ -91,35 +90,58 @@ export function ArchiveDetailView({ document: data, onClose, onEdit, onDelete }:
                         priority
                         style={{ objectPosition: data.focalPoint || 'center' }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_30%)]" />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.5)_0%,rgba(0,0,0,0.16)_28%,rgba(0,0,0,0.32)_55%,rgba(9,8,7,0.92)_100%)]" />
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full px-6 pb-12 md:px-12 md:pb-20">
+                <div className="container relative z-10 mx-auto flex min-h-[72vh] items-end px-6 pb-12 pt-32 md:min-h-[80vh] md:px-12 md:pb-20">
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                        className="max-w-4xl"
+                        className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.2fr)_340px] lg:items-end"
                     >
-                        <div className="flex items-center gap-4 mb-6">
-                            <span className="px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-[10px] uppercase tracking-widest text-primary font-medium">
-                                {data.category}
-                            </span>
-                            <span className="font-mono text-xs text-muted-foreground">
-                                {data.year}
-                            </span>
+                        <div className="max-w-4xl">
+                            <div className="mb-6 flex flex-wrap items-center gap-4">
+                                <span className="rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-primary">
+                                    {data.category}
+                                </span>
+                                <span className="font-mono text-xs text-white/60">{data.year}</span>
+                            </div>
+                            <h1 className="mb-6 font-epic-serif text-5xl font-light leading-[0.92] tracking-[-0.04em] text-white drop-shadow-lg md:text-7xl lg:text-[5.5rem]">
+                                {data.title}
+                            </h1>
+                            <p className="max-w-2xl font-elegant-sans text-lg font-light italic text-white/78 md:text-xl">
+                                — {data.description}
+                            </p>
                         </div>
-                        <h1 className="font-epic-serif text-5xl md:text-7xl lg:text-8xl text-white font-light leading-[0.95] mb-6 drop-shadow-lg">
-                            {data.title}
-                        </h1>
-                        <p className="font-elegant-sans text-lg md:text-xl text-white/80 italic font-light max-w-2xl">
-                            — {data.description}
-                        </p>
+
+                        <aside className="surface-panel rounded-[28px] p-6">
+                            <p className="text-kicker mb-3 text-primary">Exhibit Note</p>
+                            <div className="space-y-5">
+                                <div>
+                                    <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-white/50">Figure</p>
+                                    <p className="mt-2 font-epic-serif text-2xl text-white">{data.author}</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-white/50">Year</p>
+                                        <p className="mt-2 text-sm text-white/78">{data.year}</p>
+                                    </div>
+                                    <div>
+                                        <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-white/50">Type</p>
+                                        <p className="mt-2 text-sm text-white/78">{isUserDocument(data) ? 'Personal accession' : data.type}</p>
+                                    </div>
+                                </div>
+                                <p className="border-t border-white/8 pt-4 text-sm leading-relaxed text-white/64">
+                                    Move through this record like a quiet display case: image first, context second, interface last.
+                                </p>
+                            </div>
+                        </aside>
                     </motion.div>
                 </div>
             </header>
 
-            {/* Content Section - Dual Mode */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

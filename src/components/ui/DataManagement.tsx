@@ -34,7 +34,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="absolute -top-2 -right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center"
+          className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary"
         >
           <span className="text-[10px] text-primary-foreground font-medium">
             {entryCount > 99 ? '99+' : entryCount}
@@ -61,10 +61,9 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 top-full mt-2 w-72 bg-card border border-foreground/10 rounded-lg shadow-xl overflow-hidden z-50"
+            className="surface-panel absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-[28px]"
           >
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-foreground/10 flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="font-sans text-sm font-medium">Data Management</span>
                 <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-muted-foreground/60">
@@ -73,13 +72,12 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-foreground/10 rounded transition-colors"
+                className="rounded-full p-1 transition-colors hover:bg-white/10"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
             </div>
 
-            {/* Status Message */}
             <AnimatePresence mode="wait">
               {importStatus !== 'idle' && (
                 <motion.div
@@ -102,7 +100,6 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
               )}
             </AnimatePresence>
 
-            {/* Actions */}
             <div className="p-4 space-y-3">
               <p className="text-xs text-muted-foreground mb-2">
                 {entryCount > 0
@@ -110,40 +107,42 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                   : storageMode.emptyState}
               </p>
 
-              {/* Export Button */}
               <button
                 onClick={handleExport}
                 disabled={isExporting || isImporting}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full rounded-[20px] border border-white/8 bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.08] disabled:opacity-50"
               >
-                {isExporting ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-                <div className="text-left">
-                  <div className="font-sans text-sm font-medium">{storageMode.exportLabel}</div>
-                  <div className="font-sans text-xs text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  {isExporting ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  <div className="text-left">
+                    <div className="font-sans text-sm font-medium">{storageMode.exportLabel}</div>
+                    <div className="font-sans text-xs text-muted-foreground">
                     Download a portable `.json` backup with embedded local images
+                    </div>
                   </div>
                 </div>
               </button>
 
-              {/* Import Button */}
               <button
                 onClick={handleImportClick}
                 disabled={isExporting || isImporting}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-foreground/5 hover:bg-foreground/10 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full rounded-[20px] border border-white/8 bg-white/[0.04] px-4 py-3 transition-colors hover:bg-white/[0.08] disabled:opacity-50"
               >
-                {isImporting ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                <div className="text-left">
-                  <div className="font-sans text-sm font-medium">{storageMode.importLabel}</div>
-                  <div className="font-sans text-xs text-muted-foreground">
+                <div className="flex items-center gap-3">
+                  {isImporting ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  <div className="text-left">
+                    <div className="font-sans text-sm font-medium">{storageMode.importLabel}</div>
+                    <div className="font-sans text-xs text-muted-foreground">
                     Merge a backup and restore embedded images into the current storage mode
+                    </div>
                   </div>
                 </div>
               </button>
@@ -155,8 +154,7 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
                 className="hidden"
               />
 
-              {/* Info */}
-              <div className="pt-2 border-t border-foreground/10">
+              <div className="border-t border-white/8 pt-2">
                 <p className="font-sans text-[10px] text-muted-foreground/60 leading-relaxed">
                   {storageMode.description}
                 </p>

@@ -30,12 +30,12 @@ export function SearchBar({
             <motion.div
                 animate={{
                     boxShadow: isFocused
-                        ? '0 0 0 2px color-mix(in oklch, var(--primary) 20%, transparent)'
+                        ? '0 0 0 1px rgba(219, 184, 102, 0.32), 0 0 0 4px rgba(219, 184, 102, 0.08)'
                         : '0 0 0 0 transparent'
                 }}
                 className={cn(
-                    'flex items-center gap-3 px-4 py-3 bg-background border transition-colors rounded-lg',
-                    isFocused ? 'border-primary' : 'border-foreground/10'
+                    'surface-panel flex items-center gap-3 rounded-full px-4 py-3 transition-colors',
+                    isFocused ? 'border-primary/40' : ''
                 )}
             >
                 <Search className={cn(
@@ -58,7 +58,7 @@ export function SearchBar({
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
                             onClick={handleClear}
-                            className="p-1 hover:bg-foreground/10 rounded transition-colors"
+                            className="rounded-full p-1 transition-colors hover:bg-white/10"
                         >
                             <X className="w-4 h-4 text-muted-foreground" />
                         </motion.button>
@@ -108,10 +108,10 @@ export function CategoryFilter({
                         whileTap={{ scale: 0.98 }}
                         onClick={() => onChange(cat.key)}
                         className={cn(
-                            'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-sans tracking-wide transition-colors',
+                            'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-sans tracking-wide transition-colors backdrop-blur-md',
                             isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-foreground/5 hover:bg-foreground/10 text-muted-foreground hover:text-foreground'
+                                ? 'border border-primary/20 bg-primary/12 text-primary'
+                                : 'border border-white/8 bg-white/[0.04] text-muted-foreground hover:bg-white/[0.08] hover:text-foreground'
                         )}
                     >
                         <Icon className="w-3 h-3" />
@@ -140,7 +140,7 @@ export function FilterBar({
     className
 }: FilterBarProps) {
     return (
-        <div className={cn('flex flex-col md:flex-row gap-4 items-start md:items-center justify-between', className)}>
+        <div className={cn('flex flex-col items-start justify-between gap-4 md:flex-row md:items-center', className)}>
             <CategoryFilter
                 value={categoryValue}
                 onChange={onCategoryChange}

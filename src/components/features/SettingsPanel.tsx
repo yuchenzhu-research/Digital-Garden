@@ -27,7 +27,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
         <>
             <button
                 onClick={openPanel}
-                className="fixed bottom-6 left-6 z-50 p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full text-foreground/60 hover:text-foreground transition-all border border-foreground/10 shadow-lg hover:scale-110 active:scale-95 group"
+                className="surface-panel fixed bottom-6 left-6 z-50 rounded-full p-3 text-foreground/60 transition-all hover:scale-110 hover:text-foreground active:scale-95 group"
                 title="Settings"
             >
                 <Settings className="w-5 h-5 group-hover:rotate-45 transition-transform duration-500" />
@@ -39,13 +39,13 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                         initial={{ opacity: 0, scale: 0.9, x: -20, y: 20 }}
                         animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, x: -20, y: 20 }}
-                        className="fixed bottom-20 left-6 z-50 w-72 bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-2xl p-6"
+                        className="surface-panel fixed bottom-20 left-6 z-50 w-72 rounded-[28px] p-6"
                     >
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-serif text-lg text-foreground tracking-tight">Focus Control</h3>
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-1 rounded-full hover:bg-foreground/5 text-muted-foreground hover:text-foreground transition-colors"
+                                className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -67,7 +67,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                                         step="0.05"
                                         value={dimmingIntensity}
                                         onChange={(e) => onIntensityChange(parseFloat(e.target.value))}
-                                        className="w-full h-1 bg-foreground/10 rounded-full appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
+                                        className="h-1 w-full cursor-pointer appearance-none rounded-full bg-foreground/10 focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
                                     />
                                 </div>
                                 <Moon className="w-3 h-3 text-muted-foreground/60" />
@@ -79,7 +79,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
 
                         {showFolderModeControls && (
                             <>
-                                <hr className="my-6 border-foreground/10" />
+                                <hr className="my-6 border-white/8" />
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
                                         <span>Storage Mode</span>
@@ -90,7 +90,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                                     <button
                                         onClick={() => void connectFolderMode()}
                                         disabled={fsConnected || isConnectingFolderMode}
-                                        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-foreground/5 hover:bg-foreground/10 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors text-sm font-sans"
+                                        className="w-full rounded-[20px] border border-white/8 bg-white/[0.04] px-4 py-2 text-sm font-sans transition-colors hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <FolderOpen className="w-4 h-4" />
                                         {fsConnected
@@ -109,7 +109,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
 
                         {showMobileDraftNotice && (
                             <>
-                                <hr className="my-6 border-foreground/10" />
+                                <hr className="my-6 border-white/8" />
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
                                         <span>Capture Mode</span>

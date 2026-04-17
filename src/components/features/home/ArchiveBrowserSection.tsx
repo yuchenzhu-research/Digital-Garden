@@ -30,15 +30,18 @@ export function ArchiveBrowserSection({
 
   return (
     <section className="container mx-auto px-4 py-20">
-      <div className="mb-12">
+      <div className="mb-12 border-t border-[var(--line-subtle)] pt-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <span className="text-decorative text-muted-foreground/60 block mb-3">
+            <span className="text-decorative text-primary/80 block mb-3">
               Complete Collection
             </span>
             <h2 className="font-epic-serif text-4xl md:text-5xl text-foreground font-light">
               Browse Archive
             </h2>
+            <p className="mt-4 max-w-2xl text-reading-soft">
+              Move through the wider archive as if browsing adjacent cabinets and exhibition drawers.
+            </p>
           </div>
 
           <FilterBar
@@ -51,13 +54,13 @@ export function ArchiveBrowserSection({
       </div>
 
       {hasFilters && (
-        <div className="mb-6 flex items-center gap-4">
+        <div className="surface-panel mb-6 flex items-center justify-between gap-4 rounded-[24px] px-5 py-4">
           <span className="text-sm text-muted-foreground">
             Showing {documents.length} of {allDocumentsCount} entries
           </span>
           <button
             onClick={onClearFilters}
-            className="text-sm text-primary hover:text-primary/80 transition-colors"
+            className="text-sm text-primary transition-colors hover:text-primary/80"
           >
             Clear filters
           </button>
@@ -71,8 +74,7 @@ export function ArchiveBrowserSection({
               key={document.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="aspect-square overflow-hidden rounded-lg cursor-pointer group relative"
-              onClick={() => onDocumentSelect(document.id)}
+              className="relative"
             >
               <ImageCard
                 id={document.id}
@@ -84,12 +86,12 @@ export function ArchiveBrowserSection({
                 floatingTexts={{ topLeft: document.category }}
                 aspectRatio="square"
                 size="small"
-                className="h-full w-full border-none"
+                className="h-full w-full"
                 focalPoint={document.focalPoint}
-                onClick={() => {}}
+                onClick={() => onDocumentSelect(document.id)}
               />
               {isUserDocument(document) && (
-                <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/80 backdrop-blur-sm rounded text-[10px] uppercase tracking-wider text-foreground z-10">
+                <span className="absolute left-4 top-4 z-20 rounded-full border border-white/10 bg-black/[0.25] px-3 py-2 text-[10px] uppercase tracking-[0.26em] text-white/82 backdrop-blur-md">
                   Personal
                 </span>
               )}
@@ -97,11 +99,11 @@ export function ArchiveBrowserSection({
           ))}
         </div>
       ) : (
-        <div className="text-center py-20">
-          <p className="text-muted-foreground mb-4">No entries match your search.</p>
+        <div className="surface-card rounded-[32px] py-20 text-center">
+          <p className="mb-4 text-muted-foreground">No entries match your search.</p>
           <button
             onClick={onClearFilters}
-            className="text-primary hover:text-primary/80 transition-colors"
+            className="text-primary transition-colors hover:text-primary/80"
           >
             Clear filters
           </button>

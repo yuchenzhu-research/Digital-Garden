@@ -35,7 +35,7 @@ export function FeaturedArchiveSection({
               bottomRight: document.year,
             }}
             aspectRatio="portrait"
-            className="h-full w-full shadow-2xl border-elegant rounded-sm"
+            className="h-full w-full"
             focalPoint={document.focalPoint}
             onClick={() => onDocumentSelect(document.id)}
           />
