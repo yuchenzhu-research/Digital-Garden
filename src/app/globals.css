@@ -56,83 +56,83 @@
 :root {
   --radius: 0.75rem;
 
-  /* Core surfaces */
-  --background: oklch(0.16 0.01 70);
-  --foreground: oklch(0.95 0.012 85);
+  /* Core surfaces - Deeper "Night Museum" canvas */
+  --background: oklch(0.12 0.006 72);
+  --foreground: oklch(0.92 0.012 85);
 
-  --card: oklch(0.2 0.01 70);
-  --card-foreground: oklch(0.95 0.012 85);
+  --card: oklch(0.15 0.008 72);
+  --card-foreground: oklch(0.92 0.012 85);
 
-  --popover: oklch(0.22 0.01 70);
-  --popover-foreground: oklch(0.95 0.012 85);
+  --popover: oklch(0.18 0.01 72);
+  --popover-foreground: oklch(0.92 0.012 85);
 
-  /* Aged brass accent */
+  /* Aged Gold accent - Historical/Archival feel */
   --primary: oklch(0.78 0.12 79);
-  --primary-foreground: oklch(0.17 0.01 70);
+  --primary-foreground: oklch(0.12 0.006 72);
 
-  --secondary: oklch(0.26 0.012 70);
-  --secondary-foreground: oklch(0.9 0.012 84);
+  --secondary: oklch(0.22 0.01 72);
+  --secondary-foreground: oklch(0.88 0.012 84);
 
-  --muted: oklch(0.23 0.008 70);
-  --muted-foreground: oklch(0.72 0.012 84);
+  --muted: oklch(0.18 0.008 72);
+  --muted-foreground: oklch(0.68 0.012 84);
 
-  --accent: oklch(0.29 0.014 70);
-  --accent-foreground: oklch(0.94 0.012 84);
+  --accent: oklch(0.25 0.012 72);
+  --accent-foreground: oklch(0.92 0.012 84);
 
   --destructive: oklch(0.55 0.22 25);
 
-  --border: oklch(0.32 0.012 72);
-  --input: oklch(0.32 0.012 72);
+  --border: oklch(0.28 0.012 72);
+  --input: oklch(0.28 0.012 72);
   --ring: color-mix(in oklch, var(--primary) 40%, transparent);
 
   --chart-1: var(--primary);
-  --chart-2: oklch(0.68 0.08 240);
+  --chart-2: oklch(0.62 0.15 35); /* Warm terracotta */
   --chart-3: oklch(0.74 0.06 190);
   --chart-4: oklch(0.64 0.07 145);
   --chart-5: oklch(0.76 0.08 35);
 
-  --sidebar: oklch(0.19 0.01 70);
+  --sidebar: oklch(0.14 0.008 72);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: oklch(0.27 0.012 70);
+  --sidebar-accent: oklch(0.22 0.012 72);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
   /* ===== Semantic Visual Foundation ===== */
-  --canvas-base: oklch(0.11 0.006 72);
-  --canvas-subtle: oklch(0.17 0.01 70);
-  --surface-1: oklch(0.18 0.01 70);
-  --surface-2: oklch(0.23 0.012 70);
-  --surface-floating: rgba(19, 17, 15, 0.72);
-  --surface-highlight: color-mix(in oklch, var(--surface-2) 86%, var(--primary) 14%);
+  --canvas-base: oklch(0.08 0.004 72); /* Near black, not flat */
+  --canvas-subtle: oklch(0.12 0.006 72);
+  --surface-1: oklch(0.15 0.008 72);
+  --surface-2: oklch(0.2 0.01 72);
+  --surface-floating: rgba(12, 11, 10, 0.72);
+  --surface-highlight: color-mix(in oklch, var(--surface-2) 88%, var(--primary) 12%);
   --ink-strong: var(--foreground);
-  --ink-soft: oklch(0.83 0.012 84);
-  --ink-faint: oklch(0.63 0.01 84);
+  --ink-soft: oklch(0.82 0.012 84);
+  --ink-faint: oklch(0.58 0.01 84);
   --accent-strong: var(--primary);
-  --accent-soft: color-mix(in oklch, var(--primary) 18%, transparent);
-  --line-subtle: rgba(243, 231, 207, 0.1);
-  --line-strong: rgba(243, 231, 207, 0.2);
-  --scrim-soft: rgba(8, 7, 6, 0.35);
-  --scrim-strong: rgba(8, 7, 6, 0.78);
-  --glow-warm: rgba(219, 184, 102, 0.22);
+  --accent-soft: color-mix(in oklch, var(--primary) 15%, transparent);
+  --line-subtle: rgba(219, 184, 102, 0.08);
+  --line-strong: rgba(219, 184, 102, 0.18);
+  --scrim-soft: rgba(4, 4, 3, 0.45);
+  --scrim-strong: rgba(4, 4, 3, 0.88);
+  --glow-warm: rgba(219, 184, 102, 0.15);
 
-  /* ===== Glassmorphism Foundation ===== */
-  --glass-bg: rgba(18, 16, 14, 0.58);
-  --glass-border: rgba(243, 231, 207, 0.12);
-  --glass-shadow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --glass-titlebar: linear-gradient(180deg, rgba(243, 231, 207, 0.08) 0%, rgba(243, 231, 207, 0.02) 100%);
-  --card-scrim: linear-gradient(to top, rgba(7, 6, 5, 0.94), rgba(7, 6, 5, 0.52), rgba(7, 6, 5, 0.08));
+  /* ===== Glassmorphism Foundation - Apple-style ===== */
+  --glass-bg: rgba(15, 14, 12, 0.65);
+  --glass-border: rgba(219, 184, 102, 0.1);
+  --glass-shadow: 0 32px 96px rgba(0, 0, 0, 0.65), 0 12px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --glass-titlebar: linear-gradient(180deg, rgba(219, 184, 102, 0.06) 0%, rgba(219, 184, 102, 0.01) 100%);
+  --card-scrim: linear-gradient(to top, rgba(5, 5, 4, 0.98), rgba(5, 5, 4, 0.62), rgba(5, 5, 4, 0));
 
   /* ===== Motion Foundation ===== */
-  --motion-duration-fast: 180ms;
-  --motion-duration-base: 320ms;
-  --motion-duration-slow: 720ms;
-  --motion-duration-drift: 1400ms;
-  --motion-ease-standard: cubic-bezier(0.2, 0, 0.2, 1);
-  --motion-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --motion-ease-drift: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-duration-fast: 220ms;
+  --motion-duration-base: 420ms;
+  --motion-duration-slow: 920ms;
+  --motion-duration-drift: 1800ms;
+  --motion-ease-standard: cubic-bezier(0.25, 1, 0.5, 1);
+  --motion-ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --motion-ease-drift: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ===== Base Styles ===== */
