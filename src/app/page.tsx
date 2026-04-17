@@ -122,7 +122,7 @@ export default function Home() {
           onDocumentClick={(doc) => setSelectedDocId(doc.id)}
         />
 
-        <HomeFooter userEntryCount={userEntries.length} />
+        <ArchivalFooter />
       </SmoothScrollWrapper>
 
       {/* Archive Detail View Overlay */}
