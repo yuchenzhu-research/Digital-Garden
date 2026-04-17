@@ -28,7 +28,7 @@ export function MuseumHero({
           initial={{ scale: 1.1, opacity: 0 }}
           animate={{ scale: 1, opacity: 0.6 }}
           transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 bg-[url('/archive/davinci.jpg')] bg-cover bg-center"
+          className="absolute inset-0 bg-[url('/archive/museum-hero.png')] bg-cover bg-center"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-background/40 to-background" />
         <div className="absolute inset-0 mask-vignette bg-background/20" />
