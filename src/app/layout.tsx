@@ -29,37 +29,39 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "min-h-screen bg-background font-sans antialiased selection:bg-primary/20 selection:text-primary",
           inter.variable,
           playfair.variable
         )}
       >
         <CustomCursor />
-        {/* Layer 0: Warm Beige Background - Alet style */}
-
+        
+        {/* Layer 0: Deep Archive Canvas */}
         <div className="fixed inset-0 -z-50 bg-background" />
 
-        {/* Layer 1: Subtle texture overlay */}
-        <div
-          className="fixed inset-0 -z-40 opacity-20"
-          style={{
-            backgroundImage: `radial-gradient(circle at center, rgba(61, 52, 40, 0.03) 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
-          }}
+        {/* Layer 1: Subtle Archival Grit (Grain) */}
+        <div 
+          className="fixed inset-0 -z-40 opacity-[0.03] pointer-events-none mix-blend-overlay" 
+          style={{ backgroundImage: 'url("/noise.svg")' }} 
         />
 
-        {/* Layer 2: Very subtle warm glow - minimal */}
+        {/* Layer 2: Soft Tonal Variation (Museum Spotlight Feel) */}
         <div
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -z-30 h-[100vh] w-[100vw] rounded-full bg-foreground/2 blur-[150px]"
+          className="fixed inset-0 -z-30 opacity-40 pointer-events-none"
+          style={{
+            background: `
+              radial-gradient(circle at 20% 20%, var(--primary) 0%, transparent 25%),
+              radial-gradient(circle at 80% 80%, var(--accent) 0%, transparent 30%),
+              radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%)
+            `,
+            filter: 'blur(120px)'
+          }}
         />
 
         {/* Main Content */}
         <div className="relative">
           {children}
         </div>
-
-        {/* Noise texture overlay (optional) */}
-        <div className="fixed inset-0 -z-10 opacity-[0.008] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("/noise.svg")' }} />
       </body>
     </html>
   );
