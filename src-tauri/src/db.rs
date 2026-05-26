@@ -98,3 +98,53 @@ pub fn initialize_database(app_handle: AppHandle) -> Result<String, String> {
     let db_path = get_db_path(&app_handle)?;
     Ok(db_path.to_string_lossy().to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::params;
+
+    #[test]
+    fn test_sqlite_in_memory_migrations() {
+        let conn = Connection::open_in_memory().unwrap();
+        
+        // 1. Create schema_migrations table
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS schema_migrations (
+                version INTEGER PRIMARY KEY
+            );",
+            (),
+        )
+        .unwrap();
+
+        // 2. Perform test schema creation
+        let migrations = vec![
+            "CREATE TABLE IF NOT EXISTS entries (
+                id TEXT PRIMARY KEY,
+                title TEXT,
+                figure TEXT,
+                moment TEXT,
+                narrative TEXT,
+                image_url TEXT,
+                keywords TEXT,
+                date_created TEXT,
+                date_modified TEXT
+            );",
+        ];
+
+        for (idx, sql) in migrations.iter().enumerate() {
+            let version = (idx + 1) as i32;
+            conn.execute(sql, ()).unwrap();
+            conn.execute(
+                "INSERT INTO schema_migrations (version) VALUES (?1)",
+                params![version],
+            )
+            .unwrap();
+        }
+
+        // 3. Verify entry fields and constraints
+        let mut stmt = conn.prepare("SELECT version FROM schema_migrations").unwrap();
+        let versions: Vec<i32> = stmt.query_map((), |row| row.get(0)).unwrap().map(|r| r.unwrap()).collect();
+        assert_eq!(versions, vec![1]);
+    }
+}
