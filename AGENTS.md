@@ -20,7 +20,7 @@ Type: Next.js + Tauri (Desktop App)
 
 ## Repo Boundaries
 - **Product source**: `src/`, `src-tauri/`, `public/`
-- **Root docs**: `README*.md`, `CHANGELOG.md`, `DEVLOG.md`, `LICENSE`
+- **Root docs**: `README*.md`, `LICENSE`
 - **Long-form docs**: `docs/`
 - **Local-only agent assets**: `.agents/`, `.claude/`, `.Codex/`, `.agent/` (tooling only; not product source)
 - **Build outputs**: `.next/`, `out/`, `node_modules/`, `src-tauri/target/` (generated artifacts; not project structure)
@@ -45,7 +45,7 @@ Type: Next.js + Tauri (Desktop App)
 - **Project structure**: `docs/PROJECT-STRUCTURE.md`
 - **Local agent assets**: `docs/LOCAL-AGENT-ASSETS.md`
 - **Design system**: `docs/DESIGN-FOUNDATION.md`
-- **Historical change log**: `CHANGELOG.md`, `DEVLOG.md`
+
 
 ## 🏗️ Architecture Guardrails
 - `src/app/page.tsx` should stay an orchestration shell, not a long-lived home for storage branching, heavy motion logic, or editor internals.

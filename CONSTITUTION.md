@@ -105,7 +105,7 @@ mobile-draft.ts     → 移动端 IndexedDB 草稿（与主存储隔离）
 | 层级 | 目录 | 说明 |
 |---|---|---|
 | 源码层 | `src/`, `src-tauri/`, `public/` | 真正参与构建的代码和资源 |
-| 文档层 | `README*.md`, `CHANGELOG.md`, `DEVLOG.md`, `LICENSE`, `docs/` | 给人看的说明 |
+| 文档层 | `README*.md`, `LICENSE`, `docs/` | 给人看的说明 |
 | 产物层 | `.next/`, `out/`, `node_modules/`, `src-tauri/target/` | 构建输出，不是项目结构 |
 | Agent 配置层 | `AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, `.Codex/`, `.agent/` | 本地工具配置，不是产品源码 |
 
@@ -135,7 +135,7 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
 - `docs/RELEASE.md`
 - `docs/TESTING-CI.md`
 - `docs/ENGINEERING-GUARDRAILS.md`
-- `CHANGELOG.md`（追加到 [Unreleased]）
+
 
 ### 版本号同步
 
@@ -256,7 +256,7 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
 以下 9 个维度是项目健康度的持续监测点。每次做重要变更时，应评估变更对这些维度的影响：
 
 1. **对外表达**：README 是否清晰、多语言是否同步、安装说明是否准确
-2. **文档体系**：docs/ 与代码是否一致、CHANGELOG 是否及时更新
+2. **文档体系**：docs/ 与代码是否一致
 3. **目录结构**：各层边界是否清晰、命名是否一致
 4. **存储架构**：合约完整性、适配器一致性、Facade 薄度
 5. **组件边界**：features / ui / visual 是否各司其职
@@ -278,7 +278,7 @@ cargo fmt --check --manifest-path src-tauri/Cargo.toml
 7. ❌ **混淆 Agent 配置层和产品源码层**（`.agents/` ≠ `src/`）
 8. ❌ **在 `node_modules/` 或 `src-tauri/target/` 中找到的文件当作项目结构**
 9. ❌ **未经验证就推送大规模重构** — 先 `npm run lint && npm run test && npm run build`
-10. ❌ **删除 `DEVLOG.md` 或 `BLUEPRINT.md`** — 它们是项目记忆和愿景
+10. ❌ **删除 `BLUEPRINT.md`** — 它是项目愿景
 
 ---
 

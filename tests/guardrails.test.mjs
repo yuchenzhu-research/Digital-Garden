@@ -13,8 +13,6 @@ test('core engineering docs exist', () => {
     'CONSTITUTION.md',
     'AGENTS.md',
     'CLAUDE.md',
-    'CHANGELOG.md',
-    'DEVLOG.md',
     'docs/ARCHITECTURE.md',
     'docs/PROJECT-STRUCTURE.md',
     'docs/ENGINEERING-GUARDRAILS.md',
@@ -60,17 +58,7 @@ test('governance document stack stays explicit and non-duplicative', () => {
   assert.match(localAssets, /Reading Model/);
 });
 
-test('project structure includes changelog and devlog as root docs', () => {
-  const agents = read('AGENTS.md');
-  const claude = read('CLAUDE.md');
-  const structure = read('docs', 'PROJECT-STRUCTURE.md');
 
-  assert.match(agents, /CHANGELOG\.md/);
-  assert.match(agents, /DEVLOG\.md/);
-  assert.match(claude, /AGENTS\.md/);
-  assert.match(structure, /CHANGELOG\.md/);
-  assert.match(structure, /DEVLOG\.md/);
-});
 
 test('agent asset docs define a canonical local tooling split', () => {
   const agents = read('AGENTS.md');

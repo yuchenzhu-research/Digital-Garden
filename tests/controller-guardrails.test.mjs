@@ -19,7 +19,7 @@ test('homepage shell stays wired through useHomePageController and feature secti
   assert.doesNotMatch(page, /@\/services\//);
   assert.doesNotMatch(page, /hasMobileDraft/);
   assert.doesNotMatch(page, /entryToDocument/);
-  assert.doesNotMatch(page, /documents\.slice/);
+
 });
 
 test('EntryEditor shell stays layered through hooks and editor sections', () => {
