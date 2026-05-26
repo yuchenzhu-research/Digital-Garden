@@ -71,6 +71,14 @@ export function HorizontalScrollSection({
         stiffness: 150,
     });
 
+    // 滚动进度标尺动力学
+    const scaleX = useSpring(scrollYProgress, {
+        stiffness: 100,
+        damping: 30,
+        restDelta: 0.001
+    });
+    const indicatorLeft = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
     return (
         <section
             ref={targetRef}
@@ -123,6 +131,22 @@ export function HorizontalScrollSection({
                 {/* Floating background letter - 进一步降低透明度以防冲突 */}
                 <div className="absolute left-[5vw] top-1/2 -translate-y-1/2 -z-10 opacity-[0.01] pointer-events-none select-none text-foreground">
                     <span className="font-epic-serif text-[20rem] md:text-[40rem] leading-none">A</span>
+                </div>
+
+                {/* Floating Elegant Gold Ruler Progress Indicator */}
+                <div className="absolute bottom-[10vh] left-1/2 -translate-x-1/2 flex items-center gap-4 pointer-events-none select-none z-20">
+                    <span className="text-primary/30 text-[9px] font-light font-mono">+</span>
+                    <div className="relative w-48 h-[1px] bg-white/10">
+                        <motion.div 
+                            className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary/30 via-primary to-primary/30 origin-left"
+                            style={{ scaleX }}
+                        />
+                        <motion.div 
+                            className="absolute top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_#dbb866]"
+                            style={{ left: indicatorLeft, x: "-50%" }}
+                        />
+                    </div>
+                    <span className="text-primary/30 text-[9px] font-light font-mono">+</span>
                 </div>
             </div>
         </section>

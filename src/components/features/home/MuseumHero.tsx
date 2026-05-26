@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Search, Plus } from "lucide-react";
 
 interface MuseumHeroProps {
@@ -13,14 +13,22 @@ interface MuseumHeroProps {
 }
 
 const letterVariants = {
-  hidden: { opacity: 0, y: 60, rotateX: -90 },
+  hidden: { 
+    opacity: 0, 
+    y: 80, 
+    rotateX: -75, 
+    scale: 0.85,
+    filter: "blur(12px)" 
+  },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
     rotateX: 0,
+    scale: 1,
+    filter: "blur(0px)",
     transition: {
-      delay: 0.6 + i * 0.04,
-      duration: 1.0,
+      delay: 0.5 + i * 0.035,
+      duration: 1.4,
       ease: [0.16, 1, 0.3, 1] as const,
     },
   }),
@@ -58,16 +66,26 @@ export function MuseumHero({
     },
   };
 
+  const { scrollY } = useScroll();
+  // Parallax background transformations
+  const parallaxY = useTransform(scrollY, [0, 1000], [0, 180]);
+  const parallaxScale = useTransform(scrollY, [0, 1000], [1, 1.08]);
+
   return (
     <section className="relative min-h-[100vh] flex flex-col items-center justify-center overflow-hidden px-6 pt-20">
-      {/* Background Stage */}
-      <div className="absolute inset-0 -z-10 bg-black">
+      {/* Background Stage with Parallax */}
+      <div className="absolute inset-0 -z-10 bg-black overflow-hidden">
         <motion.div
-          initial={{ scale: 1.2, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.45 }}
-          transition={{ duration: 4, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 bg-[url('/archive/museum-hero.png')] bg-cover bg-center will-change-transform"
-        />
+          initial={{ opacity: 0, scale: 1.15 }}
+          animate={{ opacity: 0.45, scale: 1 }}
+          transition={{ duration: 3.5, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full h-full"
+        >
+          <motion.div
+            style={{ y: parallaxY, scale: parallaxScale }}
+            className="absolute inset-0 bg-[url('/archive/museum-hero.png')] bg-cover bg-center will-change-transform"
+          />
+        </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background" />
         <div className="absolute inset-0 mask-vignette bg-background/30" />
       </div>
@@ -84,7 +102,7 @@ export function MuseumHero({
         </motion.span>
 
         {/* Staggered Letter Reveal Title */}
-        <h1 className="text-6xl md:text-8xl lg:text-[10rem] mb-8 text-glow-gold leading-[0.9] tracking-tighter" style={{ perspective: "800px" }}>
+        <h1 className="text-6xl md:text-8xl lg:text-[10rem] mb-8 text-glow-gold leading-[0.9] tracking-tighter" style={{ perspective: "1000px" }}>
           {title.split("").map((char, i) => (
             <motion.span
               key={`${char}-${i}`}
@@ -112,26 +130,53 @@ export function MuseumHero({
           variants={itemVariants}
           className="flex flex-col md:flex-row items-center justify-center gap-5 max-w-3xl mx-auto"
         >
-          {/* Search Bar with Glassmorphism */}
-          <div className="w-full relative group">
-            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-primary/30 group-focus-within:text-primary transition-colors duration-500">
+          {/* Search Bar with Glassmorphism & High Contrast Borders */}
+          <div className="w-full relative group transition-transform duration-500 focus-within:scale-[1.01]">
+            <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-primary/30 group-focus-within:text-primary group-focus-within:translate-x-1 transition-all duration-500">
               <Search className="w-4 h-4" />
             </div>
             <input
               type="text"
               placeholder="Examine the archive..."
               onChange={(e) => onSearch?.(e.target.value)}
-              className="w-full surface-glass rounded-[4px] py-5 pl-14 pr-8 text-sm text-foreground focus:outline-none focus:border-primary/20 transition-all duration-500 placeholder:text-ink-faint/30 font-sans tracking-wide focus:shadow-[0_0_30px_rgba(219,184,102,0.08)]"
+              className="w-full bg-black/25 backdrop-blur-xl border border-white/5 rounded-[4px] py-5 pl-14 pr-8 text-sm text-foreground focus:outline-none focus:border-primary/30 transition-all duration-500 placeholder:text-ink-faint/30 font-sans tracking-wide focus:bg-black/45 focus:shadow-[0_0_40px_rgba(219,184,102,0.12)] group-hover:border-white/10"
             />
             <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-gradient-to-r from-primary/60 via-primary/40 to-transparent transition-all duration-700 group-focus-within:w-full" />
           </div>
 
-          {/* CTA Button with Pulsing Glow */}
+          {/* CTA Button with Pulsing Glow Aura */}
           <button
             onClick={onAppend}
-            className="relative whitespace-nowrap btn-minimal rounded-[4px] px-10 py-5 flex items-center gap-3 group border-white/10 overflow-hidden"
+            className="relative whitespace-nowrap btn-minimal rounded-[4px] px-10 py-5 flex items-center gap-3 group border-white/10 overflow-hidden cursor-pointer"
           >
-            {/* Pulsing glow background */}
+            {/* Regular pulsing glow background */}
+            <motion.span
+              className="absolute inset-0 rounded-[4px] bg-primary/5 -z-10 blur-[4px] pointer-events-none"
+              animate={{
+                opacity: [0.3, 0.6, 0.3],
+                scale: [0.98, 1.02, 0.98],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            {/* Outward pulsing aura border */}
+            <motion.span
+              className="absolute -inset-[1px] rounded-[4px] border border-primary/20 pointer-events-none -z-10"
+              animate={{
+                opacity: [0.2, 0.5, 0.2],
+                scale: [1, 1.04, 1],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.5
+              }}
+            />
+            {/* Hover inset glow */}
             <motion.div
               className="absolute inset-0 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"
               animate={{

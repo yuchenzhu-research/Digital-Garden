@@ -17,6 +17,30 @@ interface ExhibitDetailProps {
   onDelete?: (document: Document) => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.8,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
+  },
+};
+
 export function ExhibitDetail({ 
   document, 
   isOpen, 
@@ -107,22 +131,23 @@ export function ExhibitDetail({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 overflow-hidden">
-          {/* Scrim */}
+          {/* Scrim with Smooth Backdrop-blur transition */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(24px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             onClick={onClose}
-            className="absolute inset-0 bg-background/95 backdrop-blur-3xl"
+            className="absolute inset-0 bg-background/90"
           />
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+            initial={{ opacity: 0, scale: 0.92, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 40 }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-6xl h-full bg-surface-1 hairline-gold shadow-2xl overflow-hidden flex flex-col md:flex-row"
+            exit={{ opacity: 0, scale: 0.95, y: 30, transition: { duration: 0.3, ease: "easeInOut" } }}
+            transition={{ type: "spring", damping: 26, stiffness: 190 }}
+            className="relative w-full max-w-6xl h-full bg-surface-1 border border-primary/20 shadow-[0_0_50px_rgba(219,184,102,0.15)] overflow-hidden flex flex-col md:flex-row"
           >
             {/* Image Section */}
             <div className="relative w-full md:w-1/2 h-64 md:h-full bg-surface-2 group">
@@ -138,66 +163,65 @@ export function ExhibitDetail({
 
             {/* Content Section */}
             <div className="w-full md:w-1/2 h-full flex flex-col overflow-y-auto p-8 md:p-16 scrollbar-hide">
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="absolute top-8 right-8 p-2 rounded-full hover:bg-primary/10 text-ink-faint hover:text-primary transition-all z-10"
+                className="absolute top-8 right-8 p-2 rounded-full bg-white/5 hover:bg-primary/10 text-ink-faint hover:text-primary transition-colors z-10 border border-white/5 cursor-pointer"
               >
-                <X className="w-6 h-6" />
-              </button>
+                <X className="w-5 h-5" />
+              </motion.button>
 
-              <div className="flex flex-col h-full">
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="flex flex-col h-full"
+              >
                 <div className="mb-12">
                   <motion.span 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
+                    variants={itemVariants}
                     className="text-kicker mb-4 block"
                   >
                     Archive Exhibit No. {document.id.padStart(3, '0')}
                   </motion.span>
                   <motion.h2 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+                    variants={itemVariants}
                     className="text-4xl md:text-6xl text-glow-gold mb-8 leading-tight"
                   >
                     {document.title}
                   </motion.h2>
 
                   <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
+                    variants={itemVariants}
                     className="flex flex-wrap gap-6 text-[10px] uppercase tracking-[0.2em] text-ink-faint mb-12"
                   >
-                    <div className="flex items-center gap-2">
-                       <User className="w-3 h-3 text-primary" />
-                       {document.author}
+                    <div className="flex items-center gap-2 group/meta cursor-default">
+                       <User className="w-3 h-3 text-primary group-hover/meta:scale-115 transition-transform duration-300" />
+                       <span className="group-hover/meta:text-foreground transition-colors duration-300">{document.author}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Calendar className="w-3 h-3 text-primary" />
-                       Circa {document.year}
+                    <div className="flex items-center gap-2 group/meta cursor-default">
+                       <Calendar className="w-3 h-3 text-primary group-hover/meta:scale-115 transition-transform duration-300" />
+                       <span className="group-hover/meta:text-foreground transition-colors duration-300">Circa {document.year}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                       <Tag className="w-3 h-3 text-primary" />
-                       {document.category}
+                    <div className="flex items-center gap-2 group/meta cursor-default">
+                       <Tag className="w-3 h-3 text-primary group-hover/meta:scale-115 transition-transform duration-300" />
+                       <span className="group-hover/meta:text-foreground transition-colors duration-300">{document.category}</span>
                     </div>
                   </motion.div>
                 </div>
 
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
+                  variants={itemVariants}
                   className="flex-1"
                 >
-                  <div className="mb-12">
-                    <h3 className="text-kicker mb-4">Academic Context</h3>
+                  <div className="mb-12 group/content">
+                    <h3 className="text-kicker mb-4 group-hover/content:text-primary transition-colors duration-300">Academic Context</h3>
                     {renderAcademicContext(document.academicContext || document.description)}
                   </div>
 
-                  <div className="mb-12">
-                    <h3 className="text-kicker mb-4">Archival Narrative</h3>
+                  <div className="mb-12 group/content">
+                    <h3 className="text-kicker mb-4 group-hover/content:text-primary transition-colors duration-300">Archival Narrative</h3>
                     {renderLongDescription(
                       document.longDescription || 
                       "This archival entry represents a significant moment in the chronology of human thought. It serves as a testament to the enduring nature of our collective memory and the pursuit of truth through documentation."
@@ -207,7 +231,7 @@ export function ExhibitDetail({
                   {document.tags && (
                     <div className="flex flex-wrap gap-3 mb-12">
                       {document.tags.map(tag => (
-                        <span key={tag} className="px-3 py-1 bg-primary/5 border border-primary/20 text-[9px] uppercase tracking-widest text-primary/80">
+                        <span key={tag} className="px-3 py-1 bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/45 text-[9px] uppercase tracking-widest text-primary/80 transition-all duration-300 cursor-default">
                           {tag}
                         </span>
                       ))}
@@ -216,9 +240,7 @@ export function ExhibitDetail({
                 </motion.div>
 
                 <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.7 }}
+                  variants={itemVariants}
                   className="mt-auto pt-12 border-t border-primary/10 flex justify-between items-center"
                 >
                   <div className="flex flex-col">
@@ -249,7 +271,7 @@ export function ExhibitDetail({
                     </button>
                   )}
                 </motion.div>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>

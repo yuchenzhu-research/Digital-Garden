@@ -54,7 +54,7 @@ export function ImageCard({
             data-entry-id={id}
             aria-label={`Open ${title}${author ? ` by ${author}` : ''}${year ? ` (${year})` : ''}`}
             className={cn(
-                'group relative block flex-none cursor-pointer overflow-hidden rounded-[2px] transition-all duration-[1.2s] ease-out hover:shadow-2xl',
+                'group relative block flex-none cursor-pointer overflow-hidden rounded-[2px] border border-white/5 transition-all duration-[1.2s] ease-out hover:shadow-[0_0_50px_rgba(219,184,102,0.15)] focus:outline-none focus:border-primary/30 focus:shadow-[0_0_50px_rgba(219,184,102,0.25)]',
                 aspectRatioClasses[aspectRatio],
                 className,
             )}
@@ -70,7 +70,7 @@ export function ImageCard({
                     src={imageUrl}
                     alt={title}
                     fill
-                    className="object-cover transition-transform duration-[2.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+                    className="object-cover transition-all duration-[2.5s] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 group-hover:brightness-[1.05]"
                     sizes={isSmall ? "400px" : "1200px"}
                     style={{ objectPosition: focalPoint || 'center' }}
                 />
@@ -79,7 +79,7 @@ export function ImageCard({
             </div>
 
             {/* Hairline Frame */}
-            <div className="absolute inset-[1px] z-20 border-[0.5px] border-white/10 opacity-60 transition-all duration-700 group-hover:inset-[12px] group-hover:border-primary/40 group-hover:opacity-100" />
+            <div className="absolute inset-[1px] z-20 border-[0.5px] border-white/10 opacity-60 transition-all duration-700 group-hover:inset-[12px] group-hover:border-primary/45 group-hover:opacity-100 group-hover:shadow-[inset_0_0_12px_rgba(219,184,102,0.15)]" />
 
             {/* Floating Metadata */}
             {floatingTexts && (
