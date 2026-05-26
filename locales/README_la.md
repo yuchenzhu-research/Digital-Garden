@@ -17,8 +17,8 @@
 
   <p align="center">
     <strong>
-      <a href="README.md">English</a> | 
-      <a href="README_zh-CN.md">简体中文</a> | 
+      <a href="../README.md">English</a> | 
+      <a href="../README_zh-CN.md">简体中文</a> | 
       <a href="README_zh-TW.md">繁体中文</a> | 
       Latin | 
       <a href="README_ja.md">日本語</a> | 
@@ -31,7 +31,7 @@
 
 **Bibliotheca Vitae** ultra blog personalem transcendit. Est tabularium vitae immersivum, ubi aesthetica codicum saeculi XV cum technologia telae saeculi XXI confluit, data vulgaria in artem curationis elegantem transformans.
 
-Structura repositorii et regulae directoriorum in [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md) servantur.
+Structura repositorii et regulae directoriorum in [docs/PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md) servantur.
 
 ## 🏛️ Visio: Narratio Vitae
 
@@ -89,7 +89,7 @@ Structura communis inter telam et applicationem desktopianam Tauri:
 
 Applicationem desktopianam praecompilatam pro macOS et Windows e pagina [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) deprehendere potes.
 
-Linux ut platforma **telaris desktopiana** sustentatur. Automatizatio publicationis applicationis desktopianae pro Linux nondum confirmata est. Vide [docs/RELEASE.md](docs/RELEASE.md).
+Linux ut platforma **telaris desktopiana** sustentatur. Automatizatio publicationis applicationis desktopianae pro Linux nondum confirmata est. Vide [docs/RELEASE.md](../docs/RELEASE.md).
 
 ### 🍎 Usores macOS
 Publicatio MVP currens sine certificato Apple constructa est per GitHub Actions, ergo macOS indicare potest applicationem "corruptam" esse.
@@ -114,7 +114,7 @@ Windows SmartScreen `.exe` ut applicationem ignotam signare potest. **"More info
 6.  Si vis crustam desktopianam, utere `npm run app:dev`
 7.  Si vis constructionem telarem finalem, utere `npm run build`
 
-Documenta technica detaliata: [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
+Documenta technica detaliata: [docs/ENGINEERING-GUARDRAILS.md](../docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](../docs/TESTING-CI.md) · [docs/RELEASE.md](../docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

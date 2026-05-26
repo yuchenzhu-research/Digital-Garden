@@ -17,8 +17,8 @@
 
   <p align="center">
     <strong>
-      <a href="README.md">English</a> | 
-      <a href="README_zh-CN.md">简体中文</a> | 
+      <a href="../README.md">English</a> | 
+      <a href="../README_zh-CN.md">简体中文</a> | 
       <a href="README_zh-TW.md">繁体中文</a> | 
       <a href="README_la.md">Latin</a> | 
       <a href="README_ja.md">日本語</a> | 
@@ -31,7 +31,7 @@
 
 **Bibliotheca Vitae**는 단순한 블로그를 초월합니다. 이곳은 15세기 필사본의 미학과 21세기 공학이 만나는 디지털 정원이며, 평범한 데이터를 큐레이팅된 삶의 서사로 승화시킵니다.
 
-저장소 구조와 디렉터리 규칙은 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)에서 확인할 수 있습니다.
+저장소 구조와 디렉터리 규칙은 [docs/PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md)에서 확인할 수 있습니다.
 
 ## 🏛️ 비전: 살아있는 서사
 
@@ -89,7 +89,7 @@ Apple 스타일의 스티키 가로 스크롤을 통해 사용자는 역사의 �
 
 macOS 및 Windows용 빌드된 데스크톱 앱은 [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases)에서 다운로드할 수 있습니다.
 
-Linux는 데스크톱 **웹** 플랫폼으로 지원됩니다. Linux 데스크톱 앱 자동 릴리스는 아직 확인되지 않았습니다. 자세한 내용은 [docs/RELEASE.md](docs/RELEASE.md)를 참조하세요.
+Linux는 데스크톱 **웹** 플랫폼으로 지원됩니다. Linux 데스크톱 앱 자동 릴리스는 아직 확인되지 않았습니다. 자세한 내용은 [docs/RELEASE.md](../docs/RELEASE.md)를 참조하세요.
 
 ### 🍎 macOS 사용자
 현재 MVP 릴리스는 Apple 개발자 인증서 없이 GitHub Actions로 빌드되어, macOS 게이트키퍼가 "앱이 손상되었습니다"라고 표시할 수 있습니다.
@@ -114,7 +114,7 @@ Windows SmartScreen이 `.exe`를 인식할 수 없는 앱으로 경고할 수 �
 6.  데스크톱 셸 실행: `npm run app:dev`
 7.  웹 프로덕션 빌드: `npm run build`
 
-상세한 엔지니어링 가이드라인: [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
+상세한 엔지니어링 가이드라인: [docs/ENGINEERING-GUARDRAILS.md](../docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](../docs/TESTING-CI.md) · [docs/RELEASE.md](../docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

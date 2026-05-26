@@ -19,11 +19,11 @@
     <strong>
       English | 
       <a href="README_zh-CN.md">简体中文</a> | 
-      <a href="README_zh-TW.md">繁体中文</a> | 
-      <a href="README_la.md">Latin</a> | 
-      <a href="README_ja.md">日本語</a> | 
-      <a href="README_ko.md">한국어</a> | 
-      <a href="README_es.md">Español</a>
+      <a href="locales/README_zh-TW.md">繁体中文</a> | 
+      <a href="locales/README_la.md">Latin</a> | 
+      <a href="locales/README_ja.md">日本語</a> | 
+      <a href="locales/README_ko.md">한국어</a> | 
+      <a href="locales/README_es.md">Español</a>
     </strong>
   </p>
 </div>

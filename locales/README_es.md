@@ -17,8 +17,8 @@
 
   <p align="center">
     <strong>
-      <a href="README.md">English</a> | 
-      <a href="README_zh-CN.md">简体中文</a> | 
+      <a href="../README.md">English</a> | 
+      <a href="../README_zh-CN.md">简体中文</a> | 
       <a href="README_zh-TW.md">繁体中文</a> | 
       <a href="README_la.md">Latin</a> | 
       <a href="README_ja.md">日本語</a> | 
@@ -31,7 +31,7 @@
 
 **Bibliotheca Vitae** trasciende el concepto de blog personal. Es un Jardín Digital donde la estética de los manuscritos del siglo XV se fusiona con la ingeniería del siglo XXI, elevando datos mundanos a una narrativa curada.
 
-La estructura del repositorio y las reglas de directorios están en [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md).
+La estructura del repositorio y las reglas de directorios están en [docs/PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md).
 
 ## 🏛️ Visión: Narrativa Viva
 
@@ -89,7 +89,7 @@ Construido como una aplicación compartida **Web + Tauri de escritorio**:
 
 Puedes descargar la aplicación de escritorio precompilada para macOS y Windows desde la página de [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases).
 
-Linux sigue siendo una plataforma de **escritorio web** compatible. La automatización de lanzamiento de la app de escritorio para Linux aún no está confirmada. Consulta [docs/RELEASE.md](docs/RELEASE.md).
+Linux sigue siendo una plataforma de **escritorio web** compatible. La automatización de lanzamiento de la app de escritorio para Linux aún no está confirmada. Consulta [docs/RELEASE.md](../docs/RELEASE.md).
 
 ### 🍎 Usuarios de macOS
 La versión MVP actual se compila mediante GitHub Actions sin certificado de desarrollador de Apple, por lo que macOS puede mostrar que la app "está dañada".
@@ -114,7 +114,7 @@ Windows SmartScreen puede marcar el `.exe` como una app no reconocida. Haz clic 
 6.  Shell de escritorio opcional: `npm run app:dev`
 7.  Build web opcional de producción: `npm run build`
 
-Guías de ingeniería detalladas: [docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
+Guías de ingeniería detalladas: [docs/ENGINEERING-GUARDRAILS.md](../docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](../docs/TESTING-CI.md) · [docs/RELEASE.md](../docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*

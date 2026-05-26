@@ -17,8 +17,8 @@
 
   <p align="center">
     <strong>
-      <a href="README.md">English</a> | 
-      <a href="README_zh-CN.md">简体中文</a> | 
+      <a href="../README.md">English</a> | 
+      <a href="../README_zh-CN.md">简体中文</a> | 
       繁体中文 | 
       <a href="README_la.md">Latin</a> | 
       <a href="README_ja.md">日本語</a> | 
@@ -31,7 +31,7 @@
 
 **Bibliotheca Vitae** 超越了部落格的定義。這是一座數位花園，15 世紀手抄本美學與 21 世紀工程技藝在此交匯，將原始數據昇華為被策展的生命敘事。
 
-倉庫分層與目錄約定見 [docs/PROJECT-STRUCTURE.md](docs/PROJECT-STRUCTURE.md)。
+倉庫分層與目錄約定見 [docs/PROJECT-STRUCTURE.md](../docs/PROJECT-STRUCTURE.md)。
 
 ## 🏛️ 專案願景：生命敘事
 
@@ -89,7 +89,7 @@
 
 可從 [GitHub Releases](https://github.com/yuchenzhu-research/Digital-Garden/releases) 頁面下載 macOS 和 Windows 版本的預編譯桌面應用程式。
 
-Linux 作為桌面**網頁版**平台受支援。Linux 桌面應用的自動發佈尚未確認。詳見 [docs/RELEASE.md](docs/RELEASE.md)。
+Linux 作為桌面**網頁版**平台受支援。Linux 桌面應用的自動發佈尚未確認。詳見 [docs/RELEASE.md](../docs/RELEASE.md)。
 
 ### 🍎 macOS 使用者
 當前 MVP 版本通過 GitHub Actions 構建，未使用 Apple 開發者證書，因此 macOS 可能顯示「應用程式已損壞」。
@@ -114,7 +114,7 @@ Windows SmartScreen 可能將 `.exe` 標記為無法識別的應用。請點擊*
 6.  如需桌面殼體，執行 `npm run app:dev`
 7.  如需網頁正式構建，執行 `npm run build`
 
-詳細工程指南：[docs/ENGINEERING-GUARDRAILS.md](docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](docs/TESTING-CI.md) · [docs/RELEASE.md](docs/RELEASE.md)
+詳細工程指南：[docs/ENGINEERING-GUARDRAILS.md](../docs/ENGINEERING-GUARDRAILS.md) · [docs/TESTING-CI.md](../docs/TESTING-CI.md) · [docs/RELEASE.md](../docs/RELEASE.md)
 
 ---
 *Est. MMXXVI · Bibliotheca Vitae · Ars Longa, Vita Brevis.*
