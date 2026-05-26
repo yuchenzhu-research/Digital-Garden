@@ -5,14 +5,99 @@ import { X, Calendar, User, Tag, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import type { Document } from "@/lib/types";
 
+import ReactMarkdown from "react-markdown";
+
 interface ExhibitDetailProps {
   document: Document | null;
   isOpen: boolean;
   onClose: () => void;
+  allDocuments?: Document[];
+  onDocumentSelect?: (id: string) => void;
 }
 
-export function ExhibitDetail({ document, isOpen, onClose }: ExhibitDetailProps) {
+export function ExhibitDetail({ 
+  document, 
+  isOpen, 
+  onClose,
+  allDocuments = [],
+  onDocumentSelect
+}: ExhibitDetailProps) {
   if (!document) return null;
+
+  const renderWikiLink = (href: string | undefined, children: React.ReactNode) => {
+    if (href?.startsWith("wikilink:")) {
+      const title = decodeURIComponent(href.substring(9));
+      const foundDoc = allDocuments.find(
+        (doc) => doc.title.toLowerCase() === title.toLowerCase()
+      );
+      if (foundDoc) {
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onDocumentSelect?.(foundDoc.id);
+            }}
+            className="text-primary hover:underline font-semibold cursor-pointer text-left bg-transparent border-none p-0 inline align-baseline"
+          >
+            {children}
+          </button>
+        );
+      }
+      return (
+        <span className="text-ink-faint border-b border-dashed border-ink-faint/40" title={`Document not found: ${title}`}>
+          {children}
+        </span>
+      );
+    }
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+        {children}
+      </a>
+    );
+  };
+
+  const renderAcademicContext = (content: string) => {
+    if (!content) return null;
+    const processed = content.replace(/\[\[(.*?)\]\]/g, (_, title) => {
+      return `[${title}](wikilink:${encodeURIComponent(title)})`;
+    });
+    return (
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => (
+            <p className="font-serif italic text-xl md:text-2xl text-reading-soft leading-relaxed mb-4 last:mb-0">
+              {children}
+            </p>
+          ),
+          a: ({ href, children }) => renderWikiLink(href, children),
+        }}
+      >
+        {processed}
+      </ReactMarkdown>
+    );
+  };
+
+  const renderLongDescription = (content: string) => {
+    if (!content) return null;
+    const processed = content.replace(/\[\[(.*?)\]\]/g, (_, title) => {
+      return `[${title}](wikilink:${encodeURIComponent(title)})`;
+    });
+    return (
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => (
+            <p className="text-reading-soft text-base leading-relaxed opacity-80 mb-4 last:mb-0">
+              {children}
+            </p>
+          ),
+          a: ({ href, children }) => renderWikiLink(href, children),
+        }}
+      >
+        {processed}
+      </ReactMarkdown>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -104,16 +189,15 @@ export function ExhibitDetail({ document, isOpen, onClose }: ExhibitDetailProps)
                 >
                   <div className="mb-12">
                     <h3 className="text-kicker mb-4">Academic Context</h3>
-                    <p className="font-serif italic text-xl md:text-2xl text-reading-soft leading-relaxed">
-                      {document.academicContext || document.description}
-                    </p>
+                    {renderAcademicContext(document.academicContext || document.description)}
                   </div>
 
                   <div className="mb-12">
                     <h3 className="text-kicker mb-4">Archival Narrative</h3>
-                    <p className="text-reading-soft text-base leading-relaxed opacity-80">
-                      {document.longDescription || "This archival entry represents a significant moment in the chronology of human thought. It serves as a testament to the enduring nature of our collective memory and the pursuit of truth through documentation."}
-                    </p>
+                    {renderLongDescription(
+                      document.longDescription || 
+                      "This archival entry represents a significant moment in the chronology of human thought. It serves as a testament to the enduring nature of our collective memory and the pursuit of truth through documentation."
+                    )}
                   </div>
 
                   {document.tags && (
