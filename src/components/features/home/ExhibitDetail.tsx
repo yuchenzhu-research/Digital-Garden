@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, User, Tag, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
@@ -50,7 +51,13 @@ export function ExhibitDetail({
   onEdit,
   onDelete
 }: ExhibitDetailProps) {
-  if (!document) return null;
+  // Cache the last valid document so exit animation can still render content.
+  // Pattern: "storing information from previous renders" — React docs.
+  const [cachedDoc, setCachedDoc] = useState<Document | null>(document);
+  if (document && document !== cachedDoc) {
+    setCachedDoc(document);
+  }
+  const displayDoc = document ?? cachedDoc;
 
   const renderWikiLink = (href: string | undefined, children: React.ReactNode) => {
     if (href?.startsWith("wikilink:")) {
@@ -129,7 +136,7 @@ export function ExhibitDetail({
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && displayDoc && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 overflow-hidden">
           {/* Scrim with Smooth Backdrop-blur transition */}
           <motion.div
@@ -152,8 +159,8 @@ export function ExhibitDetail({
             {/* Image Section */}
             <div className="relative w-full md:w-1/2 h-64 md:h-full bg-surface-2 group">
               <Image
-                src={document.imageUrl}
-                alt={document.title}
+                src={displayDoc.imageUrl}
+                alt={displayDoc.title}
                 fill
                 className="object-cover transition-transform duration-[2s] group-hover:scale-105"
               />
@@ -183,13 +190,13 @@ export function ExhibitDetail({
                     variants={itemVariants}
                     className="text-kicker mb-4 block"
                   >
-                    Archive Exhibit No. {document.id.padStart(3, '0')}
+                    Archive Exhibit No. {displayDoc.id.padStart(3, '0')}
                   </motion.span>
                   <motion.h2 
                     variants={itemVariants}
                     className="text-4xl md:text-6xl text-glow-gold mb-8 leading-tight"
                   >
-                    {document.title}
+                    {displayDoc.title}
                   </motion.h2>
 
                   <motion.div 
@@ -198,15 +205,15 @@ export function ExhibitDetail({
                   >
                     <div className="flex items-center gap-2 group/meta cursor-default">
                        <User className="w-3 h-3 text-primary group-hover/meta:scale-115 transition-transform duration-300" />
-                       <span className="group-hover/meta:text-foreground transition-colors duration-300">{document.author}</span>
+                       <span className="group-hover/meta:text-foreground transition-colors duration-300">{displayDoc.author}</span>
                     </div>
                     <div className="flex items-center gap-2 group/meta cursor-default">
                        <Calendar className="w-3 h-3 text-primary group-hover/meta:scale-115 transition-transform duration-300" />
-                       <span className="group-hover/meta:text-foreground transition-colors duration-300">Circa {document.year}</span>
+                       <span className="group-hover/meta:text-foreground transition-colors duration-300">Circa {displayDoc.year}</span>
                     </div>
                     <div className="flex items-center gap-2 group/meta cursor-default">
                        <Tag className="w-3 h-3 text-primary group-hover/meta:scale-115 transition-transform duration-300" />
-                       <span className="group-hover/meta:text-foreground transition-colors duration-300">{document.category}</span>
+                       <span className="group-hover/meta:text-foreground transition-colors duration-300">{displayDoc.category}</span>
                     </div>
                   </motion.div>
                 </div>
@@ -217,20 +224,20 @@ export function ExhibitDetail({
                 >
                   <div className="mb-12 group/content">
                     <h3 className="text-kicker mb-4 group-hover/content:text-primary transition-colors duration-300">Academic Context</h3>
-                    {renderAcademicContext(document.academicContext || document.description)}
+                    {renderAcademicContext(displayDoc.academicContext || displayDoc.description)}
                   </div>
 
                   <div className="mb-12 group/content">
                     <h3 className="text-kicker mb-4 group-hover/content:text-primary transition-colors duration-300">Archival Narrative</h3>
                     {renderLongDescription(
-                      document.longDescription || 
+                      displayDoc.longDescription || 
                       "This archival entry represents a significant moment in the chronology of human thought. It serves as a testament to the enduring nature of our collective memory and the pursuit of truth through documentation."
                     )}
                   </div>
 
-                  {document.tags && (
+                  {displayDoc.tags && (
                     <div className="flex flex-wrap gap-3 mb-12">
-                      {document.tags.map(tag => (
+                      {displayDoc.tags.map(tag => (
                         <span key={tag} className="px-3 py-1 bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/45 text-[9px] uppercase tracking-widest text-primary/80 transition-all duration-300 cursor-default">
                           {tag}
                         </span>
@@ -246,19 +253,19 @@ export function ExhibitDetail({
                   <div className="flex flex-col">
                     <span className="text-[8px] uppercase tracking-[0.4em] text-ink-faint">Date Archived</span>
                     <span className="font-mono text-[9px] text-primary">
-                      {document.id.startsWith('user-') ? 'USER_ARCHIVE' : 'SYSTEM_V3'}
+                      {displayDoc.id.startsWith('user-') ? 'USER_ARCHIVE' : 'SYSTEM_V3'}
                     </span>
                   </div>
-                  {document.id.startsWith('user-') ? (
+                  {displayDoc.id.startsWith('user-') ? (
                     <div className="flex gap-4">
                       <button 
-                        onClick={() => onEdit?.(document)}
+                        onClick={() => onEdit?.(displayDoc)}
                         className="btn-minimal rounded-sm px-4 py-2 text-xs border border-primary/20 hover:border-primary/50 cursor-pointer"
                       >
                         Edit Moment
                       </button>
                       <button 
-                        onClick={() => onDelete?.(document)}
+                        onClick={() => onDelete?.(displayDoc)}
                         className="rounded-sm px-4 py-2 text-xs bg-red-950/40 hover:bg-red-900/60 border border-red-900/40 text-red-200 transition-colors cursor-pointer"
                       >
                         Delete Moment
