@@ -2,15 +2,18 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, Sun, Moon, X, FolderOpen } from 'lucide-react';
+import { Settings, Sun, Moon, X, FolderOpen, Download, Upload, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { useSettingsPanelController } from '@/hooks/useSettingsPanelController';
+import { useDataManagementController } from '@/hooks/useDataManagementController';
+import { cn } from '@/lib/utils';
 
 interface SettingsPanelProps {
     dimmingIntensity: number;
     onIntensityChange: (val: number) => void;
+    onDataChanged?: () => void;
 }
 
-export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsPanelProps) {
+export function SettingsPanel({ dimmingIntensity, onIntensityChange, onDataChanged }: SettingsPanelProps) {
     const {
         connectFolderMode,
         fsConnected,
@@ -22,6 +25,17 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
         showMobileDraftNotice,
         storageModeLabel,
     } = useSettingsPanelController();
+
+    const {
+        fileInputRef,
+        handleExport,
+        handleFileImport,
+        handleImportClick,
+        importMessage,
+        importStatus,
+        isExporting,
+        isImporting,
+    } = useDataManagementController({ onDataChanged });
 
     return (
         <>
@@ -39,7 +53,7 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                         initial={{ opacity: 0, scale: 0.9, x: -20, y: 20 }}
                         animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, x: -20, y: 20 }}
-                        className="surface-panel fixed bottom-20 left-6 z-50 w-72 rounded-[28px] p-6"
+                        className="surface-panel fixed bottom-20 left-6 z-50 w-72 rounded-[28px] p-6 max-h-[80vh] overflow-y-auto scrollbar-hide"
                     >
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="font-serif text-lg text-foreground tracking-tight">Focus Control</h3>
@@ -123,6 +137,69 @@ export function SettingsPanel({ dimmingIntensity, onIntensityChange }: SettingsP
                                 </div>
                             </>
                         )}
+
+                        <hr className="my-6 border-white/8" />
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
+                                <span>Data Backup</span>
+                                <span className="font-mono text-primary/80">
+                                    JSON
+                                </span>
+                            </div>
+
+                            {importStatus !== 'idle' && (
+                                <div className={cn(
+                                    "rounded-xl px-3 py-2 text-[10px] flex items-center gap-2 border",
+                                    importStatus === 'success'
+                                        ? "bg-green-500/5 border-green-500/20 text-green-400"
+                                        : "bg-red-500/5 border-red-500/20 text-red-400"
+                                )}>
+                                    {importStatus === 'success' ? (
+                                        <Check className="w-3.5 h-3.5 shrink-0" />
+                                    ) : (
+                                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                                    )}
+                                    <span className="truncate">{importMessage}</span>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={handleExport}
+                                    disabled={isExporting || isImporting}
+                                    className="flex items-center justify-center gap-1.5 rounded-[16px] border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent px-3 py-2 text-xs font-sans font-medium text-primary hover:from-primary/20 hover:border-primary/45 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                                >
+                                    {isExporting ? (
+                                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Download className="w-3.5 h-3.5" />
+                                    )}
+                                    Export
+                                </button>
+                                <button
+                                    onClick={handleImportClick}
+                                    disabled={isExporting || isImporting}
+                                    className="flex items-center justify-center gap-1.5 rounded-[16px] border border-primary/20 bg-gradient-to-b from-primary/10 to-transparent px-3 py-2 text-xs font-sans font-medium text-primary hover:from-primary/20 hover:border-primary/45 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                                >
+                                    {isImporting ? (
+                                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <Upload className="w-3.5 h-3.5" />
+                                    )}
+                                    Import
+                                </button>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".json"
+                                onChange={handleFileImport}
+                                className="hidden"
+                            />
+                            <p className="text-[10px] text-muted-foreground/60 leading-relaxed">
+                                Export your entries as a portable backup, or import custom JSON archives here.
+                            </p>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

@@ -14,7 +14,7 @@ export function ArchivalFooter() {
         <div className="max-w-md">
           <h2 className="text-2xl text-glow-gold mb-6">Bibliotheca Vitae</h2>
           <p className="font-serif italic text-ink-soft mb-8 leading-relaxed">
-            "A library of lives, where every moment is a manuscript and every archive is a sanctuary for the narrative of time."
+            &ldquo;A library of lives, where every moment is a manuscript and every archive is a sanctuary for the narrative of time.&rdquo;
           </p>
           <div className="flex gap-8">
             <div className="flex flex-col">
