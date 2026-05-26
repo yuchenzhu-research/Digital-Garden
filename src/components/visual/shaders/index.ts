@@ -15,6 +15,7 @@ attribute vec3 aRandom; // Random direction/offset
 varying vec2 vUv;
 varying float vProgress;
 varying float vAlpha;
+varying float vDepth;
 
 // ==========================================
 // Simplex Noise 3D (Standard Implementation)
@@ -28,11 +29,9 @@ float snoise(vec3 v) {
   const vec2 C = vec2(1.0/6.0, 1.0/3.0);
   const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
 
-  // First corner
   vec3 i  = floor(v + dot(v, C.yyy));
   vec3 x0 = v - i + dot(i, C.xxx);
 
-  // Other corners
   vec3 g = step(x0.yzx, x0.xyz);
   vec3 l = 1.0 - g;
   vec3 i1 = min(g.xyz, l.zxy);
@@ -42,15 +41,13 @@ float snoise(vec3 v) {
   vec3 x2 = x0 - i2 + C.yyy;
   vec3 x3 = x0 - D.yyy;
 
-  // Permutations
   i = mod289(i);
   vec4 p = permute(permute(permute(
              i.z + vec4(0.0, i1.z, i2.z, 1.0))
            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
 
-  // Gradients
-  float n_ = 0.142857142857; // 1.0/7.0
+  float n_ = 0.142857142857;
   vec3  ns = n_ * D.wyz - D.xzx;
 
   vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
@@ -77,14 +74,12 @@ float snoise(vec3 v) {
   vec3 p2 = vec3(a1.xy, h.z);
   vec3 p3 = vec3(a1.zw, h.w);
 
-  // Normalise gradients
   vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
   p0 *= norm.x;
   p1 *= norm.y;
   p2 *= norm.z;
   p3 *= norm.w;
 
-  // Mix
   vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
   m = m * m;
   return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
@@ -114,26 +109,37 @@ void main() {
   vec3 newPos = position;
 
   // ============================
-  // Mode A: Random (Curl Noise)
+  // Idle Breathing (when assembled, progress ≈ 0)
   // ============================
-  // Use aRandom attribute to give each particle a unique trajectory
+  float breathe = sin(uTime * 0.8 + position.x * 0.5 + position.y * 0.7) * 0.02;
+  float drift = cos(uTime * 0.5 + position.y * 0.3) * 0.015;
+  float idleInfluence = 1.0 - smoothstep(0.0, 0.15, uProgress);
+  newPos.x += drift * idleInfluence;
+  newPos.y += breathe * idleInfluence;
+  newPos.z += sin(uTime * 0.6 + position.x * 0.4) * 0.01 * idleInfluence;
+
+  // ============================
+  // Mode A: Random (Curl Noise + Spiral)
+  // ============================
   vec3 noisePos = position * 0.005 + uTime * 0.1;
   vec3 curl = curlNoise(noisePos);
   
-  // Primary explosion direction mixed with curl
   vec3 randomDir = normalize(aRandom) * uProgress * uNoiseStrength * 10.0;
   vec3 curlDir = curl * uProgress * uNoiseStrength * 5.0;
+
+  // Spiral rotation during explosion
+  float angle = uProgress * 3.14159 * 0.5 + length(position.xy) * 0.3;
+  float spiralX = cos(angle) * randomDir.x - sin(angle) * randomDir.y;
+  float spiralY = sin(angle) * randomDir.x + cos(angle) * randomDir.y;
   
-  vec3 randomModePos = position + randomDir + curlDir;
+  vec3 randomModePos = position + vec3(spiralX, spiralY, randomDir.z) + curlDir;
 
 
   // ============================
   // Mode B: Linear (Glitch)
   // ============================
-  // Directional pull (e.g., towards user + up)
   vec3 linearDir = vec3(0.0, 1.0, 2.0); 
   
-  // Glitch effect: slice the image based on Y coordinate
   float glitchWave = sin(uv.y * 20.0 + uTime * 5.0) * cos(uv.y * 10.0 + uTime * 2.0);
   float glitchStrength = smoothstep(0.4, 0.6, abs(glitchWave)) * uLinearStrength * uProgress;
   
@@ -145,19 +151,16 @@ void main() {
   // ============================
   // Blending Modes
   // ============================
-  newPos = mix(linearModePos, randomModePos, uMode);
+  newPos = mix(mix(newPos, linearModePos, uProgress), randomModePos, uMode * uProgress);
 
 
   // ============================
   // Mouse Interaction
   // ============================
-  // Project position to screen space for mouse interaction estimate
-  // (Simplified: assuming modest camera movement context)
-  vec2 screenPos = newPos.xy / 2.0; // Rough approximation
-  float d = distance(screenPos, uMouse * vec2(10.0, 10.0)); // Adjust scale
+  vec2 screenPos = newPos.xy / 2.0;
+  float d = distance(screenPos, uMouse * vec2(10.0, 10.0));
   float mouseForce = (1.0 - smoothstep(0.0, 1.5, d)) * uMouseInfluence;
   
-  // Push away from mouse
   newPos.z += mouseForce * 2.0;
   newPos.x += (newPos.x - uMouse.x * 10.0) * mouseForce * 0.5;
 
@@ -165,12 +168,16 @@ void main() {
   vec4 mvPosition = modelViewMatrix * vec4(newPos, 1.0);
   gl_Position = projectionMatrix * mvPosition;
 
-  // Size Attenuation
-  gl_PointSize = uPointSize * uPixelRatio;
-  gl_PointSize *= (1.0 / -mvPosition.z);
+  // Size Attenuation with depth-based scaling
+  float depthScale = 1.0 / max(-mvPosition.z, 0.1);
+  gl_PointSize = uPointSize * uPixelRatio * depthScale;
   
-  // Fade out alpha as they move towards camera or explode
-  vAlpha = 1.0 - smoothstep(20.0, 50.0, newPos.z);
+  // Larger particles when idle, slightly smaller when exploding (more detail)
+  gl_PointSize *= mix(1.2, 0.8, uProgress);
+  
+  // Distance fade
+  vAlpha = 1.0 - smoothstep(15.0, 45.0, -mvPosition.z);
+  vDepth = clamp(-mvPosition.z / 30.0, 0.0, 1.0);
 }
 `;
 
@@ -181,28 +188,51 @@ uniform float uColorIntensity;
 varying vec2 vUv;
 varying float vProgress;
 varying float vAlpha;
+varying float vDepth;
 
 void main() {
   // Sample texture
   vec4 texColor = texture2D(uTexture, vUv);
 
-  // Circle shape logic for points
+  // Circle shape with soft glow halo
   vec2 coord = gl_PointCoord - vec2(0.5);
   float dist = length(coord);
   
-  // Soft circle edge
-  float alpha = 1.0 - smoothstep(0.45, 0.5, dist);
+  // Inner core: sharp circle
+  float core = 1.0 - smoothstep(0.35, 0.42, dist);
+  // Outer glow: soft halo
+  float glow = 1.0 - smoothstep(0.0, 0.5, dist);
+  glow = pow(glow, 3.0) * 0.4;
+  
+  float alpha = core + glow;
 
-  // Discard pixels outside the circle
+  // Discard pixels outside both core and glow
   if (alpha < 0.01) discard;
 
-  // Boost colors for "Neon" vibe when exploding
-  vec3 finalColor = texColor.rgb * uColorIntensity;
+  // Warm gold tint for the aged archival feel
+  vec3 goldTint = vec3(0.86, 0.72, 0.4); // Matches --primary oklch(0.78 0.12 79)
   
-  // Add white core when very active (simulate energy)
-  finalColor += vec3(vProgress * 0.2);
+  // Base color from texture, boosted
+  vec3 baseColor = texColor.rgb * uColorIntensity;
+  
+  // Mix in gold warmth, stronger during explosion
+  float goldMix = 0.08 + vProgress * 0.15;
+  vec3 finalColor = mix(baseColor, baseColor * goldTint * 1.5, goldMix);
+  
+  // White-hot core energy when exploding
+  finalColor += vec3(vProgress * 0.25) * core;
+  
+  // Depth-of-field: blur distant particles by reducing contrast
+  float dofFade = 1.0 - vDepth * 0.3;
+  finalColor *= dofFade;
 
-  // Final Alpha: Texture Alpha * Circle Shape * Distance Fade
-  gl_FragColor = vec4(finalColor, texColor.a * alpha * vAlpha);
+  // Glow contributes a warm tinted light
+  vec3 glowColor = goldTint * glow * 0.6 * (0.5 + vProgress * 0.5);
+  finalColor += glowColor;
+
+  // Final Alpha: combine all factors
+  float finalAlpha = texColor.a * alpha * vAlpha * dofFade;
+  
+  gl_FragColor = vec4(finalColor, finalAlpha);
 }
 `;
