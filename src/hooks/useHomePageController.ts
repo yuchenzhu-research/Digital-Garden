@@ -9,6 +9,7 @@ import { deleteEntry, getEntries } from '@/services/entryService';
 import { hasMobileDraft } from '@/services/mobile-draft';
 import type { Entry } from '@/services/storage-repository';
 import { useMobileDevice } from './useMobileDevice';
+import { useArchiveSearch } from './useArchiveSearch';
 
 const DEFAULT_DIMMING_INTENSITY = 0.3;
 const FEATURED_DOCUMENTS = documents.slice(0, 3);
@@ -24,19 +25,6 @@ const getInitialDimmingIntensity = (): number => {
   return Number.isFinite(parsed) ? parsed : DEFAULT_DIMMING_INTENSITY;
 };
 
-const matchesDocumentQuery = (document: Document, rawQuery: string): boolean => {
-  if (!rawQuery.trim()) {
-    return true;
-  }
-
-  const query = rawQuery.toLowerCase();
-  const matchesTitle = document.title.toLowerCase().includes(query);
-  const matchesAuthor = document.author.toLowerCase().includes(query);
-  const matchesDescription = document.description.toLowerCase().includes(query);
-  const matchesTags = document.tags?.some((tag) => tag.toLowerCase().includes(query)) ?? false;
-
-  return matchesTitle || matchesAuthor || matchesDescription || matchesTags;
-};
 
 export function useHomePageController() {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -125,15 +113,15 @@ export function useHomePageController() {
     return [...documents, ...userDocuments];
   }, [userEntries]);
 
-  const filteredDocuments = useMemo(() => {
-    return allDocuments.filter((document) => {
-      if (category !== 'all' && document.category !== category) {
-        return false;
-      }
+  const { results: searchResults, isSearchActive } = useArchiveSearch(allDocuments, searchQuery);
 
-      return matchesDocumentQuery(document, searchQuery);
-    });
-  }, [allDocuments, category, searchQuery]);
+  const filteredDocuments = useMemo(() => {
+    const base = isSearchActive ? searchResults : allDocuments;
+    if (category === 'all') {
+      return base;
+    }
+    return base.filter((document) => document.category === category);
+  }, [allDocuments, searchResults, isSearchActive, category]);
 
   const selectedDoc = useMemo(
     () => allDocuments.find((document) => document.id === selectedDocId),

@@ -3,10 +3,11 @@
 import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MuseumHero } from '@/components/features/home/MuseumHero';
-import { FeaturedArchive } from '@/components/features/home/FeaturedArchive';
-import { CuratedShelf } from '@/components/features/home/CuratedShelf';
-import { ArchiveBrowser } from '@/components/features/home/ArchiveBrowser';
-import { ArchivalFooter } from '@/components/features/home/ArchivalFooter';
+import { FeaturedArchiveSection } from '@/components/features/home/FeaturedArchiveSection';
+import { PersonalCollectionSection } from '@/components/features/home/PersonalCollectionSection';
+import { TimelineSection } from '@/components/features/home/TimelineSection';
+import { ArchiveBrowserSection } from '@/components/features/home/ArchiveBrowserSection';
+import { HomeFooter } from '@/components/features/home/HomeFooter';
 import { ExhibitDetail } from '@/components/features/home/ExhibitDetail';
 import { SettingsPanel } from '@/components/features/SettingsPanel';
 import { useHomePageController } from '@/hooks/useHomePageController';
@@ -22,10 +23,6 @@ const SmoothScrollWrapper = dynamic(
   { ssr: false }
 );
 
-const ArchiveDetailView = dynamic(
-  () => import('@/components/features/ArchiveDetailView').then(mod => mod.ArchiveDetailView),
-  { ssr: false }
-);
 
 const EntryEditor = dynamic(
   () => import('@/components/features/EntryEditor').then(mod => mod.EntryEditor),
@@ -49,8 +46,6 @@ export default function Home() {
     featuredDocs,
     filteredDocuments,
     handleCreateEntry,
-    handleDeleteEntry,
-    handleEditEntry,
     handleEditorClose,
     handleIntensityChange,
     hasLocalMobileDraft,
@@ -90,11 +85,13 @@ export default function Home() {
         <SettingsPanel
           dimmingIntensity={dimmingIntensity}
           onIntensityChange={handleIntensityChange}
+          onDataChanged={refreshUserEntries}
         />
 
         {/* Hero Section */}
         <MuseumHero
           onAppend={handleCreateEntry}
+          onSearch={setSearchQuery}
           appendLabel={heroAppendLabel}
           mobileNote={heroMobileNote}
         />
@@ -107,22 +104,40 @@ export default function Home() {
           </section>
         )}
 
-        <FeaturedArchive
+        <FeaturedArchiveSection
           documents={featuredDocs}
-          onDocumentClick={(doc) => setSelectedDocId(doc.id)}
+          onDocumentSelect={(id) => setSelectedDocId(id)}
+          onScrollProgressChange={setScrollProgress}
         />
 
-        <CuratedShelf
-          documents={userEntries.map((e, i) => ({ ...documents[0], ...e, id: e.id || `user-${i}` } as any))}
-          onDocumentClick={(doc) => setSelectedDocId(doc.id)}
+        <PersonalCollectionSection
+          entries={userEntries}
+          hasLocalMobileDraft={hasLocalMobileDraft}
+          isMobileMode={isMobileMode}
+          onDataChanged={refreshUserEntries}
+          onEntrySelect={(id) => setSelectedDocId(id)}
         />
 
-        <ArchiveBrowser
+        <TimelineSection
+          documents={allDocuments}
+          onDocumentSelect={(id) => setSelectedDocId(id)}
+        />
+
+        <ArchiveBrowserSection
+          allDocumentsCount={allDocuments.length}
+          category={category}
           documents={filteredDocuments}
-          onDocumentClick={(doc) => setSelectedDocId(doc.id)}
+          onCategoryChange={setCategory}
+          onClearFilters={clearFilters}
+          onDocumentSelect={(id) => setSelectedDocId(id)}
+          onSearchChange={setSearchQuery}
+          searchQuery={searchQuery}
         />
 
-        <ArchivalFooter />
+        <HomeFooter 
+          userEntryCount={userEntries.length} 
+          onDataChanged={refreshUserEntries}
+        />
       </SmoothScrollWrapper>
 
       {/* Archive Exhibit Detail Overlay */}
@@ -130,6 +145,8 @@ export default function Home() {
         document={selectedDoc ?? null}
         isOpen={!!selectedDoc}
         onClose={() => setSelectedDocId(null)}
+        allDocuments={allDocuments}
+        onDocumentSelect={(id) => setSelectedDocId(id)}
       />
 
       {/* Entry Editor Overlay */}
@@ -155,3 +172,4 @@ export default function Home() {
     </main>
   );
 }
+
