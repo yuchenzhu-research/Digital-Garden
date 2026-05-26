@@ -47,14 +47,14 @@ export function Toast({ message, visible, onClose }: ToastProps) {
               transition={{ delay: 0.1, type: "spring", stiffness: 500, damping: 30 }}
               className="w-5 h-5 rounded-full flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, oklch(0.55 0.18 20) 0%, oklch(0.45 0.12 25) 100%)',
+                background: 'var(--primary)',
               }}
             >
               <motion.svg
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{ delay: 0.2, duration: 0.3 }}
-                className="w-3 h-3 text-white"
+                className="w-3 h-3 text-black"
                 viewBox="0 0 12 12"
                 fill="none"
               >
@@ -73,8 +73,7 @@ export function Toast({ message, visible, onClose }: ToastProps) {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.15 }}
-              className="font-sans text-sm tracking-wide"
-              style={{ color: 'oklch(0.25 0.02 30)' }}
+              className="font-sans text-sm tracking-wide text-[var(--ink-strong)]"
             >
               {message}
             </motion.span>
@@ -83,35 +82,4 @@ export function Toast({ message, visible, onClose }: ToastProps) {
       )}
     </AnimatePresence>
   );
-}
-
-// Toast Manager for programmatic use
-const toastListeners: Set<(message: string) => void> = new Set();
-
-export function showToast(message: string) {
-  toastListeners.forEach(listener => listener(message));
-}
-
-// Headless hook for managing toast state in EntryEditor
-export function useToast() {
-  const [visible, setVisible] = React.useState(false);
-  const [message, setMessage] = React.useState('');
-
-  const show = React.useCallback((msg: string) => {
-    setMessage(msg);
-    setVisible(true);
-  }, []);
-
-  const hide = React.useCallback(() => {
-    setVisible(false);
-  }, []);
-
-  React.useEffect(() => {
-    toastListeners.add(show);
-    return () => {
-      toastListeners.delete(show);
-    };
-  }, [show]);
-
-  return { visible, message, show, hide };
 }

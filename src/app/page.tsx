@@ -46,6 +46,8 @@ export default function Home() {
     featuredDocs,
     filteredDocuments,
     handleCreateEntry,
+    handleDeleteEntry,
+    handleEditEntry,
     handleEditorClose,
     handleIntensityChange,
     hasLocalMobileDraft,
@@ -147,6 +149,8 @@ export default function Home() {
         onClose={() => setSelectedDocId(null)}
         allDocuments={allDocuments}
         onDocumentSelect={(id) => setSelectedDocId(id)}
+        onEdit={handleEditEntry}
+        onDelete={handleDeleteEntry}
       />
 
       {/* Entry Editor Overlay */}

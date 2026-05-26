@@ -13,6 +13,8 @@ interface ExhibitDetailProps {
   onClose: () => void;
   allDocuments?: Document[];
   onDocumentSelect?: (id: string) => void;
+  onEdit?: (document: Document) => void;
+  onDelete?: (document: Document) => void;
 }
 
 export function ExhibitDetail({ 
@@ -20,7 +22,9 @@ export function ExhibitDetail({
   isOpen, 
   onClose,
   allDocuments = [],
-  onDocumentSelect
+  onDocumentSelect,
+  onEdit,
+  onDelete
 }: ExhibitDetailProps) {
   if (!document) return null;
 
@@ -219,12 +223,31 @@ export function ExhibitDetail({
                 >
                   <div className="flex flex-col">
                     <span className="text-[8px] uppercase tracking-[0.4em] text-ink-faint">Date Archived</span>
-                    <span className="font-mono text-[9px] text-primary">2026-04-17 / SYSTEM_V3</span>
+                    <span className="font-mono text-[9px] text-primary">
+                      {document.id.startsWith('user-') ? 'USER_ARCHIVE' : 'SYSTEM_V3'}
+                    </span>
                   </div>
-                  <button className="flex items-center gap-2 btn-minimal rounded-sm px-6 py-3">
-                    View Primary Source
-                    <ArrowUpRight className="w-3 h-3" />
-                  </button>
+                  {document.id.startsWith('user-') ? (
+                    <div className="flex gap-4">
+                      <button 
+                        onClick={() => onEdit?.(document)}
+                        className="btn-minimal rounded-sm px-4 py-2 text-xs border border-primary/20 hover:border-primary/50 cursor-pointer"
+                      >
+                        Edit Moment
+                      </button>
+                      <button 
+                        onClick={() => onDelete?.(document)}
+                        className="rounded-sm px-4 py-2 text-xs bg-red-950/40 hover:bg-red-900/60 border border-red-900/40 text-red-200 transition-colors cursor-pointer"
+                      >
+                        Delete Moment
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="flex items-center gap-2 btn-minimal rounded-sm px-6 py-3 cursor-pointer">
+                      View Primary Source
+                      <ArrowUpRight className="w-3 h-3" />
+                    </button>
+                  )}
                 </motion.div>
               </div>
             </div>
