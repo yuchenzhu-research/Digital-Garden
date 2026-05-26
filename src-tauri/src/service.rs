@@ -340,13 +340,28 @@ pub fn save_image_from_bytes(
     })
 }
 
-/// Import entries from JSON wrapped inside a single SQLite transaction
+/// Import entries from JSON wrapped inside a single SQLite transaction.
+/// Disk I/O (image writes) is performed BEFORE the transaction to avoid holding
+/// the database lock during slow filesystem operations.
 pub fn import_entries(
     conn: &mut Connection,
     archive_dir: &Path,
     entries: Vec<EntryPayload>,
 ) -> Result<(), String> {
-    let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
+    // Phase 1: Identify new entries and write images to disk (no DB lock held)
+    struct PreparedEntry {
+        id: String,
+        title: String,
+        figure: String,
+        moment: String,
+        narrative: String,
+        keywords_json: String,
+        image_url: Option<String>,
+        date_created: String,
+        date_modified: Option<String>,
+    }
+
+    let mut prepared: Vec<PreparedEntry> = Vec::with_capacity(entries.len());
 
     for mut entry in entries {
         let entry_id = entry
@@ -354,8 +369,8 @@ pub fn import_entries(
             .clone()
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-        // Check if exists
-        let exists: bool = tx
+        // Check if exists (quick read, no transaction needed)
+        let exists: bool = conn
             .query_row(
                 "SELECT 1 FROM entries WHERE id = ?1",
                 [&entry_id],
@@ -369,6 +384,7 @@ pub fn import_entries(
 
         entry.id = Some(entry_id.clone());
 
+        // Perform disk I/O outside transaction
         let mut final_image_url = entry.image_url.clone();
         if let Some(base64) = entry.image_base64.as_ref() {
             if let Ok(url) = write_embedded_image(archive_dir, &entry_id, base64) {
@@ -378,24 +394,41 @@ pub fn import_entries(
 
         let keywords_json = serde_json::to_string(&entry.keywords).unwrap_or_else(|_| "[]".to_string());
 
+        prepared.push(PreparedEntry {
+            id: entry_id,
+            title: entry.title,
+            figure: entry.figure,
+            moment: entry.moment,
+            narrative: entry.narrative,
+            keywords_json,
+            image_url: final_image_url,
+            date_created: entry.date_created,
+            date_modified: entry.date_modified,
+        });
+    }
+
+    // Phase 2: Fast transaction — only DB INSERTs, no disk I/O
+    let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
+
+    for entry in prepared {
         match tx.execute(
             "INSERT INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
-                entry_id,
+                entry.id,
                 entry.title,
                 entry.figure,
                 entry.moment,
                 entry.narrative,
-                final_image_url,
-                keywords_json,
+                entry.image_url,
+                entry.keywords_json,
                 entry.date_created,
                 entry.date_modified
             ],
         ) {
             Ok(_) => {}
             Err(e) => {
-                eprintln!("Failed to insert entry {}: {}", entry_id, e);
+                eprintln!("Failed to insert entry {}: {}", entry.id, e);
             }
         }
     }
