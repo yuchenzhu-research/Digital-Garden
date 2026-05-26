@@ -1,6 +1,7 @@
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 mod commands;
 mod db;
+pub mod service;
 
 use commands::{
     delete_entry, get_all_entries, get_entry, get_storage_path, import_entries,
