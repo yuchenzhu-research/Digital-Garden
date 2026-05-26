@@ -13,9 +13,15 @@ interface SmoothScrollWrapperProps {
 export function SmoothScrollWrapper({ children }: SmoothScrollWrapperProps) {
   useEffect(() => {
     const lenisInstance = new Lenis({
-      lerp: 0.1,
-      duration: 1.5,
+      lerp: 0.08,
+      duration: 1.2,
+      easing: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
       smoothWheel: true,
+      syncTouch: true,
+      syncTouchLerp: 0.08,
+      touchInertiaExponent: 3,
+      wheelMultiplier: 0.95,
+      touchMultiplier: 1.2,
     });
     let animationFrameId = 0;
 
