@@ -1,18 +1,21 @@
-//! Tauri Commands for File System Operations
+//! Tauri Commands for SQLite File System Operations
 //!
-//! Provides commands for saving, loading, and managing entries in the native app.
+//! Provides commands for saving, loading, and managing entries in the SQLite database.
 
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
+use rusqlite::{params, Connection};
+use crate::db::get_db_path;
 
 // ============================================================================
 // Types
 // ============================================================================
 
-/// In-memory storage for entries (until we implement proper DB)
+/// In-memory state kept for compatibility, no longer primary source of truth.
+#[allow(dead_code)]
 pub struct AppState {
     pub entries: Mutex<Vec<EntryPayload>>,
 }
@@ -49,94 +52,23 @@ pub struct ImageResult {
 }
 
 // ============================================================================
-// Initialization
-// ============================================================================
-
-/// Initialize the app state with existing entries from disk
-fn initialize_entries(_state: &State<AppState>) -> Vec<EntryPayload> {
-    let archive_dir = get_archive_dir();
-    let mut entries = Vec::new();
-
-    if let Ok(read_dir) = fs::read_dir(&archive_dir) {
-        for entry in read_dir.flatten() {
-            if entry
-                .path()
-                .extension()
-                .map(|e| e == "json")
-                .unwrap_or(false)
-            {
-                if let Ok(content) = fs::read_to_string(entry.path()) {
-                    if let Ok(entry_data) = serde_json::from_str::<serde_json::Value>(&content) {
-                        let payload = EntryPayload {
-                            id: entry_data["id"].as_str().map(|s| s.to_string()),
-                            title: entry_data["title"].as_str().unwrap_or("").to_string(),
-                            figure: entry_data["figure"].as_str().unwrap_or("").to_string(),
-                            moment: entry_data["moment"].as_str().unwrap_or("").to_string(),
-                            narrative: entry_data["narrative"].as_str().unwrap_or("").to_string(),
-                            keywords: entry_data["keywords"]
-                                .as_array()
-                                .map(|arr| {
-                                    arr.iter()
-                                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                                        .collect()
-                                })
-                                .unwrap_or_default(),
-                            image_base64: None,
-                            date_created: entry_data["date_created"]
-                                .as_str()
-                                .unwrap_or(&entry_data["created_at"].as_str().unwrap_or(""))
-                                .to_string(),
-                            date_modified: None,
-                            image_url: entry_data["image_url"].as_str().map(|s| s.to_string()),
-                        };
-                        entries.push(payload);
-                    }
-                }
-            }
-        }
-    }
-
-    entries
-}
-
-// ============================================================================
 // Path Helpers
 // ============================================================================
 
-fn get_archive_dir() -> PathBuf {
-    dirs::document_dir()
-        .unwrap_or_else(|| {
-            let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-            PathBuf::from(home).join("Documents")
-        })
-        .join("DigitalGarden")
-        .join("Archive")
-}
-
-fn sanitize_filename(title: &str) -> String {
-    title
-        .chars()
-        .take(30)
-        .map(|c| {
-            if c.is_alphanumeric() || c == '-' || c == '_' {
-                c
-            } else {
-                '_'
-            }
-        })
-        .collect()
-}
-
-fn build_entry_file_path(archive_dir: &PathBuf, title: &str, id: &str) -> PathBuf {
-    let short_id: String = id.chars().take(8).collect();
-    archive_dir.join(format!("{}_{}.json", sanitize_filename(title), short_id))
-}
-
-fn write_entry_to_disk(file_path: &PathBuf, payload: &EntryPayload) -> Result<(), String> {
-    let json_content =
-        serde_json::to_string_pretty(payload).map_err(|e| format!("Failed to serialize: {}", e))?;
-
-    fs::write(file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))
+fn get_archive_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
+    let app_data_dir = app_handle
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+    
+    let digital_garden_dir = app_data_dir.join("DigitalGarden");
+    
+    if !digital_garden_dir.exists() {
+        fs::create_dir_all(&digital_garden_dir)
+            .map_err(|e| format!("Failed to create DigitalGarden directory: {}", e))?;
+    }
+    
+    Ok(digital_garden_dir)
 }
 
 fn image_extension_from_data(data: &str) -> &'static str {
@@ -154,10 +86,11 @@ fn image_extension_from_data(data: &str) -> &'static str {
 }
 
 fn write_embedded_image(
-    archive_dir: &PathBuf,
+    app_handle: &AppHandle,
     entry_id: &str,
     image_data: &str,
 ) -> Result<String, String> {
+    let archive_dir = get_archive_dir(app_handle)?;
     let image_dir = archive_dir.join("images");
     fs::create_dir_all(&image_dir)
         .map_err(|e| format!("Failed to create image directory: {}", e))?;
@@ -172,205 +105,276 @@ fn write_embedded_image(
     Ok(format!("images/{}", image_filename))
 }
 
-fn find_entry_file_by_id(archive_dir: &PathBuf, id: &str) -> Result<Option<PathBuf>, String> {
-    let read_dir = match fs::read_dir(archive_dir) {
-        Ok(read_dir) => read_dir,
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(err) => return Err(format!("Failed to read archive directory: {}", err)),
-    };
-
-    for entry in read_dir.flatten() {
-        let path = entry.path();
-
-        if path.extension().map(|ext| ext == "json").unwrap_or(false) {
-            let content = match fs::read_to_string(&path) {
-                Ok(content) => content,
-                Err(_) => continue,
-            };
-
-            let value = match serde_json::from_str::<serde_json::Value>(&content) {
-                Ok(value) => value,
-                Err(_) => continue,
-            };
-
-            if value["id"].as_str() == Some(id) {
-                return Ok(Some(path));
-            }
-        }
-    }
-
-    Ok(None)
-}
-
 // ============================================================================
 // Commands
 // ============================================================================
 
-/// Initialize the app state
+/// Initialize the app state. In SQLite mode, we run migrations at startup and keep this
+/// dummy call for backwards compatibility with the lifecycle hooks.
 #[tauri::command]
-pub fn init_app_state(state: State<AppState>) -> Result<(), String> {
-    let entries = initialize_entries(&state);
-    *state.entries.lock().map_err(|e| e.to_string())? = entries;
+pub fn init_app_state(_state: State<AppState>, _app_handle: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Get all entries
+/// Get all entries from SQLite database
 #[tauri::command]
-pub fn get_all_entries(state: State<AppState>) -> Result<Vec<EntryPayload>, String> {
-    let entries = state.entries.lock().map_err(|e| e.to_string())?;
-    Ok(entries.clone())
+pub fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, String> {
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
+
+    let mut stmt = conn
+        .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries")
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let entry_iter = stmt
+        .query_map((), |row| {
+            let keywords_str: String = row.get(6)?;
+            let keywords: Vec<String> = serde_json::from_str(&keywords_str).unwrap_or_default();
+            Ok(EntryPayload {
+                id: Some(row.get(0)?),
+                title: row.get(1)?,
+                figure: row.get(2)?,
+                moment: row.get(3)?,
+                narrative: row.get(4)?,
+                image_url: row.get(5)?,
+                keywords,
+                image_base64: None,
+                date_created: row.get(7)?,
+                date_modified: row.get(8)?,
+            })
+        })
+        .map_err(|e| format!("Failed to query database: {}", e))?;
+
+    let mut entries = Vec::new();
+    for entry in entry_iter {
+        if let Ok(item) = entry {
+            entries.push(item);
+        }
+    }
+
+    Ok(entries)
 }
 
-/// Get a single entry by ID
+/// Get a single entry by ID from SQLite database
 #[tauri::command]
-pub fn get_entry(id: String, state: State<AppState>) -> Result<Option<EntryPayload>, String> {
-    let entries = state.entries.lock().map_err(|e| e.to_string())?;
-    Ok(entries.iter().find(|e| e.id.as_ref() == Some(&id)).cloned())
+pub fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<EntryPayload>, String> {
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
+
+    let mut stmt = conn
+        .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries WHERE id = ?1")
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let mut rows = stmt
+        .query_map([&id], |row| {
+            let keywords_str: String = row.get(6)?;
+            let keywords: Vec<String> = serde_json::from_str(&keywords_str).unwrap_or_default();
+            Ok(EntryPayload {
+                id: Some(row.get(0)?),
+                title: row.get(1)?,
+                figure: row.get(2)?,
+                moment: row.get(3)?,
+                narrative: row.get(4)?,
+                image_url: row.get(5)?,
+                keywords,
+                image_base64: None,
+                date_created: row.get(7)?,
+                date_modified: row.get(8)?,
+            })
+        })
+        .map_err(|e| format!("Failed to query database: {}", e))?;
+
+    if let Some(Ok(entry)) = rows.next() {
+        Ok(Some(entry))
+    } else {
+        Ok(None)
+    }
 }
 
-/// Save a new entry
+/// Save a new entry to SQLite database
 #[tauri::command]
 pub async fn save_entry(
     payload: EntryPayload,
-    state: State<'_, AppState>,
+    app_handle: AppHandle,
 ) -> Result<SaveResult, String> {
-    let archive_dir = get_archive_dir();
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
 
-    // Create directory
-    fs::create_dir_all(&archive_dir)
-        .map_err(|e| format!("Failed to create archive directory: {}", e))?;
-
-    // Generate ID and path
     let id = payload
         .id
         .clone()
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-    let file_path = build_entry_file_path(&archive_dir, &payload.title, &id);
+    let mut final_image_url = payload.image_url.clone();
 
-    // Create saved entry with ID
-    let mut saved_payload = payload.clone();
-    saved_payload.id = Some(id.clone());
-    saved_payload.date_modified = Some(chrono::Utc::now().to_rfc3339());
-
-    // Save image from base64 if present (Legacy fallback)
+    // Process embedded base64 image if present
     if let Some(base64) = &payload.image_base64 {
-        saved_payload.image_url = Some(write_embedded_image(&archive_dir, &id, base64)?);
+        match write_embedded_image(&app_handle, &id, base64) {
+            Ok(url) => final_image_url = Some(url),
+            Err(e) => {
+                return Ok(SaveResult {
+                    success: false,
+                    entry_id: None,
+                    file_path: None,
+                    error: Some(format!("Failed to save image: {}", e)),
+                });
+            }
+        }
     }
 
-    // Strip out base64 before serializing so it doesn't bloat the JSON file!
-    saved_payload.image_base64 = None;
+    let keywords_json = serde_json::to_string(&payload.keywords).unwrap_or_else(|_| "[]".to_string());
+    let date_created = if payload.date_created.is_empty() {
+        chrono::Utc::now().to_rfc3339()
+    } else {
+        payload.date_created.clone()
+    };
+    let date_modified = chrono::Utc::now().to_rfc3339();
 
-    // Serialize
-    // Write to file
-    write_entry_to_disk(&file_path, &saved_payload)?;
-
-    // Update in-memory state
-    {
-        let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
-        entries.push(saved_payload.clone());
+    match conn.execute(
+        "INSERT INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        params![
+            id,
+            payload.title,
+            payload.figure,
+            payload.moment,
+            payload.narrative,
+            final_image_url,
+            keywords_json,
+            date_created,
+            date_modified
+        ],
+    ) {
+        Ok(_) => Ok(SaveResult {
+            success: true,
+            entry_id: Some(id),
+            file_path: Some(db_path.to_string_lossy().to_string()),
+            error: None,
+        }),
+        Err(e) => Ok(SaveResult {
+            success: false,
+            entry_id: None,
+            file_path: None,
+            error: Some(format!("Database insert failed: {}", e)),
+        }),
     }
-
-    Ok(SaveResult {
-        success: true,
-        entry_id: Some(id),
-        file_path: Some(file_path.to_string_lossy().to_string()),
-        error: None,
-    })
 }
 
-/// Update an existing entry
+/// Update an existing entry in SQLite database
 #[tauri::command]
 pub async fn update_entry(
     id: String,
     payload: serde_json::Value,
-    state: State<'_, AppState>,
+    app_handle: AppHandle,
 ) -> Result<SaveResult, String> {
-    let updated_entry = {
-        let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
 
-        if let Some(index) = entries.iter().position(|e| e.id.as_ref() == Some(&id)) {
-            if let Some(title) = payload.get("title").and_then(|v| v.as_str()) {
-                entries[index].title = title.to_string();
-            }
-            if let Some(figure) = payload.get("figure").and_then(|v| v.as_str()) {
-                entries[index].figure = figure.to_string();
-            }
-            if let Some(moment) = payload.get("moment").and_then(|v| v.as_str()) {
-                entries[index].moment = moment.to_string();
-            }
-            if let Some(narrative) = payload.get("narrative").and_then(|v| v.as_str()) {
-                entries[index].narrative = narrative.to_string();
-            }
-            if let Some(keywords) = payload.get("keywords").and_then(|v| v.as_array()) {
-                entries[index].keywords = keywords
-                    .iter()
-                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
-                    .collect();
-            }
-            if let Some(image_url) = payload.get("imageUrl").or_else(|| payload.get("image_url")) {
-                entries[index].image_url = image_url.as_str().map(|value| value.to_string());
-            }
-
-            entries[index].date_modified = Some(chrono::Utc::now().to_rfc3339());
-            entries[index].clone()
-        } else {
-            return Ok(SaveResult {
-                success: false,
-                entry_id: None,
-                file_path: None,
-                error: Some("Entry not found".to_string()),
-            });
-        }
-    };
-
-    let archive_dir = get_archive_dir();
-    let Some(file_path) = find_entry_file_by_id(&archive_dir, &id)? else {
+    // Verify entry exists
+    let existing: Option<EntryPayload> = get_entry(id.clone(), app_handle.clone())?;
+    let Some(current) = existing else {
         return Ok(SaveResult {
             success: false,
             entry_id: None,
             file_path: None,
-            error: Some("Entry file not found".to_string()),
+            error: Some("Entry not found".to_string()),
         });
     };
 
-    let json_content = serde_json::to_string_pretty(&updated_entry)
-        .map_err(|e| format!("Failed to serialize: {}", e))?;
+    let title = payload
+        .get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&current.title)
+        .to_string();
 
-    fs::write(&file_path, json_content).map_err(|e| format!("Failed to write file: {}", e))?;
+    let figure = payload
+        .get("figure")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&current.figure)
+        .to_string();
 
-    Ok(SaveResult {
-        success: true,
-        entry_id: Some(id.clone()),
-        file_path: Some(file_path.to_string_lossy().to_string()),
-        error: None,
-    })
+    let moment = payload
+        .get("moment")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&current.moment)
+        .to_string();
+
+    let narrative = payload
+        .get("narrative")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&current.narrative)
+        .to_string();
+
+    let keywords_json = if let Some(keywords_val) = payload.get("keywords") {
+        serde_json::to_string(keywords_val).unwrap_or_else(|_| "[]".to_string())
+    } else {
+        serde_json::to_string(&current.keywords).unwrap_or_else(|_| "[]".to_string())
+    };
+
+    let image_url = if let Some(url_val) = payload.get("imageUrl").or_else(|| payload.get("image_url")) {
+        url_val.as_str().map(|s| s.to_string())
+    } else {
+        current.image_url
+    };
+
+    let date_modified = chrono::Utc::now().to_rfc3339();
+
+    match conn.execute(
+        "UPDATE entries SET title = ?1, figure = ?2, moment = ?3, narrative = ?4, keywords = ?5, image_url = ?6, date_modified = ?7 WHERE id = ?8",
+        params![
+            title,
+            figure,
+            moment,
+            narrative,
+            keywords_json,
+            image_url,
+            date_modified,
+            id
+        ],
+    ) {
+        Ok(_) => Ok(SaveResult {
+            success: true,
+            entry_id: Some(id),
+            file_path: Some(db_path.to_string_lossy().to_string()),
+            error: None,
+        }),
+        Err(e) => Ok(SaveResult {
+            success: false,
+            entry_id: None,
+            file_path: None,
+            error: Some(format!("Database update failed: {}", e)),
+        }),
+    }
 }
 
-/// Delete an entry
+/// Delete an entry and its associated local image assets from disk
 #[tauri::command]
-pub async fn delete_entry(id: String, state: State<'_, AppState>) -> Result<(), String> {
-    let mut entries = state.entries.lock().map_err(|e| e.to_string())?;
+pub async fn delete_entry(id: String, app_handle: AppHandle) -> Result<(), String> {
+    let db_path = get_db_path(&app_handle)?;
+    
+    // 1. Fetch image URL before deleting database record
+    let entry_data = get_entry(id.clone(), app_handle.clone())?;
+    
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
 
-    if let Some(index) = entries.iter().position(|e| e.id.as_ref() == Some(&id)) {
-        let removed_entry = entries.remove(index);
+    // 2. Delete from database
+    conn.execute("DELETE FROM entries WHERE id = ?1", [&id])
+        .map_err(|e| format!("Failed to delete entry: {}", e))?;
 
-        let archive_dir = get_archive_dir();
-        if let Some(file_path) = find_entry_file_by_id(&archive_dir, &id)? {
-            fs::remove_file(&file_path).map_err(|e| format!("Failed to delete file: {}", e))?;
-        }
-
-        if let Some(image_url) = removed_entry.image_url.as_ref() {
-            if let Some(image_name) = std::path::Path::new(image_url).file_name() {
+    // 3. Delete physical image asset from disk
+    if let Some(current) = entry_data {
+        if let Some(image_url) = current.image_url {
+            let archive_dir = get_archive_dir(&app_handle)?;
+            if let Some(image_name) = std::path::Path::new(&image_url).file_name() {
                 let image_path = archive_dir.join("images").join(image_name);
                 if image_path.exists() {
                     let _ = fs::remove_file(&image_path);
                 }
-            }
-        } else {
-            let image_path = archive_dir.join("images").join(format!("{}.png", id));
-            if image_path.exists() {
-                let _ = fs::remove_file(&image_path);
             }
         }
     }
@@ -383,9 +387,9 @@ pub async fn delete_entry(id: String, state: State<'_, AppState>) -> Result<(), 
 pub async fn save_image(
     data: String,
     filename: String,
-    _state: State<'_, AppState>,
+    app_handle: AppHandle,
 ) -> Result<ImageResult, String> {
-    let archive_dir = get_archive_dir();
+    let archive_dir = get_archive_dir(&app_handle)?;
     let image_dir = archive_dir.join("images");
 
     fs::create_dir_all(&image_dir)
@@ -414,9 +418,9 @@ pub async fn save_image(
 pub async fn save_image_from_bytes(
     bytes: Vec<u8>,
     filename: String,
-    _state: State<'_, AppState>,
+    app_handle: AppHandle,
 ) -> Result<ImageResult, String> {
-    let archive_dir = get_archive_dir();
+    let archive_dir = get_archive_dir(&app_handle)?;
     let image_dir = archive_dir.join("images");
 
     fs::create_dir_all(&image_dir)
@@ -440,21 +444,19 @@ pub async fn save_image_from_bytes(
 
 /// Get the storage path
 #[tauri::command]
-pub fn get_storage_path() -> Result<String, String> {
-    Ok(get_archive_dir().to_string_lossy().to_string())
+pub fn get_storage_path(app_handle: AppHandle) -> Result<String, String> {
+    Ok(get_archive_dir(&app_handle)?.to_string_lossy().to_string())
 }
 
-/// Import entries from JSON
+/// Import entries from JSON and write images to disk
 #[tauri::command]
-pub async fn import_entries(json: String, state: State<'_, AppState>) -> Result<(), String> {
+pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), String> {
     let entries: Vec<EntryPayload> =
         serde_json::from_str(&json).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
-    let archive_dir = get_archive_dir();
-    fs::create_dir_all(&archive_dir)
-        .map_err(|e| format!("Failed to create archive directory: {}", e))?;
-
-    let mut state_entries = state.entries.lock().map_err(|e| e.to_string())?;
+    let db_path = get_db_path(&app_handle)?;
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
 
     for mut entry in entries {
         let entry_id = entry
@@ -462,22 +464,39 @@ pub async fn import_entries(json: String, state: State<'_, AppState>) -> Result<
             .clone()
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
-        // Skip if ID already exists
-        if state_entries
-            .iter()
-            .any(|existing| existing.id.as_deref() == Some(entry_id.as_str()))
-        {
+        // Check if exists
+        let mut check_stmt = conn.prepare("SELECT 1 FROM entries WHERE id = ?1").unwrap();
+        let exists = check_stmt.exists([&entry_id]).unwrap_or(false);
+        if exists {
             continue;
         }
 
         entry.id = Some(entry_id.clone());
+
+        let mut final_image_url = entry.image_url.clone();
         if let Some(base64) = entry.image_base64.as_ref() {
-            entry.image_url = Some(write_embedded_image(&archive_dir, &entry_id, base64)?);
-            entry.image_base64 = None;
+            if let Ok(url) = write_embedded_image(&app_handle, &entry_id, base64) {
+                final_image_url = Some(url);
+            }
         }
-        let file_path = build_entry_file_path(&archive_dir, &entry.title, &entry_id);
-        write_entry_to_disk(&file_path, &entry)?;
-        state_entries.push(entry);
+
+        let keywords_json = serde_json::to_string(&entry.keywords).unwrap_or_else(|_| "[]".to_string());
+        
+        let _ = conn.execute(
+            "INSERT INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![
+                entry_id,
+                entry.title,
+                entry.figure,
+                entry.moment,
+                entry.narrative,
+                final_image_url,
+                keywords_json,
+                entry.date_created,
+                entry.date_modified
+            ],
+        );
     }
 
     Ok(())
