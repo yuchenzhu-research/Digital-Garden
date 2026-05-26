@@ -301,7 +301,7 @@ const resetRepositoryRuntime = () => {
 if (typeof window !== 'undefined' && !isTauri()) {
   sharedWebFS.initialize(true).then((ready) => {
     if (ready) {
-      console.log('WebFSStorage automatically re-connected via IndexedDB.');
+      console.info('WebFSStorage automatically re-connected via IndexedDB.');
       resetRepositoryRuntime();
     }
   });

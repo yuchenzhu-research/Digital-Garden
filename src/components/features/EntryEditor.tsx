@@ -134,7 +134,7 @@ export function EntryEditor({
         };
 
         try {
-            console.log(`${isEditMode ? 'Updating' : 'Saving'} entry with service...`);
+            console.info(`${isEditMode ? 'Updating' : 'Saving'} entry with service...`);
             const result = isEditMode && initialEntry?.id
                 ? await entryService.updateEntry(initialEntry.id, entryData)
                 : await entryService.saveEntry(entryData);
@@ -145,10 +145,10 @@ export function EntryEditor({
                 return;
             }
 
-            console.log('Save result:', result);
+            console.info('Save result:', result);
 
             if (result.success) {
-                console.log(`Entry ${isEditMode ? 'updated' : 'saved'} successfully:`, result.savedPath);
+                console.info(`Entry ${isEditMode ? 'updated' : 'saved'} successfully:`, result.savedPath);
                 showToast(isEditMode ? 'Moment Updated in Archive' : 'Moment Preserved in Archive');
 
                 if (!isEditMode) {
