@@ -33,3 +33,4 @@ uuid = { version = "1", features = ["v4", "serde"] }
 base64 = "0.22"
 window-vibrancy = "0.7.1"
 tauri-plugin-global-shortcut = "2.3.1"
+rusqlite = { version = "0.31.0", features = ["bundled"] }
