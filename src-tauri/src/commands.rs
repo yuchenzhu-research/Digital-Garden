@@ -36,14 +36,14 @@ fn get_archive_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
 
 /// Get all entries from SQLite database
 #[tauri::command]
-pub fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, String> {
+pub async fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, String> {
     let conn = open_connection(&app_handle)?;
     crate::service::get_all_entries(&conn)
 }
 
 /// Get a single entry by ID from SQLite database
 #[tauri::command]
-pub fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<EntryPayload>, String> {
+pub async fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<EntryPayload>, String> {
     let conn = open_connection(&app_handle)?;
     crate::service::get_entry(&conn, &id)
 }
