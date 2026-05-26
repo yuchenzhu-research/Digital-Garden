@@ -116,7 +116,6 @@ export default function Home() {
           entries={userEntries}
           hasLocalMobileDraft={hasLocalMobileDraft}
           isMobileMode={isMobileMode}
-          onDataChanged={refreshUserEntries}
           onEntrySelect={(id) => setSelectedDocId(id)}
         />
 
@@ -138,7 +137,6 @@ export default function Home() {
 
         <HomeFooter 
           userEntryCount={userEntries.length} 
-          onDataChanged={refreshUserEntries}
         />
       </SmoothScrollWrapper>
 

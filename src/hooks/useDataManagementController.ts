@@ -7,6 +7,8 @@ import {
   getStorageModeInfo,
   getUserEntryCount,
   importFromFile,
+  getEntries,
+  deleteEntry,
 } from '@/services/entryService';
 
 type ImportStatus = 'idle' | 'success' | 'error';
@@ -20,6 +22,7 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isWiping, setIsWiping] = useState(false);
   const [importStatus, setImportStatus] = useState<ImportStatus>('idle');
   const [importMessage, setImportMessage] = useState('');
   const [entryCount, setEntryCount] = useState(0);
@@ -140,6 +143,46 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
     }
   }, [clearStatusTimeout, refreshAfterMutation, scheduleStatusReset]);
 
+  const handleWipeData = useCallback(async () => {
+    const confirmed = window.confirm("Are you sure you want to permanently clear all archive entries? This action cannot be undone.");
+    if (!confirmed) return false;
+
+    setIsWiping(true);
+    setImportStatus('idle');
+    setImportMessage('');
+    clearStatusTimeout();
+
+    try {
+      const entries = await getEntries();
+      if (entries.length === 0) {
+        setImportStatus('success');
+        setImportMessage('Archive is already empty');
+        scheduleStatusReset(3000);
+        return true;
+      }
+
+      await Promise.all(entries.map(async (entry) => {
+        if (entry.id) {
+          await deleteEntry(entry.id);
+        }
+      }));
+
+      setImportStatus('success');
+      setImportMessage(`Cleared all ${entries.length} entries`);
+      await refreshAfterMutation();
+      scheduleStatusReset(3000);
+      return true;
+    } catch (error) {
+      console.error('Failed to wipe data:', error);
+      setImportStatus('error');
+      setImportMessage('Failed to clear data');
+      scheduleStatusReset(3000);
+      return false;
+    } finally {
+      setIsWiping(false);
+    }
+  }, [clearStatusTimeout, refreshAfterMutation, scheduleStatusReset]);
+
   return {
     entryCount,
     fileInputRef,
@@ -150,6 +193,8 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
     importStatus,
     isExporting,
     isImporting,
+    isWiping,
+    handleWipeData,
     isOpen,
     setIsOpen,
     storageLocation,

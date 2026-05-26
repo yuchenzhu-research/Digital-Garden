@@ -1,14 +1,12 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { DataManagement } from '@/components/ui/DataManagement';
 import type { Entry } from '@/services/storage-repository';
 
 interface PersonalCollectionSectionProps {
   entries: Entry[];
   hasLocalMobileDraft: boolean;
   isMobileMode: boolean;
-  onDataChanged: () => Promise<void>;
   onEntrySelect: (documentId: string) => void;
 }
 
@@ -16,7 +14,6 @@ export function PersonalCollectionSection({
   entries,
   hasLocalMobileDraft,
   isMobileMode,
-  onDataChanged,
   onEntrySelect,
 }: PersonalCollectionSectionProps) {
   return (
@@ -34,7 +31,6 @@ export function PersonalCollectionSection({
               A quieter shelf for your own accessions, drafts, and archived moments.
             </p>
           </div>
-          {!isMobileMode && <DataManagement onDataChanged={onDataChanged} />}
         </div>
       </div>
 

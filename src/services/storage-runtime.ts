@@ -292,12 +292,10 @@ class RuntimeStorageRepository implements StorageRepository {
 }
 
 let repositoryInstance: StorageRepository | null = null;
-let currentStorageMode: StorageMode | null = null;
 
 const resetRepositoryRuntime = () => {
   // Reset runtime parameters, but since repositoryInstance is RuntimeStorageRepository,
   // we do not set it to null. Instead, getActiveRepository will automatically query new modes.
-  currentStorageMode = null;
 };
 
 if (typeof window !== 'undefined' && !isTauri()) {
@@ -343,9 +341,9 @@ export const getAdapterInfo = (): AdapterMetadata => {
 
   const repository = getRepository();
   // Call it on active repository or fallback
-  const activeRepo = (repository as any).getActiveRepository?.() || repository;
-  if ('getMetadata' in activeRepo) {
-    return activeRepo.getMetadata();
+  const activeRepo = (repository as unknown as { getActiveRepository?: () => StorageRepository }).getActiveRepository?.() || repository;
+  if (activeRepo && 'getMetadata' in activeRepo) {
+    return (activeRepo as unknown as { getMetadata: () => AdapterMetadata }).getMetadata();
   }
 
   return {
