@@ -3,26 +3,18 @@ mod commands;
 mod db;
 
 use commands::{
-    delete_entry, get_all_entries, get_entry, get_storage_path, import_entries, init_app_state,
-    save_entry, save_image, save_image_from_bytes, update_entry, AppState,
+    delete_entry, get_all_entries, get_entry, get_storage_path, import_entries,
+    save_entry, save_image, save_image_from_bytes, update_entry,
 };
 use db::initialize_database;
 use tauri::Manager;
 
 pub fn run() {
     tauri::Builder::default()
-        .manage(AppState {
-            entries: std::sync::Mutex::new(Vec::new()),
-        })
         .setup(|app| {
             // Run SQLite database migrations on startup
             if let Err(e) = db::run_migrations(app.handle()) {
                 eprintln!("Failed to run database migrations: {}", e);
-            }
-
-            // Initialize app state with existing entries (synchronous to avoid race)
-            if let Err(e) = init_app_state(app.state::<AppState>(), app.handle().clone()) {
-                eprintln!("Failed to initialize app state: {}", e);
             }
 
             if cfg!(debug_assertions) {

@@ -5,20 +5,13 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use std::sync::Mutex;
-use tauri::{AppHandle, Manager, State};
-use rusqlite::{params, Connection};
-use crate::db::get_db_path;
+use tauri::{AppHandle, Manager};
+use rusqlite::params;
+use crate::db::{get_db_path, open_connection};
 
 // ============================================================================
 // Types
 // ============================================================================
-
-/// In-memory state kept for compatibility, no longer primary source of truth.
-#[allow(dead_code)]
-pub struct AppState {
-    pub entries: Mutex<Vec<EntryPayload>>,
-}
 
 /// Main entry payload matching the frontend Entry interface
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -52,8 +45,9 @@ pub struct ImageResult {
 }
 
 // ============================================================================
-// Path Helpers
+// Helpers
 // ============================================================================
+
 
 fn get_archive_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
     let app_data_dir = app_handle
@@ -85,6 +79,20 @@ fn image_extension_from_data(data: &str) -> &'static str {
     }
 }
 
+fn validate_image_extension(filename: &str) -> Result<String, String> {
+    let ext = std::path::Path::new(filename)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|s| s.to_lowercase())
+        .ok_or_else(|| "Missing file extension".to_string())?;
+    
+    let allowed = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
+    if !allowed.contains(&ext.as_str()) {
+        return Err(format!("Forbidden file extension: .{}", ext));
+    }
+    Ok(ext)
+}
+
 fn write_embedded_image(
     app_handle: &AppHandle,
     entry_id: &str,
@@ -109,19 +117,11 @@ fn write_embedded_image(
 // Commands
 // ============================================================================
 
-/// Initialize the app state. In SQLite mode, we run migrations at startup and keep this
-/// dummy call for backwards compatibility with the lifecycle hooks.
-#[tauri::command]
-pub fn init_app_state(_state: State<AppState>, _app_handle: AppHandle) -> Result<(), String> {
-    Ok(())
-}
 
 /// Get all entries from SQLite database
 #[tauri::command]
 pub fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, String> {
-    let db_path = get_db_path(&app_handle)?;
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn = open_connection(&app_handle)?;
 
     let mut stmt = conn
         .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries")
@@ -159,9 +159,7 @@ pub fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, Strin
 /// Get a single entry by ID from SQLite database
 #[tauri::command]
 pub fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<EntryPayload>, String> {
-    let db_path = get_db_path(&app_handle)?;
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn = open_connection(&app_handle)?;
 
     let mut stmt = conn
         .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries WHERE id = ?1")
@@ -199,9 +197,8 @@ pub async fn save_entry(
     payload: EntryPayload,
     app_handle: AppHandle,
 ) -> Result<SaveResult, String> {
+    let conn = open_connection(&app_handle)?;
     let db_path = get_db_path(&app_handle)?;
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
 
     let id = payload
         .id
@@ -270,9 +267,8 @@ pub async fn update_entry(
     payload: serde_json::Value,
     app_handle: AppHandle,
 ) -> Result<SaveResult, String> {
+    let conn = open_connection(&app_handle)?;
     let db_path = get_db_path(&app_handle)?;
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
 
     // Verify entry exists
     let existing: Option<EntryPayload> = get_entry(id.clone(), app_handle.clone())?;
@@ -354,13 +350,10 @@ pub async fn update_entry(
 /// Delete an entry and its associated local image assets from disk
 #[tauri::command]
 pub async fn delete_entry(id: String, app_handle: AppHandle) -> Result<(), String> {
-    let db_path = get_db_path(&app_handle)?;
-    
     // 1. Fetch image URL before deleting database record
     let entry_data = get_entry(id.clone(), app_handle.clone())?;
     
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn = open_connection(&app_handle)?;
 
     // 2. Delete from database
     conn.execute("DELETE FROM entries WHERE id = ?1", [&id])
@@ -382,7 +375,7 @@ pub async fn delete_entry(id: String, app_handle: AppHandle) -> Result<(), Strin
     Ok(())
 }
 
-/// Save an image file
+/// Save an image file with extension white-list validation
 #[tauri::command]
 pub async fn save_image(
     data: String,
@@ -395,10 +388,8 @@ pub async fn save_image(
     fs::create_dir_all(&image_dir)
         .map_err(|e| format!("Failed to create image directory: {}", e))?;
 
-    let ext = std::path::Path::new(&filename)
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("png");
+    // Security validation of file extension
+    let ext = validate_image_extension(&filename)?;
     let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let image_path = image_dir.join(&safe_filename);
 
@@ -413,7 +404,7 @@ pub async fn save_image(
     })
 }
 
-/// Save an image file from raw bytes (More efficient)
+/// Save an image file from raw bytes with extension white-list validation
 #[tauri::command]
 pub async fn save_image_from_bytes(
     bytes: Vec<u8>,
@@ -426,10 +417,8 @@ pub async fn save_image_from_bytes(
     fs::create_dir_all(&image_dir)
         .map_err(|e| format!("Failed to create image directory: {}", e))?;
 
-    let ext = std::path::Path::new(&filename)
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("png");
+    // Security validation of file extension
+    let ext = validate_image_extension(&filename)?;
     let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let image_path = image_dir.join(&safe_filename);
 
@@ -448,15 +437,14 @@ pub fn get_storage_path(app_handle: AppHandle) -> Result<String, String> {
     Ok(get_archive_dir(&app_handle)?.to_string_lossy().to_string())
 }
 
-/// Import entries from JSON and write images to disk
+/// Import entries from JSON wrapped inside a single SQLite transaction
 #[tauri::command]
 pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), String> {
     let entries: Vec<EntryPayload> =
         serde_json::from_str(&json).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
-    let db_path = get_db_path(&app_handle)?;
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let mut conn = open_connection(&app_handle)?;
+    let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
 
     for mut entry in entries {
         let entry_id = entry
@@ -465,8 +453,14 @@ pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), S
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
 
         // Check if exists
-        let mut check_stmt = conn.prepare("SELECT 1 FROM entries WHERE id = ?1").unwrap();
-        let exists = check_stmt.exists([&entry_id]).unwrap_or(false);
+        let exists: bool = tx
+            .query_row(
+                "SELECT 1 FROM entries WHERE id = ?1",
+                [&entry_id],
+                |_| Ok(true),
+            )
+            .unwrap_or(false);
+
         if exists {
             continue;
         }
@@ -482,7 +476,7 @@ pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), S
 
         let keywords_json = serde_json::to_string(&entry.keywords).unwrap_or_else(|_| "[]".to_string());
         
-        let _ = conn.execute(
+        match tx.execute(
             "INSERT INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
@@ -496,9 +490,15 @@ pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), S
                 entry.date_created,
                 entry.date_modified
             ],
-        );
+        ) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Failed to insert entry {}: {}", entry_id, e);
+            }
+        }
     }
 
+    tx.commit().map_err(|e| format!("Failed to commit import transaction: {}", e))?;
     Ok(())
 }
 
@@ -514,4 +514,24 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, String> {
     let s = s.trim_start_matches("data:image/svg+xml;base64,");
 
     base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_validate_image_extension() {
+        assert_eq!(validate_image_extension("test.png").unwrap(), "png");
+        assert_eq!(validate_image_extension("test.PNG").unwrap(), "png");
+        assert_eq!(validate_image_extension("test.jpeg").unwrap(), "jpeg");
+        assert_eq!(validate_image_extension("test.jpg").unwrap(), "jpg");
+        assert_eq!(validate_image_extension("test.gif").unwrap(), "gif");
+        assert_eq!(validate_image_extension("test.webp").unwrap(), "webp");
+        assert_eq!(validate_image_extension("test.svg").unwrap(), "svg");
+
+        assert!(validate_image_extension("test.txt").is_err());
+        assert!(validate_image_extension("test").is_err());
+        assert!(validate_image_extension("test.").is_err());
+    }
 }

@@ -20,11 +20,19 @@ pub fn get_db_path(app_handle: &AppHandle) -> Result<PathBuf, String> {
     Ok(digital_garden_dir.join("archive.db"))
 }
 
+/// Open a connection to the SQLite database and set busy_timeout to 5000ms.
+pub fn open_connection(app_handle: &AppHandle) -> Result<Connection, String> {
+    let db_path = get_db_path(app_handle)?;
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open SQLite database at {:?}: {}", db_path, e))?;
+    conn.execute("PRAGMA busy_timeout = 5000", ())
+        .map_err(|e| format!("Failed to set busy timeout: {}", e))?;
+    Ok(conn)
+}
+
 /// Run SQLite database migrations.
 pub fn run_migrations(app_handle: &AppHandle) -> Result<(), String> {
-    let db_path = get_db_path(app_handle)?;
-    let mut conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open SQLite database at {:?}: {}", db_path, e))?;
+    let mut conn = open_connection(app_handle)?;
 
     // Create schema_migrations table if not exists to track version changes
     conn.execute(
