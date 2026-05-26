@@ -38,7 +38,7 @@ test('EntryEditor shell stays layered through hooks and editor sections', () => 
 
 test('settings and data UI components rely on controller hooks instead of storage orchestration', () => {
   const settingsPanel = read('src', 'components', 'features', 'SettingsPanel.tsx');
-  const dataManagement = read('src', 'components', 'ui', 'DataManagement.tsx');
+  const dataManagement = read('src', 'components', 'features', 'DataManagement.tsx');
 
   assert.match(settingsPanel, /useSettingsPanelController/);
   assert.doesNotMatch(settingsPanel, /getWebFS/);
