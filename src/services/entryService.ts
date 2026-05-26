@@ -57,24 +57,42 @@ const downloadJsonFile = (filename: string, json: string) => {
  * Save an entry
  */
 export const saveEntry = async (entry: Parameters<StorageRepository['saveEntry']>[0]) => {
-  const repo = getRepository();
-  return repo.saveEntry(entry);
+  try {
+    const repo = getRepository();
+    return await repo.saveEntry(entry);
+  } catch (error) {
+    console.error('entryService.saveEntry failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to save entry',
+    };
+  }
 };
 
 /**
  * Get all entries
  */
 export const getEntries = async (): Promise<ReturnType<StorageRepository['getEntries']>> => {
-  const repo = getRepository();
-  return repo.getEntries();
+  try {
+    const repo = getRepository();
+    return await repo.getEntries();
+  } catch (error) {
+    console.error('entryService.getEntries failed:', error);
+    return [];
+  }
 };
 
 /**
  * Get a single entry by ID
  */
 export const getEntry = async (id: string) => {
-  const repo = getRepository();
-  return repo.getEntry(id);
+  try {
+    const repo = getRepository();
+    return await repo.getEntry(id);
+  } catch (error) {
+    console.error('entryService.getEntry failed:', error);
+    return null;
+  }
 };
 
 /**
@@ -84,16 +102,28 @@ export const updateEntry = async (
   id: string,
   data: Parameters<StorageRepository['updateEntry']>[1]
 ) => {
-  const repo = getRepository();
-  return repo.updateEntry(id, data);
+  try {
+    const repo = getRepository();
+    return await repo.updateEntry(id, data);
+  } catch (error) {
+    console.error('entryService.updateEntry failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update entry',
+    };
+  }
 };
 
 /**
  * Delete an entry
  */
 export const deleteEntry = async (id: string) => {
-  const repo = getRepository();
-  return repo.deleteEntry(id);
+  try {
+    const repo = getRepository();
+    return await repo.deleteEntry(id);
+  } catch (error) {
+    console.error('entryService.deleteEntry failed:', error);
+  }
 };
 
 /**
@@ -102,32 +132,54 @@ export const deleteEntry = async (id: string) => {
 export const uploadImage = async (
   file: Parameters<StorageRepository['uploadImage']>[0]
 ) => {
-  const repo = getRepository();
-  return repo.uploadImage(file);
+  try {
+    const repo = getRepository();
+    return await repo.uploadImage(file);
+  } catch (error) {
+    console.error('entryService.uploadImage failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to upload image',
+    };
+  }
 };
 
 /**
  * Export all data
  */
 export const exportData = async (): Promise<string> => {
-  const repo = getRepository();
-  return repo.exportData();
+  try {
+    const repo = getRepository();
+    return await repo.exportData();
+  } catch (error) {
+    console.error('entryService.exportData failed:', error);
+    return '[]';
+  }
 };
 
 /**
  * Import data
  */
 export const importData = async (json: string) => {
-  const repo = getRepository();
-  return repo.importData(json);
+  try {
+    const repo = getRepository();
+    return await repo.importData(json);
+  } catch (error) {
+    console.error('entryService.importData failed:', error);
+  }
 };
 
 /**
  * Get the storage location
  */
 export const getStorageLocation = async (): Promise<string> => {
-  const repo = getRepository();
-  return repo.getStorageLocation();
+  try {
+    const repo = getRepository();
+    return await repo.getStorageLocation();
+  } catch (error) {
+    console.error('entryService.getStorageLocation failed:', error);
+    return 'localStorage';
+  }
 };
 
 export const exportToFile = async (): Promise<FileExportResult> => {
@@ -205,24 +257,37 @@ export const getUserEntryCount = async (): Promise<number> => {
  * Save a draft entry
  */
 export const saveDraft = async (draft: DraftEntry): Promise<void> => {
-  const repo = getRepository();
-  return repo.saveDraft(draft);
+  try {
+    const repo = getRepository();
+    return await repo.saveDraft(draft);
+  } catch (error) {
+    console.error('entryService.saveDraft failed:', error);
+  }
 };
 
 /**
  * Get the current draft entry
  */
 export const getDraft = async (): Promise<DraftEntry | null> => {
-  const repo = getRepository();
-  return repo.getDraft();
+  try {
+    const repo = getRepository();
+    return await repo.getDraft();
+  } catch (error) {
+    console.error('entryService.getDraft failed:', error);
+    return null;
+  }
 };
 
 /**
  * Clear the current draft entry
  */
 export const clearDraft = async (): Promise<void> => {
-  const repo = getRepository();
-  return repo.clearDraft();
+  try {
+    const repo = getRepository();
+    return await repo.clearDraft();
+  } catch (error) {
+    console.error('entryService.clearDraft failed:', error);
+  }
 };
 
 // ============================================================================
