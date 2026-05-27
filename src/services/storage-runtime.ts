@@ -60,7 +60,7 @@ const NOOP_REPOSITORY: StorageRepository = {
 
 const sharedWebFS = new WebFSStorageAdapter();
 
-class RuntimeStorageRepository implements StorageRepository {
+export class RuntimeStorageRepository implements StorageRepository {
   private nativeAdapter: NativeStorageAdapter | null = null;
   private webFSAdapter: WebFSStorageAdapter;
   private webLocalAdapter: WebStorageAdapter | null = null;
@@ -69,7 +69,7 @@ class RuntimeStorageRepository implements StorageRepository {
     this.webFSAdapter = webFS;
   }
 
-  private getActiveRepository(): StorageRepository {
+  public getActiveRepository(): StorageRepository {
     if (typeof window === 'undefined') {
       return NOOP_REPOSITORY;
     }
@@ -108,201 +108,144 @@ class RuntimeStorageRepository implements StorageRepository {
     return this.webLocalAdapter;
   }
 
-  async saveEntry(entry: Entry): Promise<SaveResult> {
+  private async wrapWithFallback<T>(
+    operationName: string,
+    operation: (repo: StorageRepository) => Promise<T>,
+    fallbackDefault: T | ((error: unknown) => T | Promise<T>)
+  ): Promise<T> {
     try {
       const repo = this.getActiveRepository();
-      return await repo.saveEntry(entry);
+      return await operation(repo);
     } catch (error) {
-      console.error('Active storage saveEntry failed, falling back:', error);
+      console.error(`Active storage ${operationName} failed, falling back:`, error);
       try {
-        return await this.getFallbackRepository().saveEntry(entry);
+        const fallbackRepo = this.getFallbackRepository();
+        return await operation(fallbackRepo);
       } catch (e) {
-        return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
+        if (typeof fallbackDefault === 'function') {
+          return await (fallbackDefault as (error: unknown) => T | Promise<T>)(e);
+        }
+        return fallbackDefault;
       }
     }
+  }
+
+  async saveEntry(entry: Entry): Promise<SaveResult> {
+    return this.wrapWithFallback(
+      'saveEntry',
+      (repo) => repo.saveEntry(entry),
+      (e) => ({ success: false, error: e instanceof Error ? e.message : 'Unknown error' })
+    );
   }
 
   async getEntry(id: string): Promise<Entry | null> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.getEntry(id);
-    } catch (error) {
-      console.error('Active storage getEntry failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().getEntry(id);
-      } catch {
-        return null;
-      }
-    }
+    return this.wrapWithFallback(
+      'getEntry',
+      (repo) => repo.getEntry(id),
+      null
+    );
   }
 
   async getEntries(): Promise<Entry[]> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.getEntries();
-    } catch (error) {
-      console.error('Active storage getEntries failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().getEntries();
-      } catch {
-        return [];
-      }
-    }
+    return this.wrapWithFallback(
+      'getEntries',
+      (repo) => repo.getEntries(),
+      []
+    );
   }
 
   async getEntrySummaries(): Promise<EntrySummary[]> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.getEntrySummaries();
-    } catch (error) {
-      console.error('Active storage getEntrySummaries failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().getEntrySummaries();
-      } catch {
-        return [];
-      }
-    }
+    return this.wrapWithFallback(
+      'getEntrySummaries',
+      (repo) => repo.getEntrySummaries(),
+      []
+    );
   }
 
   async updateEntry(id: string, data: Partial<Entry>): Promise<SaveResult> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.updateEntry(id, data);
-    } catch (error) {
-      console.error('Active storage updateEntry failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().updateEntry(id, data);
-      } catch (e) {
-        return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
-      }
-    }
+    return this.wrapWithFallback(
+      'updateEntry',
+      (repo) => repo.updateEntry(id, data),
+      (e) => ({ success: false, error: e instanceof Error ? e.message : 'Unknown error' })
+    );
   }
 
   async deleteEntry(id: string): Promise<void> {
-    try {
-      const repo = this.getActiveRepository();
-      await repo.deleteEntry(id);
-    } catch (error) {
-      console.error('Active storage deleteEntry failed, falling back:', error);
-      try {
-        await this.getFallbackRepository().deleteEntry(id);
-      } catch {
-        // Ignored
-      }
-    }
+    return this.wrapWithFallback(
+      'deleteEntry',
+      (repo) => repo.deleteEntry(id),
+      undefined
+    );
   }
 
   async uploadImage(file: File | Blob | string): Promise<ImageUploadResult> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.uploadImage(file);
-    } catch (error) {
-      console.error('Active storage uploadImage failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().uploadImage(file);
-      } catch (e) {
-        return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
-      }
-    }
+    return this.wrapWithFallback(
+      'uploadImage',
+      (repo) => repo.uploadImage(file),
+      (e) => ({ success: false, error: e instanceof Error ? e.message : 'Unknown error' })
+    );
   }
 
   async exportData(): Promise<string> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.exportData();
-    } catch (error) {
-      console.error('Active storage exportData failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().exportData();
-      } catch {
-        return '[]';
-      }
-    }
+    return this.wrapWithFallback(
+      'exportData',
+      (repo) => repo.exportData(),
+      '[]'
+    );
   }
 
   async importData(json: string): Promise<void> {
-    try {
-      const repo = this.getActiveRepository();
-      await repo.importData(json);
-    } catch (error) {
-      console.error('Active storage importData failed, falling back:', error);
-      try {
-        await this.getFallbackRepository().importData(json);
-      } catch (e) {
+    return this.wrapWithFallback(
+      'importData',
+      (repo) => repo.importData(json),
+      (e) => {
         throw e;
       }
-    }
+    );
   }
 
   async getStorageLocation(): Promise<string> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.getStorageLocation();
-    } catch (error) {
-      console.error('Active storage getStorageLocation failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().getStorageLocation();
-      } catch {
-        return 'localStorage';
-      }
-    }
+    return this.wrapWithFallback(
+      'getStorageLocation',
+      (repo) => repo.getStorageLocation(),
+      'localStorage'
+    );
   }
 
   async saveDraft(draft: DraftEntry): Promise<void> {
-    try {
-      const repo = this.getActiveRepository();
-      await repo.saveDraft(draft);
-    } catch (error) {
-      console.error('Active storage saveDraft failed, falling back:', error);
-      try {
-        await this.getFallbackRepository().saveDraft(draft);
-      } catch {
-        // Ignored
-      }
-    }
+    return this.wrapWithFallback(
+      'saveDraft',
+      (repo) => repo.saveDraft(draft),
+      undefined
+    );
   }
 
   async getDraft(): Promise<DraftEntry | null> {
-    try {
-      const repo = this.getActiveRepository();
-      return await repo.getDraft();
-    } catch (error) {
-      console.error('Active storage getDraft failed, falling back:', error);
-      try {
-        return await this.getFallbackRepository().getDraft();
-      } catch {
-        return null;
-      }
-    }
+    return this.wrapWithFallback(
+      'getDraft',
+      (repo) => repo.getDraft(),
+      null
+    );
   }
 
   async clearDraft(): Promise<void> {
-    try {
-      const repo = this.getActiveRepository();
-      await repo.clearDraft();
-    } catch (error) {
-      console.error('Active storage clearDraft failed, falling back:', error);
-      try {
-        await this.getFallbackRepository().clearDraft();
-      } catch {
-        // Ignored
-      }
-    }
+    return this.wrapWithFallback(
+      'clearDraft',
+      (repo) => repo.clearDraft(),
+      undefined
+    );
   }
 }
 
 let repositoryInstance: StorageRepository | null = null;
 
-const resetRepositoryRuntime = () => {
-  // Reset runtime parameters, but since repositoryInstance is RuntimeStorageRepository,
-  // we do not set it to null. Instead, getActiveRepository will automatically query new modes.
-};
-
+// On Web (non-Tauri) startup, try to auto-reconnect a previously granted
+// FileSystem directory handle. RuntimeStorageRepository will automatically
+// pick up the new mode on the next dispatch, so no explicit reset is needed.
 if (typeof window !== 'undefined' && !isTauri()) {
   sharedWebFS.initialize(true).then((ready) => {
     if (ready) {
       console.info('WebFSStorage automatically re-connected via IndexedDB.');
-      resetRepositoryRuntime();
     }
   });
 }
@@ -341,9 +284,13 @@ export const getAdapterInfo = (): AdapterMetadata => {
 
   const repository = getRepository();
   // Call it on active repository or fallback
-  const activeRepo = (repository as unknown as { getActiveRepository?: () => StorageRepository }).getActiveRepository?.() || repository;
+  const activeRepo =
+    repository instanceof RuntimeStorageRepository
+      ? repository.getActiveRepository()
+      : repository;
+
   if (activeRepo && 'getMetadata' in activeRepo) {
-    return (activeRepo as unknown as { getMetadata: () => AdapterMetadata }).getMetadata();
+    return (activeRepo as { getMetadata: () => AdapterMetadata }).getMetadata();
   }
 
   return {

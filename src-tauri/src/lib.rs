@@ -64,14 +64,14 @@ pub fn run() {
                     Some(tauri_plugin_global_shortcut::Modifiers::ALT),
                     tauri_plugin_global_shortcut::Code::Space,
                 );
-                app.handle()
-                    .plugin(
-                        tauri_plugin_global_shortcut::Builder::new()
-                            .with_shortcuts(vec![shortcut])
-                            .unwrap()
-                            .build(),
-                    )
-                    .ok();
+                match tauri_plugin_global_shortcut::Builder::new().with_shortcuts(vec![shortcut]) {
+                    Ok(builder) => {
+                        let _ = app.handle().plugin(builder.build());
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to register default shortcuts: {}", e);
+                    }
+                }
             }
 
             // System Tray
@@ -88,9 +88,8 @@ pub fn run() {
                 )?;
                 let menu = tauri::menu::Menu::with_items(app, &[&show_i, &quit_i])?;
 
-                let _tray = tauri::tray::TrayIconBuilder::new()
+                let mut tray_builder = tauri::tray::TrayIconBuilder::new()
                     .menu(&menu)
-                    .icon(app.default_window_icon().unwrap().clone())
                     .tooltip("Bibliotheca Vitae")
                     .on_menu_event(|app, event| match event.id.as_ref() {
                         "quit" => {
@@ -111,8 +110,15 @@ pub fn run() {
                                 let _ = window.set_focus();
                             }
                         }
-                    })
-                    .build(app)?;
+                    });
+
+                if let Some(icon) = app.default_window_icon() {
+                    tray_builder = tray_builder.icon(icon.clone());
+                } else {
+                    eprintln!("Warning: default_window_icon is None, skipping tray icon setting.");
+                }
+
+                let _tray = tray_builder.build(app)?;
             }
 
             #[cfg(desktop)]
@@ -130,7 +136,7 @@ pub fn run() {
 
                     #[cfg(target_os = "windows")]
                     {
-                        window.set_decorations(false).unwrap();
+                        let _ = window.set_decorations(false);
                         let _ = window_vibrancy::apply_blur(&window, Some((18, 18, 18, 125)));
                     }
                 }

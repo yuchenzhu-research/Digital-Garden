@@ -479,7 +479,7 @@ export class WebFSStorageAdapter implements StorageRepository {
 
             // Generate filename
             const ext = file instanceof File ? file.name.split('.').pop() || 'png' : 'png';
-            const filename = `${uuid_v4()}.${ext}`;
+            const filename = `${generateId()}.${ext}`;
 
             const fileHandle = await imgDirHandle.getFileHandle(filename, { create: true });
             const writable = await fileHandle.createWritable();
@@ -600,13 +600,6 @@ export class WebFSStorageAdapter implements StorageRepository {
     }
 }
 
-function uuid_v4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
 export const createWebFSStorage = (): WebFSStorageAdapter => {
     return new WebFSStorageAdapter();

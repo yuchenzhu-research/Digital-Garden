@@ -16,7 +16,7 @@ import type { Entry, EntrySummary, SavedEntry } from './storage-repository';
  * Used by adapters when an entry does not already carry an ID.
  */
 export const generateId = (): string => {
-  return `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  return crypto.randomUUID();
 };
 
 // ============================================================================
