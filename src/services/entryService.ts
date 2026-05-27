@@ -290,6 +290,31 @@ export const clearDraft = async (): Promise<void> => {
   }
 };
 
+/**
+ * Save search index
+ */
+export const saveSearchIndex = async (json: string): Promise<void> => {
+  try {
+    const repo = getRepository();
+    return await repo.saveSearchIndex(json);
+  } catch (error) {
+    console.error('entryService.saveSearchIndex failed:', error);
+  }
+};
+
+/**
+ * Load search index
+ */
+export const loadSearchIndex = async (): Promise<string | null> => {
+  try {
+    const repo = getRepository();
+    return await repo.loadSearchIndex();
+  } catch (error) {
+    console.error('entryService.loadSearchIndex failed:', error);
+    return null;
+  }
+};
+
 // ============================================================================
 // Default Export (Lazy Factory with Proxy)
 // ============================================================================

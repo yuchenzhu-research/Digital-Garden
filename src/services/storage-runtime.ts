@@ -56,6 +56,8 @@ const NOOP_REPOSITORY: StorageRepository = {
   saveDraft: async () => {},
   getDraft: async () => null,
   clearDraft: async () => {},
+  saveSearchIndex: async () => {},
+  loadSearchIndex: async () => null,
 };
 
 const sharedWebFS = new WebFSStorageAdapter();
@@ -233,6 +235,22 @@ export class RuntimeStorageRepository implements StorageRepository {
       'clearDraft',
       (repo) => repo.clearDraft(),
       undefined
+    );
+  }
+
+  async saveSearchIndex(json: string): Promise<void> {
+    return this.wrapWithFallback(
+      'saveSearchIndex',
+      (repo) => repo.saveSearchIndex(json),
+      undefined
+    );
+  }
+
+  async loadSearchIndex(): Promise<string | null> {
+    return this.wrapWithFallback(
+      'loadSearchIndex',
+      (repo) => repo.loadSearchIndex(),
+      null
     );
   }
 }

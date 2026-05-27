@@ -423,6 +423,46 @@ export class NativeStorageAdapter implements StorageRepository {
   }
 
   // ==========================================================================
+  // Search Index Operations
+  // ==========================================================================
+
+  async saveSearchIndex(json: string): Promise<void> {
+    try {
+      const fs = await this.initFs();
+      const path = await this.initPath();
+      const appDataDir = await path.appDataDir();
+
+      try {
+        await fs.mkdir(appDataDir, { recursive: true });
+      } catch {
+        // Ignore if exists
+      }
+
+      const indexPath = await path.join(appDataDir, 'search_index.json');
+      await fs.writeTextFile(indexPath, json);
+    } catch (error) {
+      console.warn('Native saveSearchIndex error:', error);
+    }
+  }
+
+  async loadSearchIndex(): Promise<string | null> {
+    try {
+      const fs = await this.initFs();
+      const path = await this.initPath();
+      const appDataDir = await path.appDataDir();
+      const indexPath = await path.join(appDataDir, 'search_index.json');
+
+      const exists = await fs.exists(indexPath);
+      if (!exists) return null;
+
+      return await fs.readTextFile(indexPath);
+    } catch (error) {
+      console.warn('Native loadSearchIndex error:', error);
+      return null;
+    }
+  }
+
+  // ==========================================================================
   // Helper Methods
   // ==========================================================================
 

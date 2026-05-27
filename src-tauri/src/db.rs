@@ -1,37 +1,35 @@
+use crate::AppError;
 use rusqlite::Connection;
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 /// Get the path to the SQLite database, creating the parent directories if necessary.
-pub fn get_db_path(app_handle: &AppHandle) -> Result<PathBuf, String> {
+pub fn get_db_path(app_handle: &AppHandle) -> Result<PathBuf, AppError> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+        .map_err(|e| AppError::Tauri(e.to_string()))?;
     
     let digital_garden_dir = app_data_dir.join("DigitalGarden");
     
     if !digital_garden_dir.exists() {
-        fs::create_dir_all(&digital_garden_dir)
-            .map_err(|e| format!("Failed to create DigitalGarden directory: {}", e))?;
+        fs::create_dir_all(&digital_garden_dir)?;
     }
     
     Ok(digital_garden_dir.join("archive.db"))
 }
 
 /// Open a connection to the SQLite database and set busy_timeout to 5000ms.
-pub fn open_connection(app_handle: &AppHandle) -> Result<Connection, String> {
+pub fn open_connection(app_handle: &AppHandle) -> Result<Connection, AppError> {
     let db_path = get_db_path(app_handle)?;
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open SQLite database at {:?}: {}", db_path, e))?;
-    conn.execute("PRAGMA busy_timeout = 5000", ())
-        .map_err(|e| format!("Failed to set busy timeout: {}", e))?;
+    let conn = Connection::open(&db_path)?;
+    conn.execute("PRAGMA busy_timeout = 5000", ())?;
     Ok(conn)
 }
 
 /// Run SQLite database migrations.
-pub fn run_migrations(app_handle: &AppHandle) -> Result<(), String> {
+pub fn run_migrations(app_handle: &AppHandle) -> Result<(), AppError> {
     let mut conn = open_connection(app_handle)?;
 
     // Create schema_migrations table if not exists to track version changes
@@ -40,8 +38,7 @@ pub fn run_migrations(app_handle: &AppHandle) -> Result<(), String> {
             version INTEGER PRIMARY KEY
         );",
         (),
-    )
-    .map_err(|e| format!("Failed to create schema_migrations table: {}", e))?;
+    )?;
 
     // Define migration scripts in order. Add new migrations at the end of the vector.
     let migrations = vec![
@@ -60,48 +57,40 @@ pub fn run_migrations(app_handle: &AppHandle) -> Result<(), String> {
     ];
 
     // Fetch previously applied migrations
-    let mut stmt = conn
-        .prepare("SELECT version FROM schema_migrations")
-        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+    let mut stmt = conn.prepare("SELECT version FROM schema_migrations")?;
     
     let executed_versions: std::collections::HashSet<i32> = stmt
-        .query_map((), |row| row.get(0))
-        .map_err(|e| format!("Failed to fetch executed migrations: {}", e))?
+        .query_map((), |row| row.get(0))?
         .filter_map(|r| r.ok())
         .collect();
 
     drop(stmt);
 
     // Apply any missing migrations inside a transaction
-    let tx = conn
-        .transaction()
-        .map_err(|e| format!("Failed to begin transaction: {}", e))?;
+    let tx = conn.transaction()?;
 
     for (idx, migration_sql) in migrations.iter().enumerate() {
         let version = (idx + 1) as i32;
         if !executed_versions.contains(&version) {
-            tx.execute(migration_sql, ())
-                .map_err(|e| format!("Failed to execute migration version {}: {}", version, e))?;
+            tx.execute(migration_sql, ())?;
             
             tx.execute(
                 "INSERT INTO schema_migrations (version) VALUES (?1)",
                 rusqlite::params![version],
-            )
-            .map_err(|e| format!("Failed to record migration version {}: {}", version, e))?;
+            )?;
             
             println!("SQLite Migration version {} applied successfully.", version);
         }
     }
 
-    tx.commit()
-        .map_err(|e| format!("Failed to commit database migrations: {}", e))?;
+    tx.commit()?;
 
     Ok(())
 }
 
 /// Tauri command to manually trigger database initialization and run migrations.
 #[tauri::command]
-pub fn initialize_database(app_handle: AppHandle) -> Result<String, String> {
+pub fn initialize_database(app_handle: AppHandle) -> Result<String, AppError> {
     run_migrations(&app_handle)?;
     let db_path = get_db_path(&app_handle)?;
     Ok(db_path.to_string_lossy().to_string())

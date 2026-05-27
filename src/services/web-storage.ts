@@ -341,6 +341,34 @@ export class WebStorageAdapter implements StorageRepository {
   }
 
   // ==========================================================================
+  // Search Index Operations
+  // ==========================================================================
+
+  async saveSearchIndex(json: string): Promise<void> {
+    if (!isBrowser()) return;
+    try {
+      const indexKey = this.prefix
+        ? `${this.prefix}_bibliotheca_search_index`
+        : 'bibliotheca_search_index';
+      localStorage.setItem(indexKey, json);
+    } catch (error) {
+      console.warn('WebStorage saveSearchIndex error:', error);
+    }
+  }
+
+  async loadSearchIndex(): Promise<string | null> {
+    if (!isBrowser()) return null;
+    try {
+      const indexKey = this.prefix
+        ? `${this.prefix}_bibliotheca_search_index`
+        : 'bibliotheca_search_index';
+      return localStorage.getItem(indexKey);
+    } catch {
+      return null;
+    }
+  }
+
+  // ==========================================================================
   // Metadata
   // ==========================================================================
 

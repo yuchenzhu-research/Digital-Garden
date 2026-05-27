@@ -1,3 +1,4 @@
+use crate::AppError;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -43,10 +44,9 @@ pub struct ImageResult {
 // ============================================================================
 
 /// Get all entries from SQLite database
-pub fn get_all_entries(conn: &Connection) -> Result<Vec<EntryPayload>, String> {
+pub fn get_all_entries(conn: &Connection) -> Result<Vec<EntryPayload>, AppError> {
     let mut stmt = conn
-        .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries")
-        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+        .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries")?;
 
     let entry_iter = stmt
         .query_map((), |row| {
@@ -64,8 +64,7 @@ pub fn get_all_entries(conn: &Connection) -> Result<Vec<EntryPayload>, String> {
                 date_created: row.get(7)?,
                 date_modified: row.get(8)?,
             })
-        })
-        .map_err(|e| format!("Failed to query database: {}", e))?;
+        })?;
 
     let mut entries = Vec::new();
     for entry in entry_iter {
@@ -78,10 +77,9 @@ pub fn get_all_entries(conn: &Connection) -> Result<Vec<EntryPayload>, String> {
 }
 
 /// Get a single entry by ID from SQLite database
-pub fn get_entry(conn: &Connection, id: &str) -> Result<Option<EntryPayload>, String> {
+pub fn get_entry(conn: &Connection, id: &str) -> Result<Option<EntryPayload>, AppError> {
     let mut stmt = conn
-        .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries WHERE id = ?1")
-        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+        .prepare("SELECT id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified FROM entries WHERE id = ?1")?;
 
     let mut rows = stmt
         .query_map([id], |row| {
@@ -99,8 +97,7 @@ pub fn get_entry(conn: &Connection, id: &str) -> Result<Option<EntryPayload>, St
                 date_created: row.get(7)?,
                 date_modified: row.get(8)?,
             })
-        })
-        .map_err(|e| format!("Failed to query database: {}", e))?;
+        })?;
 
     if let Some(Ok(entry)) = rows.next() {
         Ok(Some(entry))
@@ -115,7 +112,7 @@ pub fn save_entry(
     archive_dir: &Path,
     payload: EntryPayload,
     db_path: &Path,
-) -> Result<SaveResult, String> {
+) -> Result<SaveResult, AppError> {
     let id = payload
         .id
         .clone()
@@ -182,7 +179,7 @@ pub fn update_entry(
     id: &str,
     payload: serde_json::Value,
     db_path: &Path,
-) -> Result<SaveResult, String> {
+) -> Result<SaveResult, AppError> {
     // Verify entry exists
     let existing: Option<EntryPayload> = get_entry(conn, id)?;
     let Some(current) = existing else {
@@ -265,13 +262,12 @@ pub fn delete_entry(
     conn: &Connection,
     archive_dir: &Path,
     id: &str,
-) -> Result<(), String> {
+) -> Result<(), AppError> {
     // 1. Fetch image URL before deleting database record
     let entry_data = get_entry(conn, id)?;
 
     // 2. Delete from database
-    conn.execute("DELETE FROM entries WHERE id = ?1", [id])
-        .map_err(|e| format!("Failed to delete entry: {}", e))?;
+    conn.execute("DELETE FROM entries WHERE id = ?1", [id])?;
 
     // 3. Delete physical image asset from disk
     if let Some(current) = entry_data {
@@ -293,20 +289,19 @@ pub fn save_image(
     archive_dir: &Path,
     data: &str,
     filename: &str,
-) -> Result<ImageResult, String> {
+) -> Result<ImageResult, AppError> {
     let image_dir = archive_dir.join("images");
 
-    fs::create_dir_all(&image_dir)
-        .map_err(|e| format!("Failed to create image directory: {}", e))?;
+    fs::create_dir_all(&image_dir)?;
 
     // Security validation of file extension
     let ext = validate_image_extension(filename)?;
     let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let image_path = image_dir.join(&safe_filename);
 
-    let bytes = base64_decode(data).map_err(|e| format!("Failed to decode base64: {}", e))?;
+    let bytes = base64_decode(data)?;
 
-    fs::write(&image_path, bytes).map_err(|e| format!("Failed to write image: {}", e))?;
+    fs::write(&image_path, bytes)?;
 
     Ok(ImageResult {
         success: true,
@@ -320,18 +315,17 @@ pub fn save_image_from_bytes(
     archive_dir: &Path,
     bytes: &[u8],
     filename: &str,
-) -> Result<ImageResult, String> {
+) -> Result<ImageResult, AppError> {
     let image_dir = archive_dir.join("images");
 
-    fs::create_dir_all(&image_dir)
-        .map_err(|e| format!("Failed to create image directory: {}", e))?;
+    fs::create_dir_all(&image_dir)?;
 
     // Security validation of file extension
     let ext = validate_image_extension(filename)?;
     let safe_filename = format!("{}.{}", uuid::Uuid::new_v4(), ext);
     let image_path = image_dir.join(&safe_filename);
 
-    fs::write(&image_path, bytes).map_err(|e| format!("Failed to write image: {}", e))?;
+    fs::write(&image_path, bytes)?;
 
     Ok(ImageResult {
         success: true,
@@ -347,7 +341,7 @@ pub fn import_entries(
     conn: &mut Connection,
     archive_dir: &Path,
     entries: Vec<EntryPayload>,
-) -> Result<(), String> {
+) -> Result<(), AppError> {
     // Phase 1: Identify new entries and write images to disk (no DB lock held)
     struct PreparedEntry {
         id: String,
@@ -408,10 +402,10 @@ pub fn import_entries(
     }
 
     // Phase 2: Fast transaction — only DB INSERTs, no disk I/O
-    let tx = conn.transaction().map_err(|e| format!("Failed to start transaction: {}", e))?;
+    let tx = conn.transaction()?;
 
     for entry in prepared {
-        match tx.execute(
+        if let Err(e) = tx.execute(
             "INSERT INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![
@@ -426,14 +420,11 @@ pub fn import_entries(
                 entry.date_modified
             ],
         ) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!("Failed to insert entry {}: {}", entry.id, e);
-            }
+            eprintln!("Failed to insert entry {}: {}", entry.id, e);
         }
     }
 
-    tx.commit().map_err(|e| format!("Failed to commit import transaction: {}", e))?;
+    tx.commit()?;
     Ok(())
 }
 
@@ -455,16 +446,16 @@ pub fn image_extension_from_data(data: &str) -> &'static str {
     }
 }
 
-pub fn validate_image_extension(filename: &str) -> Result<String, String> {
+pub fn validate_image_extension(filename: &str) -> Result<String, AppError> {
     let ext = std::path::Path::new(filename)
         .extension()
         .and_then(|e| e.to_str())
         .map(|s| s.to_lowercase())
-        .ok_or_else(|| "Missing file extension".to_string())?;
+        .ok_or_else(|| AppError::InvalidExtension("Missing file extension".to_string()))?;
 
     let allowed = ["png", "jpg", "jpeg", "gif", "webp", "svg"];
     if !allowed.contains(&ext.as_str()) {
-        return Err(format!("Forbidden file extension: .{}", ext));
+        return Err(AppError::InvalidExtension(format!("Forbidden file extension: .{}", ext)));
     }
     Ok(ext)
 }
@@ -473,27 +464,27 @@ pub fn write_embedded_image(
     archive_dir: &Path,
     entry_id: &str,
     image_data: &str,
-) -> Result<String, String> {
+) -> Result<String, AppError> {
     let image_dir = archive_dir.join("images");
-    fs::create_dir_all(&image_dir)
-        .map_err(|e| format!("Failed to create image directory: {}", e))?;
+    fs::create_dir_all(&image_dir)?;
 
     let ext = image_extension_from_data(image_data);
     let image_filename = format!("{}.{}", entry_id, ext);
     let image_path = image_dir.join(&image_filename);
     let bytes = base64_decode(image_data)?;
 
-    fs::write(&image_path, bytes).map_err(|e| format!("Failed to save image: {}", e))?;
+    fs::write(&image_path, bytes)?;
 
     Ok(format!("images/{}", image_filename))
 }
 
-pub fn base64_decode(s: &str) -> Result<Vec<u8>, String> {
+pub fn base64_decode(s: &str) -> Result<Vec<u8>, AppError> {
     let s = s.trim_start_matches("data:image/png;base64,");
     let s = s.trim_start_matches("data:image/jpeg;base64,");
     let s = s.trim_start_matches("data:image/gif;base64,");
     let s = s.trim_start_matches("data:image/webp;base64,");
     let s = s.trim_start_matches("data:image/svg+xml;base64,");
 
-    base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s).map_err(|e| e.to_string())
+    let decoded = base64::Engine::decode(&base64::engine::general_purpose::STANDARD, s)?;
+    Ok(decoded)
 }

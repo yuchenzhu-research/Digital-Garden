@@ -6,6 +6,7 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 use crate::db::{get_db_path, open_connection};
+use crate::AppError;
 
 // Re-export service types so they remain part of commands public API if needed
 pub use crate::service::{EntryPayload, SaveResult, ImageResult};
@@ -14,17 +15,16 @@ pub use crate::service::{EntryPayload, SaveResult, ImageResult};
 // Helpers
 // ============================================================================
 
-fn get_archive_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
+fn get_archive_dir(app_handle: &AppHandle) -> Result<PathBuf, AppError> {
     let app_data_dir = app_handle
         .path()
         .app_data_dir()
-        .map_err(|e| format!("Failed to get app data dir: {}", e))?;
+        .map_err(|e| AppError::Tauri(e.to_string()))?;
     
     let digital_garden_dir = app_data_dir.join("DigitalGarden");
     
     if !digital_garden_dir.exists() {
-        fs::create_dir_all(&digital_garden_dir)
-            .map_err(|e| format!("Failed to create DigitalGarden directory: {}", e))?;
+        fs::create_dir_all(&digital_garden_dir)?;
     }
     
     Ok(digital_garden_dir)
@@ -36,14 +36,14 @@ fn get_archive_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
 
 /// Get all entries from SQLite database
 #[tauri::command]
-pub async fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, String> {
+pub async fn get_all_entries(app_handle: AppHandle) -> Result<Vec<EntryPayload>, AppError> {
     let conn = open_connection(&app_handle)?;
     crate::service::get_all_entries(&conn)
 }
 
 /// Get a single entry by ID from SQLite database
 #[tauri::command]
-pub async fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<EntryPayload>, String> {
+pub async fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<EntryPayload>, AppError> {
     let conn = open_connection(&app_handle)?;
     crate::service::get_entry(&conn, &id)
 }
@@ -53,7 +53,7 @@ pub async fn get_entry(id: String, app_handle: AppHandle) -> Result<Option<Entry
 pub async fn save_entry(
     payload: EntryPayload,
     app_handle: AppHandle,
-) -> Result<SaveResult, String> {
+) -> Result<SaveResult, AppError> {
     let conn = open_connection(&app_handle)?;
     let archive_dir = get_archive_dir(&app_handle)?;
     let db_path = get_db_path(&app_handle)?;
@@ -66,7 +66,7 @@ pub async fn update_entry(
     id: String,
     payload: serde_json::Value,
     app_handle: AppHandle,
-) -> Result<SaveResult, String> {
+) -> Result<SaveResult, AppError> {
     let conn = open_connection(&app_handle)?;
     let db_path = get_db_path(&app_handle)?;
     crate::service::update_entry(&conn, &id, payload, &db_path)
@@ -74,7 +74,7 @@ pub async fn update_entry(
 
 /// Delete an entry and its associated local image assets from disk
 #[tauri::command]
-pub async fn delete_entry(id: String, app_handle: AppHandle) -> Result<(), String> {
+pub async fn delete_entry(id: String, app_handle: AppHandle) -> Result<(), AppError> {
     let conn = open_connection(&app_handle)?;
     let archive_dir = get_archive_dir(&app_handle)?;
     crate::service::delete_entry(&conn, &archive_dir, &id)
@@ -86,7 +86,7 @@ pub async fn save_image(
     data: String,
     filename: String,
     app_handle: AppHandle,
-) -> Result<ImageResult, String> {
+) -> Result<ImageResult, AppError> {
     let archive_dir = get_archive_dir(&app_handle)?;
     crate::service::save_image(&archive_dir, &data, &filename)
 }
@@ -97,23 +97,21 @@ pub async fn save_image_from_bytes(
     bytes: Vec<u8>,
     filename: String,
     app_handle: AppHandle,
-) -> Result<ImageResult, String> {
+) -> Result<ImageResult, AppError> {
     let archive_dir = get_archive_dir(&app_handle)?;
     crate::service::save_image_from_bytes(&archive_dir, &bytes, &filename)
 }
 
 /// Get the storage path
 #[tauri::command]
-pub fn get_storage_path(app_handle: AppHandle) -> Result<String, String> {
+pub fn get_storage_path(app_handle: AppHandle) -> Result<String, AppError> {
     Ok(get_archive_dir(&app_handle)?.to_string_lossy().to_string())
 }
 
 /// Import entries from JSON wrapped inside a single SQLite transaction
 #[tauri::command]
-pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), String> {
-    let entries: Vec<EntryPayload> =
-        serde_json::from_str(&json).map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
+pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), AppError> {
+    let entries: Vec<EntryPayload> = serde_json::from_str(&json)?;
     let mut conn = open_connection(&app_handle)?;
     let archive_dir = get_archive_dir(&app_handle)?;
     crate::service::import_entries(&mut conn, &archive_dir, entries)

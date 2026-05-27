@@ -29,6 +29,17 @@ const FIELD_BOOST: Record<string, number> = {
   academicContext: 1,
 };
 
+interface IndexableDocument {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  tags_joined: string;
+  category: string;
+  longDescription: string;
+  academicContext: string;
+}
+
 /**
  * SearchIndex Class wrapping MiniSearch
  */
@@ -38,6 +49,101 @@ export class SearchIndex {
 
   constructor(initialDocuments: Document[] = []) {
     this.rebuild(initialDocuments);
+  }
+
+  /**
+   * Load index from a serialized JSON string.
+   */
+  public loadFromJSON(json: string, documents: Document[]): void {
+    this.documents = documents;
+    try {
+      this.miniSearch = MiniSearch.loadJSON(json, {
+        fields: SEARCH_FIELDS,
+        storeFields: ['id'],
+        searchOptions: {
+          boost: FIELD_BOOST,
+          fuzzy: 0.2,
+          prefix: true,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to load MiniSearch from JSON, rebuilding index...', error);
+      this.rebuild(documents);
+    }
+  }
+
+  /**
+   * Serialize the index to a JSON string.
+   */
+  public serialize(): string | null {
+    if (!this.miniSearch) return null;
+    try {
+      return JSON.stringify(this.miniSearch.toJSON());
+    } catch (error) {
+      console.error('Failed to serialize MiniSearch index:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update the index incrementally with a new list of documents.
+   */
+  public updateIncrementally(newDocuments: Document[]): void {
+    if (!this.miniSearch) {
+      this.rebuild(newDocuments);
+      return;
+    }
+
+    // Map existing documents by ID
+    const existingDocMap = new Map(this.documents.map((d) => [d.id, d]));
+    const newDocMap = new Map(newDocuments.map((d) => [d.id, d]));
+
+    // Find added or updated documents
+    const toAdd: IndexableDocument[] = [];
+    const toUpdate: IndexableDocument[] = [];
+    newDocuments.forEach((doc) => {
+      const existing = existingDocMap.get(doc.id);
+      const indexable: IndexableDocument = {
+        id: doc.id,
+        title: doc.title,
+        author: doc.author,
+        description: doc.description,
+        tags_joined: doc.tags?.join(' ') ?? '',
+        category: doc.category,
+        longDescription: doc.longDescription ?? '',
+        academicContext: doc.academicContext ?? '',
+      };
+
+      if (!existing) {
+        toAdd.push(indexable);
+      } else if (JSON.stringify(existing) !== JSON.stringify(doc)) {
+        toUpdate.push(indexable);
+      }
+    });
+
+    // Find removed documents
+    const toRemove: Array<{ id: string }> = [];
+    this.documents.forEach((doc) => {
+      if (!newDocMap.has(doc.id)) {
+        toRemove.push({ id: doc.id });
+      }
+    });
+
+    if (toRemove.length > 0) {
+      this.miniSearch.removeAll(toRemove);
+    }
+
+    if (toUpdate.length > 0) {
+      toUpdate.forEach((doc) => {
+        this.miniSearch!.replace(doc);
+      });
+    }
+
+    if (toAdd.length > 0) {
+      this.miniSearch.addAll(toAdd);
+    }
+
+    this.documents = newDocuments;
   }
 
   /**

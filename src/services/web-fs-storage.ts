@@ -595,6 +595,28 @@ export class WebFSStorageAdapter implements StorageRepository {
         }
     }
 
+    // ==========================================================================
+    // Search Index Operations
+    // ==========================================================================
+
+    async saveSearchIndex(json: string): Promise<void> {
+        try {
+            await set('bibliotheca_search_index', json);
+        } catch (e) {
+            console.warn('WebFSStorage saveSearchIndex error:', e);
+        }
+    }
+
+    async loadSearchIndex(): Promise<string | null> {
+        try {
+            const index = await get<string>('bibliotheca_search_index');
+            return index || null;
+        } catch (e) {
+            console.warn('WebFSStorage loadSearchIndex error:', e);
+            return null;
+        }
+    }
+
     getMetadata() {
         return this.metadata;
     }

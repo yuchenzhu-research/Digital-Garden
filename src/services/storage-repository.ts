@@ -160,6 +160,16 @@ export interface StorageRepository {
    * Clear the current draft entry
    */
   clearDraft(): Promise<void>;
+
+  /**
+   * Save search index JSON
+   */
+  saveSearchIndex(json: string): Promise<void>;
+
+  /**
+   * Load search index JSON
+   */
+  loadSearchIndex(): Promise<string | null>;
 }
 
 // ============================================================================

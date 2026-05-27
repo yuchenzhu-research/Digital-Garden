@@ -104,6 +104,7 @@ dependencies = [
  "tauri-plugin-global-shortcut",
  "tauri-plugin-log",
  "tauri-plugin-os",
+ "thiserror 1.0.69",
  "uuid",
  "window-vibrancy 0.7.1",
 ]
