@@ -14,6 +14,9 @@ interface ArchiveBrowserSectionProps {
   onDocumentSelect: (documentId: string) => void;
   onSearchChange: (value: string) => void;
   searchQuery: string;
+  selectedTag: string | null;
+  availableTags: string[];
+  onTagSelect: (tag: string | null) => void;
 }
 
 export function ArchiveBrowserSection({
@@ -25,8 +28,11 @@ export function ArchiveBrowserSection({
   onDocumentSelect,
   onSearchChange,
   searchQuery,
+  selectedTag,
+  availableTags,
+  onTagSelect,
 }: ArchiveBrowserSectionProps) {
-  const hasFilters = searchQuery.length > 0 || category !== 'all';
+  const hasFilters = searchQuery.length > 0 || category !== 'all' || selectedTag !== null;
 
   return (
     <section className="container mx-auto px-4 py-20">
@@ -49,6 +55,9 @@ export function ArchiveBrowserSection({
             onSearchChange={onSearchChange}
             categoryValue={category}
             onCategoryChange={onCategoryChange}
+            selectedTag={selectedTag}
+            availableTags={availableTags}
+            onTagSelect={onTagSelect}
           />
         </div>
       </div>
@@ -74,7 +83,7 @@ export function ArchiveBrowserSection({
               key={document.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative"
+              className="relative flex flex-col h-full"
             >
               <ImageCard
                 id={document.id}
@@ -86,7 +95,7 @@ export function ArchiveBrowserSection({
                 floatingTexts={{ topLeft: document.category }}
                 aspectRatio="square"
                 size="small"
-                className="h-full w-full"
+                className="h-full w-full flex-grow"
                 focalPoint={document.focalPoint}
                 onClick={() => onDocumentSelect(document.id)}
               />
@@ -94,6 +103,22 @@ export function ArchiveBrowserSection({
                 <span className="absolute left-4 top-4 z-20 rounded-full border border-white/10 bg-black/[0.25] px-3 py-2 text-[10px] uppercase tracking-[0.26em] text-white/82 backdrop-blur-md">
                   Personal
                 </span>
+              )}
+              {document.tags && document.tags.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5 px-1 relative z-20">
+                  {document.tags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTagSelect(tag);
+                      }}
+                      className="rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 px-2 py-0.5 text-[9px] uppercase tracking-widest text-primary/80 transition-all duration-300 cursor-pointer"
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
               )}
             </motion.div>
           ))}

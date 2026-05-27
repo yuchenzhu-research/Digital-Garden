@@ -8,6 +8,7 @@ interface PersonalCollectionSectionProps {
   hasLocalMobileDraft: boolean;
   isMobileMode: boolean;
   onEntrySelect: (documentId: string) => void;
+  onTagSelect: (tag: string | null) => void;
 }
 
 export function PersonalCollectionSection({
@@ -15,6 +16,7 @@ export function PersonalCollectionSection({
   hasLocalMobileDraft,
   isMobileMode,
   onEntrySelect,
+  onTagSelect,
 }: PersonalCollectionSectionProps) {
   return (
     <section className="container mx-auto px-4 py-20">
@@ -83,6 +85,22 @@ export function PersonalCollectionSection({
                       ? entry.narrative.substring(0, 120)
                       : 'A personal accession waiting for its narrative plaque.'}
                   </p>
+                  {entry.keywords && entry.keywords.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5 relative z-30">
+                      {entry.keywords.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTagSelect(tag);
+                          }}
+                          className="rounded-full border border-primary/20 bg-primary/10 hover:bg-primary/20 px-2 py-0.5 text-[9px] uppercase tracking-widest text-primary transition-all duration-300 cursor-pointer"
+                        >
+                          #{tag}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

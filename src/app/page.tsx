@@ -62,7 +62,10 @@ export default function Home() {
     scrollProgress,
     searchQuery,
     selectedDoc,
+    selectedTag,
+    availableTags,
     setCategory,
+    setSelectedTag,
     setScrollProgress,
     setSearchQuery,
     setSelectedDocId,
@@ -117,6 +120,7 @@ export default function Home() {
           hasLocalMobileDraft={hasLocalMobileDraft}
           isMobileMode={isMobileMode}
           onEntrySelect={(id) => setSelectedDocId(id)}
+          onTagSelect={setSelectedTag}
         />
 
         <TimelineSection
@@ -133,6 +137,9 @@ export default function Home() {
           onDocumentSelect={(id) => setSelectedDocId(id)}
           onSearchChange={setSearchQuery}
           searchQuery={searchQuery}
+          selectedTag={selectedTag}
+          availableTags={availableTags}
+          onTagSelect={setSelectedTag}
         />
 
         <HomeFooter 
@@ -149,6 +156,7 @@ export default function Home() {
         onDocumentSelect={(id) => setSelectedDocId(id)}
         onEdit={handleEditEntry}
         onDelete={handleDeleteEntry}
+        onTagSelect={setSelectedTag}
       />
 
       {/* Entry Editor Overlay */}

@@ -34,6 +34,7 @@ export function useHomePageController() {
   const [userEntries, setUserEntries] = useState<Entry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState<Category>('all');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [dimmingIntensity, setDimmingIntensity] = useState(getInitialDimmingIntensity);
   const [hasLocalMobileDraft, setHasLocalMobileDraft] = useState(false);
@@ -115,13 +116,32 @@ export function useHomePageController() {
 
   const { results: searchResults, isSearchActive } = useArchiveSearch(allDocuments, searchQuery);
 
+  const availableTags = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allDocuments.forEach((doc) => {
+      doc.tags?.forEach((tag) => {
+        if (tag) {
+          counts[tag] = (counts[tag] || 0) + 1;
+        }
+      });
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, 10)
+      .map(([tag]) => tag);
+  }, [allDocuments]);
+
   const filteredDocuments = useMemo(() => {
     const base = isSearchActive ? searchResults : allDocuments;
-    if (category === 'all') {
-      return base;
+    let docs = base;
+    if (category !== 'all') {
+      docs = docs.filter((document) => document.category === category);
     }
-    return base.filter((document) => document.category === category);
-  }, [allDocuments, searchResults, isSearchActive, category]);
+    if (selectedTag) {
+      docs = docs.filter((document) => document.tags?.includes(selectedTag));
+    }
+    return docs;
+  }, [allDocuments, searchResults, isSearchActive, category, selectedTag]);
 
   const selectedDoc = useMemo(
     () => allDocuments.find((document) => document.id === selectedDocId),
@@ -185,6 +205,7 @@ export function useHomePageController() {
   const clearFilters = useCallback(() => {
     setSearchQuery('');
     setCategory('all');
+    setSelectedTag(null);
   }, []);
 
   const heroAppendLabel = isMobileMode
@@ -220,7 +241,10 @@ export function useHomePageController() {
     scrollProgress,
     searchQuery,
     selectedDoc,
+    selectedTag,
+    availableTags,
     setCategory,
+    setSelectedTag,
     setScrollProgress,
     setSearchQuery,
     setSelectedDocId,

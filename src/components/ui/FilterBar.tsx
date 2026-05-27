@@ -129,6 +129,9 @@ interface FilterBarProps {
     onSearchChange: (value: string) => void;
     categoryValue: Category;
     onCategoryChange: (value: Category) => void;
+    selectedTag: string | null;
+    onTagSelect: (tag: string | null) => void;
+    availableTags?: string[];
     className?: string;
 }
 
@@ -137,20 +140,51 @@ export function FilterBar({
     onSearchChange,
     categoryValue,
     onCategoryChange,
+    selectedTag,
+    onTagSelect,
+    availableTags = [],
     className
 }: FilterBarProps) {
     return (
-        <div className={cn('flex flex-col items-start justify-between gap-4 md:flex-row md:items-center', className)}>
-            <CategoryFilter
-                value={categoryValue}
-                onChange={onCategoryChange}
-            />
-            <SearchBar
-                value={searchValue}
-                onChange={onSearchChange}
-                placeholder="Search by title, figure, or keyword..."
-                className="w-full md:w-80"
-            />
+        <div className={cn('flex flex-col gap-4 w-full md:w-auto', className)}>
+            {/* Top 10 Dynamic Tags Pills */}
+            {availableTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 mr-1">Top Tags:</span>
+                    {availableTags.map((tag) => {
+                        const isActive = selectedTag === tag;
+                        return (
+                            <motion.button
+                                key={tag}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => onTagSelect(isActive ? null : tag)}
+                                className={cn(
+                                    'rounded-full px-3 py-1 text-xs font-sans tracking-wide transition-all duration-300 backdrop-blur-md cursor-pointer',
+                                    isActive
+                                        ? 'border border-primary bg-primary/20 text-primary shadow-[0_0_8px_rgba(219,184,102,0.25)]'
+                                        : 'border border-primary/30 bg-primary/5 text-primary/70 hover:bg-primary/10 hover:text-primary hover:border-primary/50'
+                                )}
+                            >
+                                #{tag}
+                            </motion.button>
+                        );
+                    })}
+                </div>
+            )}
+            
+            <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <CategoryFilter
+                    value={categoryValue}
+                    onChange={onCategoryChange}
+                />
+                <SearchBar
+                    value={searchValue}
+                    onChange={onSearchChange}
+                    placeholder="Search by title, figure, or keyword..."
+                    className="w-full md:w-80"
+                />
+            </div>
         </div>
     );
 }

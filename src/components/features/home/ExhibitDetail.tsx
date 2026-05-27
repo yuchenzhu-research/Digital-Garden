@@ -16,6 +16,7 @@ interface ExhibitDetailProps {
   onDocumentSelect?: (id: string) => void;
   onEdit?: (document: Document) => void;
   onDelete?: (document: Document) => void;
+  onTagSelect?: (tag: string | null) => void;
 }
 
 const containerVariants = {
@@ -49,7 +50,8 @@ export function ExhibitDetail({
   allDocuments = [],
   onDocumentSelect,
   onEdit,
-  onDelete
+  onDelete,
+  onTagSelect
 }: ExhibitDetailProps) {
   // Cache the last valid document so exit animation can still render content.
   // Pattern: "storing information from previous renders" — React docs.
@@ -137,7 +139,14 @@ export function ExhibitDetail({
   return (
     <AnimatePresence>
       {isOpen && displayDoc && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 overflow-hidden">
+        <motion.div
+          key="exhibit-detail-modal-root"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 overflow-hidden"
+        >
           {/* Scrim with Smooth Backdrop-blur transition */}
           <motion.div
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
@@ -238,9 +247,16 @@ export function ExhibitDetail({
                   {displayDoc.tags && (
                     <div className="flex flex-wrap gap-3 mb-12">
                       {displayDoc.tags.map(tag => (
-                        <span key={tag} className="px-3 py-1 bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/45 text-[9px] uppercase tracking-widest text-primary/80 transition-all duration-300 cursor-default">
-                          {tag}
-                        </span>
+                        <button
+                          key={tag}
+                          onClick={() => {
+                            onTagSelect?.(tag);
+                            onClose();
+                          }}
+                          className="px-3 py-1 bg-primary/5 hover:bg-primary/10 border border-primary/20 hover:border-primary/45 text-[9px] uppercase tracking-widest text-primary/80 transition-all duration-300 cursor-pointer rounded-sm"
+                        >
+                          #{tag}
+                        </button>
                       ))}
                     </div>
                   )}
@@ -281,7 +297,7 @@ export function ExhibitDetail({
               </motion.div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
