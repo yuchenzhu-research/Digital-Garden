@@ -196,10 +196,10 @@ export class RuntimeStorageRepository implements StorageRepository {
     );
   }
 
-  async importData(json: string): Promise<void> {
+  async importData(json: string, conflictBehavior?: string): Promise<void> {
     return this.wrapWithFallback(
       'importData',
-      (repo) => repo.importData(json),
+      (repo) => repo.importData(json, conflictBehavior),
       (e) => {
         throw e;
       }

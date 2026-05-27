@@ -267,7 +267,7 @@ export class WebStorageAdapter implements StorageRepository {
     return JSON.stringify(entries, null, 2);
   }
 
-  async importData(json: string): Promise<void> {
+  async importData(json: string, conflictBehavior?: string): Promise<void> {
     try {
       const entries = parseBackupJson(json);
 
@@ -276,12 +276,33 @@ export class WebStorageAdapter implements StorageRepository {
 
       for (const entry of entries) {
         const normalizedEntry = normalizeImportedEntry(entry as Entry);
-        // Skip if ID already exists
-        const exists = merged.some(
-          (e) => (e as SavedEntry).id === (normalizedEntry as SavedEntry).id
+        const entryId = normalizedEntry.id || generateId();
+
+        const existingIndex = merged.findIndex(
+          (e) => (e as SavedEntry).id === entryId
         );
-        if (!exists) {
-          merged.push(normalizedEntry);
+
+        if (existingIndex !== -1) {
+          if (conflictBehavior === 'overwrite') {
+            merged[existingIndex] = {
+              ...normalizedEntry,
+              id: entryId,
+              dateModified: new Date().toISOString(),
+            } as SavedEntry;
+          } else if (conflictBehavior === 'duplicate') {
+            const newId = generateId();
+            merged.push({
+              ...normalizedEntry,
+              id: newId,
+              dateModified: new Date().toISOString(),
+            } as SavedEntry);
+          }
+          // If skip, do nothing (skip)
+        } else {
+          merged.push({
+            ...normalizedEntry,
+            id: entryId,
+          } as SavedEntry);
         }
       }
 

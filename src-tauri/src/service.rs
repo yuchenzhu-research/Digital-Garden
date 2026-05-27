@@ -341,6 +341,7 @@ pub fn import_entries(
     conn: &mut Connection,
     archive_dir: &Path,
     entries: Vec<EntryPayload>,
+    conflict_behavior: &str,
 ) -> Result<(), AppError> {
     // Phase 1: Identify new entries and write images to disk (no DB lock held)
     struct PreparedEntry {
@@ -353,15 +354,18 @@ pub fn import_entries(
         image_url: Option<String>,
         date_created: String,
         date_modified: Option<String>,
+        is_overwrite: bool,
     }
 
     let mut prepared: Vec<PreparedEntry> = Vec::with_capacity(entries.len());
 
     for mut entry in entries {
-        let entry_id = entry
+        let mut entry_id = entry
             .id
             .clone()
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+
+        let mut is_overwrite = false;
 
         // Check if exists (quick read, no transaction needed)
         let exists: bool = conn
@@ -373,7 +377,18 @@ pub fn import_entries(
             .unwrap_or(false);
 
         if exists {
-            continue;
+            match conflict_behavior {
+                "overwrite" => {
+                    is_overwrite = true;
+                }
+                "duplicate" => {
+                    entry_id = uuid::Uuid::new_v4().to_string();
+                }
+                _ => {
+                    // "skip" (default)
+                    continue;
+                }
+            }
         }
 
         entry.id = Some(entry_id.clone());
@@ -398,6 +413,7 @@ pub fn import_entries(
             image_url: final_image_url,
             date_created: entry.date_created,
             date_modified: entry.date_modified,
+            is_overwrite,
         });
     }
 
@@ -405,9 +421,16 @@ pub fn import_entries(
     let tx = conn.transaction()?;
 
     for entry in prepared {
-        if let Err(e) = tx.execute(
+        let sql = if entry.is_overwrite {
+            "INSERT OR REPLACE INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"
+        } else {
             "INSERT INTO entries (id, title, figure, moment, narrative, image_url, keywords, date_created, date_modified)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)"
+        };
+
+        if let Err(e) = tx.execute(
+            sql,
             params![
                 entry.id,
                 entry.title,
@@ -420,7 +443,7 @@ pub fn import_entries(
                 entry.date_modified
             ],
         ) {
-            eprintln!("Failed to insert entry {}: {}", entry.id, e);
+            eprintln!("Failed to insert/replace entry {}: {}", entry.id, e);
         }
     }
 

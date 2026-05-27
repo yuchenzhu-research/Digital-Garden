@@ -24,6 +24,7 @@ export interface FileExportResult {
 export interface FileImportOptions {
   merge?: boolean;
   onProgress?: (count: number) => void;
+  conflictBehavior?: string;
 }
 
 export interface FileImportResult {
@@ -160,10 +161,10 @@ export const exportData = async (): Promise<string> => {
 /**
  * Import data
  */
-export const importData = async (json: string) => {
+export const importData = async (json: string, conflictBehavior?: string) => {
   try {
     const repo = getRepository();
-    return await repo.importData(json);
+    return await repo.importData(json, conflictBehavior);
   } catch (error) {
     console.error('entryService.importData failed:', error);
   }
@@ -221,7 +222,7 @@ export const importFromFile = async (
     const parsed = JSON.parse(text);
     const entries = parseBackupEntries(parsed);
 
-    await importData(JSON.stringify(entries));
+    await importData(JSON.stringify(entries), options.conflictBehavior);
 
     const nextCount = await getUserEntryCount();
     const importedCount = Math.max(0, nextCount - previousCount);

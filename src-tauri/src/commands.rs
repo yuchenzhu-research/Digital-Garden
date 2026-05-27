@@ -110,11 +110,11 @@ pub fn get_storage_path(app_handle: AppHandle) -> Result<String, AppError> {
 
 /// Import entries from JSON wrapped inside a single SQLite transaction
 #[tauri::command]
-pub async fn import_entries(json: String, app_handle: AppHandle) -> Result<(), AppError> {
+pub async fn import_entries(json: String, conflict_behavior: String, app_handle: AppHandle) -> Result<(), AppError> {
     let entries: Vec<EntryPayload> = serde_json::from_str(&json)?;
     let mut conn = open_connection(&app_handle)?;
     let archive_dir = get_archive_dir(&app_handle)?;
-    crate::service::import_entries(&mut conn, &archive_dir, entries)
+    crate::service::import_entries(&mut conn, &archive_dir, entries, &conflict_behavior)
 }
 
 #[cfg(test)]

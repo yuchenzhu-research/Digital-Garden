@@ -543,10 +543,29 @@ export class WebFSStorageAdapter implements StorageRepository {
         return JSON.stringify(portableEntries, null, 2);
     }
 
-    async importData(json: string): Promise<void> {
+    async importData(json: string, conflictBehavior?: string): Promise<void> {
         const entries = parseBackupJson(json);
         for (const entry of entries) {
             const preparedEntry = await this.prepareImportedEntry(entry);
+            const entryId = preparedEntry.id;
+
+            if (entryId) {
+                const existing = await this.getEntry(entryId);
+                if (existing) {
+                    if (conflictBehavior === 'overwrite') {
+                        await this.updateEntry(entryId, preparedEntry);
+                    } else if (conflictBehavior === 'duplicate') {
+                        const newId = generateId();
+                        await this.saveEntry({
+                            ...preparedEntry,
+                            id: newId,
+                        });
+                    }
+                    // If skip, do nothing (skip)
+                    continue;
+                }
+            }
+
             await this.saveEntry(preparedEntry);
         }
     }

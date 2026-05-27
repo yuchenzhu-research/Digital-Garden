@@ -25,6 +25,8 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
     handleWipeData,
     storageLocation,
     storageMode,
+    conflictBehavior,
+    setConflictBehavior,
   } = useDataManagementController({ onDataChanged });
 
   return (
@@ -75,6 +77,29 @@ export function DataManagement({ onDataChanged, className }: DataManagementProps
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Conflict Resolution Strategy Dropdown */}
+      <div className="space-y-1.5">
+        <label className="text-[10px] text-muted-foreground uppercase tracking-widest font-sans">
+          Conflict Strategy
+        </label>
+        <select
+          value={conflictBehavior}
+          onChange={(e) => setConflictBehavior(e.target.value)}
+          className="w-full rounded-[16px] border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] px-3 py-2 text-xs font-sans text-foreground/80 focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors cursor-pointer appearance-none relative"
+          style={{
+            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            backgroundSize: '14px',
+            paddingRight: '30px'
+          }}
+        >
+          <option value="skip" className="bg-[#181818] text-foreground">跳过冲突记录 (skip)</option>
+          <option value="overwrite" className="bg-[#181818] text-foreground">覆盖已存在的记录 (overwrite)</option>
+          <option value="duplicate" className="bg-[#181818] text-foreground">保存为新副本 (duplicate)</option>
+        </select>
+      </div>
 
       {/* Quick Action Grid */}
       <div className="grid grid-cols-2 gap-2">

@@ -328,7 +328,7 @@ export class NativeStorageAdapter implements StorageRepository {
     return JSON.stringify(entries, null, 2);
   }
 
-  async importData(json: string): Promise<void> {
+  async importData(json: string, conflictBehavior?: string): Promise<void> {
     try {
       const { invoke } = await this.initCore();
       const entries = parseBackupJson(json);
@@ -347,6 +347,7 @@ export class NativeStorageAdapter implements StorageRepository {
 
       await invoke('import_entries', {
         json: JSON.stringify(payload),
+        conflictBehavior: conflictBehavior || 'skip',
       });
     } catch (error) {
       throw new Error(

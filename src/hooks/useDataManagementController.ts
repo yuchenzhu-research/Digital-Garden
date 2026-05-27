@@ -24,6 +24,7 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
   const [isImporting, setIsImporting] = useState(false);
   const [isWiping, setIsWiping] = useState(false);
   const [importStatus, setImportStatus] = useState<ImportStatus>('idle');
+  const [conflictBehavior, setConflictBehavior] = useState<string>('skip');
   const [importMessage, setImportMessage] = useState('');
   const [entryCount, setEntryCount] = useState(0);
   const [storageLocation, setStorageLocation] = useState('');
@@ -115,6 +116,7 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
       const result = await importFromFile(file, {
         merge: true,
         onProgress: () => {},
+        conflictBehavior,
       });
 
       if (result.success) {
@@ -141,7 +143,7 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
 
       scheduleStatusReset(4000);
     }
-  }, [clearStatusTimeout, refreshAfterMutation, scheduleStatusReset]);
+  }, [clearStatusTimeout, refreshAfterMutation, scheduleStatusReset, conflictBehavior]);
 
   const handleWipeData = useCallback(async () => {
     const confirmed = window.confirm("Are you sure you want to permanently clear all archive entries? This action cannot be undone.");
@@ -199,5 +201,7 @@ export function useDataManagementController({ onDataChanged }: UseDataManagement
     setIsOpen,
     storageLocation,
     storageMode,
+    conflictBehavior,
+    setConflictBehavior,
   };
 }

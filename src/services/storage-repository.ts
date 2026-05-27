@@ -134,9 +134,10 @@ export interface StorageRepository {
   /**
    * Import entries from a JSON array
    * @param json - JSON string of entries
+   * @param conflictBehavior - Strategy on ID conflict ('skip', 'overwrite', or 'duplicate')
    * @returns void if successful
    */
-  importData(json: string): Promise<void>;
+  importData(json: string, conflictBehavior?: string): Promise<void>;
 
   /**
    * Get the storage location/path
